@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>{{ protein_label }} - 細胞胞器 / GO Function 對照</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cell_go_view.css') }}">
+
+</head>
+<body>
+
+<header class="topbar">
+  <h1>{{ protein_label }} <span class="accession">({{ protein_id }})</span></h1>
+  <p class="hint">頁面載入後會依序自動點亮對應的胞器；滑鼠移到圖上的胞器，右側會自動對應到相關的 GO function（反之亦然）。</p>
+</header>
+
+<main class="layout">
+
+  <!-- 左側：Animal cell SVG -->
+  <section id="cell-container" class="cell-panel" aria-label="細胞構造圖">
+    <div class="loading" id="svg-loading">圖片載入中...</div>
+  </section>
+
+  <!-- 右側：GO function 清單 -->
+  <aside class="go-panel">
+    <h2>GO Function</h2>
+
+    <div class="go-group" data-aspect="C">
+      <h3>Cellular Component（胞器 / 位置）</h3>
+      <ul id="go-list-C" class="go-list"></ul>
+    </div>
+
+    <div class="go-group" data-aspect="F">
+      <h3>Molecular Function</h3>
+      <ul id="go-list-F" class="go-list go-list--static"></ul>
+    </div>
+
+    <div class="go-group" data-aspect="P">
+      <h3>Biological Process</h3>
+      <ul id="go-list-P" class="go-list go-list--static"></ul>
+    </div>
+  </aside>
+
+</main>
+
+<script>
+  window.CELL_SVG_URL = {{ url_for('static', filename='img/Animal_cells.svg') | tojson }};
+  window.GO_API_URL = "/api/protein/" + encodeURIComponent({{ protein_id | tojson }}) + "/cell-go";
+</script>
+<script src="{{ url_for('static', filename='js/cell_go_viewer.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+/analyze_enzyme_id_mapping.py
+/build_ub_relations.py
+/db.py
+/dedup.py
+/domain_nlp_parser.py
+/domain_scan.py
+/export_to_neo4j.py
+/go_sl_mapping.py
+/import_biogrid_ubiquitin.py
+/load
+/neo4j_import_csv
+/normalize.py
+/run_paper_domain.py
+/test.css
+/test.html
+/test.txt
+/update_ukw.py

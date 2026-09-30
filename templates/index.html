@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ubiquitin 泛素本地查詢資料庫</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<script src="{{ url_for('static', filename='molstar/molstar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cytoscape/cytoscape.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cytoscape/cytoscape-dagre.js') }}"></script>
+
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">Ub</span>
+    <div class="brand-text">
+      <h1>Ubiquitin 本地查詢資料庫</h1>
+    </div>
+  </div>
+
+  <!-- Protein class buttons -->
+  <div class="category-buttons">
+
+    <button class="class-btn ubiquitin-btn"
+            onclick="loadProteinClass('UB')">
+      UB
+    </button>
+
+    <button class="class-btn e1-btn"
+            onclick="loadProteinClass('E1')">
+      E1
+    </button>
+
+    <button class="class-btn e2-btn"
+            onclick="loadProteinClass('E2')">
+      E2
+    </button>
+
+    <button class="class-btn e3-btn"
+            onclick="loadProteinClass('E3')">
+      E3
+    </button>
+
+    <button class="class-btn dub-btn"
+            onclick="loadProteinClass('DUB')">
+      DUB
+    </button>
+
+        <button class="class-btn ubl-btn"
+            onclick="loadProteinClass('UBL')">
+      UBL
+    </button>  
+
+    <button class="class-btn" onclick="loadProteinClassNoPDB('E1')">
+      E1 No Exp PDB
+    </button>
+
+    <button class="class-btn" onclick="loadProteinClassNoPDB('E2')">
+      E2 No Exp PDB
+    </button>
+
+    <button class="class-btn" onclick="loadProteinClassNoPDB('E3')">
+      E3 No Exp PDB
+    </button>
+
+    <button class="class-btn" onclick="loadProteinClassNoPDB('DUB')">
+      DUB No Exp PDB
+    </button>
+
+  </div>
+
+  <!-- Search -->
+
+  <form class="searchbar" id="searchForm" autocomplete="off">
+    <input id="searchInput" type="text" placeholder="輸入蛋白質名稱 / 基因名 / UniProt accession，例如 ubiquitin、UBB、P0CG47..." value="uba">
+    <button type="submit">查詢</button>
+  </form>
+</header>
+
+<main class="layout">
+  <aside class="results-pane">
+    <h2 class="pane-title">搜尋結果</h2>
+    <div class="filter-panel">
+    <div id="subfamily-filters"></div>
+    </div>
+    <ul id="resultsList" class="results-list"></ul>
+  </aside>
+
+  <section class="detail-pane" id="detailPane">
+    <div class="empty-state">
+      <p>請在上方輸入關鍵字並按下「查詢」，或直接查詢預設的 <strong>ubiquitin</strong>。</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer-note">
+  本工具為本地端 SQLite 資料庫示範介面 · 資料來源與下載方式請參見 README.md
+</footer>
+
+<script src="/static/js/01-constants.js"></script>
+<script src="/static/js/02-state.js"></script>
+<script src="/static/js/03-utils.js"></script>
+<script src="/static/js/04-viewer.js"></script>
+<script src="/static/js/05-search.js"></script>
+<script src="/static/js/06-annotation-sections.js"></script>
+<script src="/static/js/07-papers-sequence.js"></script>
+<script src="/static/js/08-detail.js"></script>
+<script src="/static/js/09-network.js"></script>
+<script src="/static/js/10-main.js"></script>
+<script src="/static/js/11-domain.js"></script>
+
+<!-- =========================================================
+     Domain Explorer
+========================================================= -->
+
+<div id="domainExplorerModal" class="domain-explorer-modal">
+
+    <div class="domain-explorer-window">
+
+        <!-- Header -->
+
+        <div class="domain-explorer-header">
+
+            <div>
+
+                <strong>
+                    Domain Explorer
+                </strong>
+
+            </div>
+
+
+            <button
+                class="icon-btn"
+                onclick="closeDomainExplorer()"
+                title="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- Body -->
+
+        <div class="domain-explorer-body">
+            <!-- =================================================
+                 LEFT : Domain
+            ================================================== -->
+            <div class="domain-explorer-left">
+                <div
+                    id="domainExplorerTrack"
+                    class="domain-explorer-track"
+                >
+                </div>
+                <div
+                    id="domainExplorerInfo"
+                    class="domain-explorer-info"
+                >
+                    <p>
+                        點選 Domain 查看詳細位置
+                    </p>
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT : PDB
+            ================================================== -->
+
+            <div class="domain-explorer-right">
+                <div class="domain-explorer-pdb-header">
+                    <strong>
+                        Structure
+                    </strong>
+                </div>
+                <div
+                    id="domainExplorerPDB"
+                    class="domain-explorer-pdb"
+                >
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

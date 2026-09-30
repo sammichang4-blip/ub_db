@@ -1,0 +1,165 @@
+# ============================================================
+# Ubiquitin Knowledge Warehouse (UKW)
+# Global Configuration
+# ============================================================
+[general]
+
+project_name = Ubiquitin Knowledge Warehouse
+user_agent = UKW-Human-Database/1.0
+request_timeout = 120
+max_retries = 3
+# ============================================================
+# Database
+# ============================================================
+[database]
+
+path = ../data_new/ubiquitin.db
+
+# ============================================================
+# UniProt
+# ============================================================
+
+[uniprot]
+
+base_url = https://ftp.uniprot.org/pub/databases/uniprot
+proteome_id = UP000005640_9606
+version =
+output_dir = ../data_new/raw/uniprot
+
+filename = uniprot_sprot.dat.gz
+fasta_filename = uniprot_sprot.fasta.gz
+
+
+# ============================================================
+# Reactome
+# ============================================================
+
+[reactome]
+
+# Reactome ContentService API
+base_url = https://reactome.org/ContentService
+
+# Reactome download directory
+download_url = https://reactome.org/download/current/
+
+# Leave empty.
+# Version is detected automatically from ContentService.
+version =
+
+output_dir = ../data_new/raw/reactome
+
+uniprot_pathway_file = UniProt2Reactome_All_Levels.txt
+uniprot_reaction_file = UniProt2ReactomeReactions.txt
+
+
+# ============================================================
+# BioGRID
+# ============================================================
+
+[biogrid]
+
+base_url = https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive
+
+version = 5.0.260
+
+filename = BIOGRID-ORGANISM-{version}.tab3.zip
+
+output_dir = ../data_new/raw/biogrid
+
+
+# ============================================================
+# CORUM
+# ============================================================
+
+[corum]
+
+base_url = https://mips.helmholtz-muenchen.de/fastapi-corum
+
+download_endpoint = /public/file/download_current_file
+
+file_id = human
+
+file_format = txt
+
+version =
+
+output_dir = ../data_new/raw/corum
+
+
+# ============================================================
+# IntAct
+# ============================================================
+[intact]
+
+base_url = https://www.ebi.ac.uk/Tools/webservices/psicquic/intact/webservices/current/search/query
+
+query = taxidA:9606 AND taxidB:9606
+
+format = tab27
+
+page_size = 5000
+
+output_file = ../data_new/raw/intact/intact_human_mitab27.txt
+
+version = current
+
+# ============================================================
+# STRING
+# ============================================================
+
+[stringdb]
+
+base_url = https://stringdb-downloads.org/download/
+
+species = 9606
+
+version = 12.0
+
+output_dir = ../data_new/raw/string
+
+
+# ============================================================
+# UbiBrowser
+# ============================================================
+[ubibrowser]
+
+base_url_e3    = http://ubibrowser.bio-it.cn/ubibrowser_v3/Public/download/E3/H.sapiens.result.txt.gz
+base_url_dub   = http://ubibrowser.bio-it.cn/ubibrowser_v3/Public/download/DUB/H.sapiens.result.txt.gz
+ubibrowser_species    = H.sapiens
+ubibrowser_version        = v2
+output_dir     = ../data_new/raw/ubibrowser
+
+# ============================================================
+# PhosphoSitePlus
+# ============================================================
+
+[phosphositeplus]
+
+base_url =
+
+version =
+
+output_dir = ../data_new/raw/phosphositeplus
+
+
+# ============================================================
+# UKW
+# ============================================================
+[ukw]
+
+species = Homo sapiens
+taxid = 9606
+primary_id = uniprot
+human_only = true
+
+# ============================================================
+# Logging
+# ============================================================
+
+[logging]
+
+output_dir = logs
+level = INFO
+
+download_log = true
+loader_log = true

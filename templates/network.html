@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="{{ url_for('static', filename='js/cytoscape/cytoscape.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cytoscape/cytoscape-dagre.js') }}"></script>
+
+</head>
+<body>
+
+<div id="toolbar">
+
+    <h3>Network Type</h3>
+
+    <button onclick="changeLayout('dagre')">
+        Dagre
+    </button>
+
+    <button onclick="changeLayout('grid')">
+        Grid
+    </button>
+
+    <button onclick="changeLayout('circle')">
+        Circle
+    </button>
+
+    <button onclick="changeLayout('breadthfirst')">
+        Tree
+    </button>
+
+    <button onclick="changeLayout('cose')">
+        COSE
+    </button>
+
+    <button onclick="changeLayout('concentric')">
+        Concentric
+    </button>
+
+    <button onclick="changeLayout('random')">
+        Random
+    </button>
+
+    <button
+        id="editModeBtn"
+        onclick="enterEditMode()">
+        ✎ Edit Mode
+    </button>
+
+    <button onclick="restoreNetwork()">
+        ↻ Restore All
+    </button>
+
+    <button onclick="exportPNG()">
+        Save to PNG
+    </button>
+
+
+    <!-- ==========================================
+         Node Legend
+         ========================================== -->
+
+    <div id="nodeLegend">
+
+        <div class="legend-title">
+            Node Type
+        </div>
+
+
+        <div class="legend-items">
+
+            <!-- E1 -->
+            <div class="legend-item">
+
+                <span
+                    class="legend-shape legend-e1">
+                </span>
+
+                <div class="legend-text">
+                    <strong>E1</strong>
+                    <span>
+                        Ubiquitin activating enzyme
+                    </span>
+                </div>
+
+            </div>
+
+
+            <!-- E2 -->
+            <div class="legend-item">
+
+                <span
+                    class="legend-shape legend-e2">
+                </span>
+
+                <div class="legend-text">
+                    <strong>E2</strong>
+                    <span>
+                        Ubiquitin conjugating enzyme
+                    </span>
+                </div>
+
+            </div>
+
+
+            <!-- E3 -->
+            <div class="legend-item">
+
+                <span
+                    class="legend-shape legend-e3">
+                </span>
+
+                <div class="legend-text">
+                    <strong>E3</strong>
+                    <span>
+                        Ubiquitin ligase
+                    </span>
+                </div>
+
+            </div>
+
+
+            <!-- Substrate -->
+            <div class="legend-item">
+
+                <span
+                    class="legend-shape legend-substrate">
+                </span>
+
+                <div class="legend-text">
+                    <strong>Substrate</strong>
+                    <span>
+                        Ubiquitinated protein
+                    </span>
+                </div>
+
+            </div>
+
+
+            <!-- DUB -->
+            <div class="legend-item">
+
+                <span
+                    class="legend-shape legend-dub">
+                </span>
+
+                <div class="legend-text">
+                    <strong>DUB</strong>
+                    <span>
+                        Deubiquitinase
+                    </span>
+                </div>
+
+            </div>
+
+                        <!-- Complexes Numbers -->
+            <div class="legend-item">
+
+                <span
+                    class="legend-shape legend-complex">
+                </span>
+
+                <div class="legend-text">
+                    <strong>Complexes</strong>
+                    <span>
+                        Protein complexes Numbers
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div id="bigcy"></div>
+<script src="{{ url_for('static', filename='js/network.js') }}"></script>
+
+<script>
+const proteinID = "{{ protein }}";
+loadNetwork(proteinID);
+</script>
+</body>
+</html>

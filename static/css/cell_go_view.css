@@ -1,0 +1,734 @@
+:root {
+  --glow-color: #ffcc00;
+  --glow-color-soft: rgba(255, 204, 0, 0.55);
+  --accent: #2b6cb0;
+  --bg: #f7f8fa;
+  --panel-bg: #ffffff;
+  --border: #e2e6ea;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  background: var(--bg);
+  color: #222;
+}
+
+.topbar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+.topbar h1 { margin: 0 0 4px; font-size: 20px; }
+.topbar .accession { color: #888; font-weight: normal; font-size: 15px; }
+.topbar .hint { margin: 0; color: #666; font-size: 13px; }
+
+/* =========================================================
+   Main Layout
+   SVG Panel ↔ GO Panel 等高
+   ========================================================= */
+
+.layout {
+    display: flex;
+
+    gap: 16px;
+
+    padding: 16px;
+
+    align-items: stretch;
+
+    width: 100%;
+}
+
+
+/* =========================================================
+   左：Cell / SVG Panel
+   ========================================================= */
+
+.cell-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+#cell-container {
+    width: 100%;
+}
+
+
+
+/* SVG 隨 panel 寬度縮放 */
+.cell-panel svg {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    max-width: 100%;
+}
+
+
+/* =========================================================
+   右：GO Panel
+   ========================================================= */
+
+.go-panel {
+    flex: 2 1 0;
+
+    min-width: 280px;
+
+    background: var(--panel-bg);
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    padding: 16px;
+
+    /* 不再自己限制高度 */
+    max-height: none;
+
+    /* 如果 GO 太多，自己滾動 */
+    overflow-y: auto;
+
+    min-height: 0;
+}
+
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+/* 每個胞器 <g id="SLxxxx"> 加游標，讓使用者知道可以互動 */
+.cell-panel g[id^="SL"] {
+  cursor: pointer;
+}
+
+/* 發亮效果：套用在胞器的 <g> 上，靠 filter 讓底下所有 .coloured 元素發光 */
+.sl-glow-strong .coloured {
+  filter:
+    drop-shadow(0 0 6px var(--glow-color))
+    drop-shadow(0 0 14px var(--glow-color));
+  transition: filter 0.25s ease;
+}
+.sl-glow-soft .coloured {
+  filter: drop-shadow(0 0 5px var(--glow-color-soft));
+  transition: filter 0.4s ease;
+}
+.sl-glow-strong,
+.sl-glow-soft {
+  transition: filter 0.25s ease;
+}
+
+/* 自動導覽時的脈動動畫，讓「依序點亮」更明顯 */
+@keyframes sl-pulse {
+  0%   { filter: drop-shadow(0 0 2px var(--glow-color)); }
+  50%  { filter: drop-shadow(0 0 16px var(--glow-color)) drop-shadow(0 0 26px var(--glow-color)); }
+  100% { filter: drop-shadow(0 0 2px var(--glow-color)); }
+}
+.sl-glow-pulse .coloured {
+  animation: sl-pulse 1.1s ease-in-out;
+}
+
+/* ---------- 右：GO function 清單 ---------- */
+
+.go-panel h2 { margin-top: 0; font-size: 18px; }
+.go-group { margin-bottom: 18px; }
+.go-group h3 {
+  font-size: 13px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.go-list { list-style: none; margin: 0; padding: 0; }
+.go-list li {
+  padding: 7px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+.go-list .go-id {
+  display: inline-block;
+  font-size: 11px;
+  color: #999;
+  margin-left: 6px;
+}
+.go-list .go-evidence {
+  display: inline-block;
+  font-size: 10px;
+  color: #fff;
+  background: #b0b7bf;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* 有對應到胞器、可以互動的項目 */
+.go-list li.mappable {
+  cursor: pointer;
+  background: #fbfbfb;
+}
+.go-list li.mappable:hover,
+.go-list li.active {
+  background: #fff6da;
+  border-color: var(--glow-color);
+}
+
+/* 沒有對應胞器（F / P，或 SVG 上沒畫的胞器）就是純展示 */
+.go-list--static li {
+  color: #444;
+}
+/* =========================================================
+   UKW GO → Cell highlight
+   ========================================================= */
+
+/* 被 GO list 對應到的胞器 */
+#cell-container svg .sl-glow-strong {
+    filter:
+        drop-shadow(0 0 5px rgba(0, 140, 255, 0.95))
+        drop-shadow(0 0 12px rgba(0, 140, 255, 0.85))
+        drop-shadow(0 0 22px rgba(0, 140, 255, 0.65));
+
+    opacity: 1 !important;
+}
+
+/* 讓 SL group 裡真正畫圖的 SVG element 變藍 */
+#cell-container svg .sl-glow-strong > path,
+#cell-container svg .sl-glow-strong > rect,
+#cell-container svg .sl-glow-strong > ellipse,
+#cell-container svg .sl-glow-strong > circle,
+#cell-container svg .sl-glow-strong > polygon,
+#cell-container svg .sl-glow-strong > polyline {
+
+    stroke: #008cff !important;
+    stroke-width: 2.5px !important;
+
+    filter:
+        drop-shadow(0 0 4px rgba(0, 140, 255, 1))
+        drop-shadow(0 0 10px rgba(0, 140, 255, 0.9));
+}
+
+
+/* 如果原 SVG 使用 fill，也讓它有藍色效果 */
+#cell-container svg .sl-glow-strong > path {
+    stroke: #008cff !important;
+}
+
+
+/* GO list active 狀態 */
+#go-list-C li.mappable.active {
+    color: #008cff;
+    background: rgba(0, 140, 255, 0.10);
+    border-left: 3px solid #008cff;
+    padding-left: 10px;
+
+    box-shadow:
+        0 0 10px rgba(0, 140, 255, 0.15);
+}
+
+/* =========================================================
+   UKW SVG Inspector
+   ========================================================= */
+
+.svg-inspector {
+
+    margin-top: 16px;
+
+    padding: 16px;
+
+    border: 1px solid
+        rgba(0, 140, 255, 0.35);
+
+    border-radius: 10px;
+
+    background:
+        rgba(8, 20, 35, 0.96);
+
+    color: #dceeff;
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    box-shadow:
+        0 8px 30px
+        rgba(0, 0, 0, 0.25);
+}
+
+
+.inspector-title {
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    color: #5db7ff;
+
+    margin-bottom: 14px;
+
+    padding-bottom: 8px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.12);
+}
+
+
+.inspector-section {
+
+    margin-bottom: 16px;
+}
+
+
+.inspector-label {
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.08em;
+
+    color: #7f9bb5;
+
+    margin-bottom: 5px;
+}
+
+
+.inspector-value {
+
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+
+.inspector-sl {
+
+    color: #00aaff;
+
+    font-family: monospace;
+
+    font-size: 16px;
+}
+
+
+.inspector-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 7px;
+}
+
+
+.inspector-grid > div {
+
+    padding: 7px 8px;
+
+    border-radius: 6px;
+
+    background:
+        rgba(255,255,255,0.05);
+}
+
+
+.inspector-grid span {
+
+    display: block;
+
+    font-size: 9px;
+
+    color: #7791a8;
+
+    margin-bottom: 2px;
+}
+
+
+.inspector-grid strong {
+
+    display: block;
+
+    font-family: monospace;
+
+    font-size: 12px;
+
+    color: #dceeff;
+}
+
+
+.inspector-go-item {
+
+    padding: 8px 10px;
+
+    margin-bottom: 6px;
+
+    border-left:
+        3px solid #008cff;
+
+    background:
+        rgba(0,140,255,0.08);
+
+    border-radius: 4px;
+}
+
+
+.inspector-go-id {
+
+    font-family: monospace;
+
+    font-size: 11px;
+
+    color: #5db7ff;
+}
+
+
+.inspector-go-name {
+
+    margin-top: 3px;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+
+    color: #e8f4ff;
+}
+
+
+.inspector-evidence {
+
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 10px;
+
+    color: #91a9bd;
+}
+
+
+.inspector-empty,
+.inspector-no-go {
+
+    color: #7f95a8;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   SVG selected node
+   ========================================================= */
+
+#cell-container svg .sl-selected {
+
+    filter:
+        drop-shadow(
+            0 0 5px
+            rgba(0, 140, 255, 1)
+        )
+        drop-shadow(
+            0 0 12px
+            rgba(0, 140, 255, 0.95)
+        )
+        drop-shadow(
+            0 0 24px
+            rgba(0, 140, 255, 0.75)
+        );
+
+    opacity: 1 !important;
+}
+
+
+#cell-container svg .sl-selected path,
+#cell-container svg .sl-selected rect,
+#cell-container svg .sl-selected ellipse,
+#cell-container svg .sl-selected circle,
+#cell-container svg .sl-selected polygon,
+#cell-container svg .sl-selected polyline {
+
+    stroke:
+        #008cff !important;
+
+    stroke-width:
+        2.5px !important;
+}
+
+
+/* =========================================================
+   GO list selected
+   ========================================================= */
+
+#go-list-C li.inspector-active {
+
+    color: #008cff;
+
+    background:
+        rgba(0,140,255,0.12);
+
+    border-left:
+        3px solid #008cff;
+
+    box-shadow:
+        0 0 12px
+        rgba(0,140,255,0.15);
+}
+
+#cell-container svg .ukw-description-box {
+    fill: rgba(255, 255, 255, 0.97);
+    stroke: #1683d8;
+    stroke-width: 1.5px;
+
+    filter:
+        drop-shadow(0 4px 12px rgba(0, 0, 0, 0.18));
+}
+
+#cell-container svg .ukw-description-line {
+    stroke: #1683d8;
+    stroke-width: 1.5px;
+    stroke-dasharray: 4 3;
+}
+
+#cell-container svg .ukw-description-title {
+    font-size: 16px;
+    font-weight: 700;
+    fill: #172b4d;
+}
+
+#cell-container svg .ukw-description-sl {
+    font-size: 10px;
+    fill: #7b8794;
+}
+
+#cell-container svg .ukw-description-text {
+    width: 300px;
+    height: 80px;
+
+    overflow: auto;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size: 11px;
+    line-height: 1.45;
+
+    color: #374151;
+
+    background: transparent;
+
+    padding: 0;
+    margin: 0;
+}
+
+
+/* ============================================================
+   Cell Description Card
+   固定在細胞圖左下角，不遮住主要 SVG
+   ============================================================ */
+
+
+
+#cell-container > svg {
+    display: block;
+
+    width: 100%;
+
+    height: auto;
+
+    max-width: 100%;
+}
+
+#cell-detail-card {
+    position: relative;
+    left: auto;
+    bottom: auto;
+
+    width: 100%;
+    margin-top: 2px;
+}
+
+#cell-detail-card.visible {
+    opacity: 1;
+
+    visibility: visible;
+
+    transform: translateY(0);
+}
+/* ============================================================
+   Title
+   ============================================================ */
+
+#cell-detail-card .cell-detail-title {
+    font-size: 16px;
+    font-weight: 700;
+
+    line-height: 1.35;
+
+    margin-bottom: 4px;
+
+    color: #263746;
+}
+
+
+/* ============================================================
+   SL ID
+   ============================================================ */
+
+#cell-detail-card .cell-detail-sl {
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        monospace;
+
+    font-size: 11px;
+
+    color: #7a8791;
+
+    margin-bottom: 8px;
+}
+
+
+/* ============================================================
+   Description
+   ============================================================ */
+
+#cell-detail-card .cell-detail-description {
+    font-size: 13px;
+
+    line-height: 1.55;
+
+    color: #46545f;
+
+    max-height: 120px;
+
+    overflow-y: auto;
+}
+
+/* =========================
+   Desktop / TV default
+   ========================= */
+
+.layout {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.cell-panel {
+    flex: 3 1 0;
+    min-width: 0;
+}
+
+.go-panel {
+    flex: 2 1 0;
+    min-width: 280px;
+}
+
+
+/* =========================
+   Tablet / iPad
+   600–1099px
+   ========================= */
+
+@media (max-width: 1099px) and (min-width: 600px) {
+
+    .layout {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+
+
+    .go-panel {
+        flex: 2 1 0;
+        min-width: 260px;
+        max-height: none;
+        overflow-y: auto;
+    }
+
+    .go-list li {
+        font-size: 13px;
+    }
+}
+
+
+/* =========================
+   Phone
+   <600px
+   ========================= */
+
+@media (max-width: 599px) {
+
+    .layout {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .cell-panel {
+        width: 100%;
+        min-height: 0;
+    }
+
+    .go-panel {
+        width: 100%;
+        min-width: 0;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+}
+
+@media (min-width: 1800px) {
+
+    .layout {
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .cell-panel {
+        flex: 7 1 0;
+    }
+
+    .go-panel {
+        flex: 3 1 0;
+        padding: 20px;
+    }
+
+    .go-panel h2 {
+        font-size: 22px;
+    }
+
+    .go-group h3 {
+        font-size: 14px;
+    }
+
+    .go-list li {
+        font-size: 16px;
+        padding: 9px 12px;
+    }
+
+    .go-list .go-id {
+        font-size: 12px;
+    }
+
+    .go-list .go-evidence {
+        font-size: 11px;
+    }
+}

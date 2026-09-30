@@ -1,0 +1,1729 @@
+const LYSINE_SITES = [6, 11, 27, 29, 33, 48, 63]; // 已知多泛素鏈接位點
+const resultsList = document.getElementById("resultsList");
+const detailPane = document.getElementById("detailPane");
+const searchForm = document.getElementById("searchForm");
+const searchInput = document.getElementById("searchInput");
+
+let currentProteinId = null;
+let pdbViewer = null;
+let currentPdbId=null;
+let currentData = null;
+let currentProtein = null;
+let currentPdbUrl = null;
+
+// Cytoscape instance
+let cy = null;
+
+async function initViewer(){
+    console.log("===== initViewer =====");
+    const container = document.getElementById("pdb-viewer");
+    console.log("container =", container);
+
+    if (!container){
+        return;
+    }
+
+    if (pdbViewer){
+        return;
+    }
+
+    try {
+
+        pdbViewer = await molstar.Viewer.create(
+            "pdb-viewer",
+            {
+              layoutIsExpanded:false,
+              layoutShowControls:false,
+              collapseLeftPanel:true,
+              collapseRightPanel:true
+            }
+        );
+
+        console.log(
+            "Mol* viewer ready",
+            pdbViewer
+        );
+
+    } catch(error){
+
+        console.error(
+            "Mol* initialization error:",
+            error
+        );
+    }
+}
+
+async function showPDBStructure(pdb_url){
+    console.log("Loading:", pdb_url);
+    // 保存目前實際的 PDB URL
+    currentPdbUrl = pdb_url
+    if(!pdbViewer){
+        console.error("Mol* viewer not initialized");
+        return;
+    }
+    // 清除目前 structure
+    await pdbViewer.plugin.clear();
+    const ext =
+        pdb_url.toLowerCase().endsWith(".cif")
+        ? "mmcif"
+        : "pdb";
+    try {
+        const data =
+            await pdbViewer.plugin.builders.data.download(
+            {
+                url:pdb_url,
+                isBinary:false
+            });
+        console.log("Data:", data);
+        const trajectory =
+            await pdbViewer.plugin.builders.structure.parseTrajectory(
+                data,
+                ext
+            );
+        await pdbViewer.plugin.builders.structure.hierarchy.applyPreset(
+            trajectory,
+            "default"
+        );
+    }
+    catch(err){
+        console.error(
+            "Load structure failed:",
+            pdb_url,
+            err
+        );
+    }
+}
+
+searchForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  doSearch(searchInput.value.trim());
+});
+
+async function doSearch(q) {
+  console.log("q. :",q)
+
+  if (!q) return;
+  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  renderResults(data);
+
+  if (data.length > 0) {
+    loadProtein(data[0].protein_id);
+  } else {
+    detailPane.innerHTML = `<div class="empty-state"><p>找不到符合「${escapeHtml(q)}」的蛋白質。</p></div>`;
+  }
+}
+
+function renderResults(items) {
+  resultsList.innerHTML = "";
+  items.forEach((item) => {
+    
+    const li = document.createElement("li");
+    li.className = "result-item" + (item.protein_id === currentProteinId ? " active" : "");
+    
+    li.innerHTML = `<div class="gene">${escapeHtml(item.gene_name || item.uniprot_acc)}</div>
+                    <div class="name">${escapeHtml(item.protein_name || "")}</div>`;
+
+    li.addEventListener("click", () => loadProtein(item.protein_id));
+    resultsList.appendChild(li);
+    
+  });
+}
+
+async function loadProtein(proteinId) {
+  currentProteinId = proteinId;
+  document.querySelectorAll(".result-item").forEach((el, i) => {
+    el.classList.toggle("active", el.querySelector(".gene").textContent);
+  });
+  const res = await fetch(`/api/protein/${encodeURIComponent(proteinId)}`);
+
+  if (!res.ok) {
+    detailPane.innerHTML = `<div class="empty-state"><p>載入失敗。</p></div>`;
+    return;
+  }
+  const data = await res.json();
+  // 存起來，讓 openExpandedView() 之後能讀到
+  currentData = data;
+  currentProtein = data.protein;
+  
+
+
+  renderDetail(data);
+  loadNetwork(data.protein.gene_name);
+
+}
+
+function destroyNetwork(){
+
+    if(cy){
+        cy.destroy();
+        cy=null;
+    }
+}
+
+function renderDescription(desc) {
+
+    if (!desc) {
+        return `<p style="color:var(--ink-dim)">No functional description.</p>`;
+    }
+
+    // 去掉 ECO annotation
+    desc = desc.replace(/\{ECO:[^}]+\}/g, "");
+
+    // 將多個空白壓成一個空白
+    desc = desc.replace(/\s+/g, " ").trim();
+
+    // 每個 Block 以最後一個 (PubMed:...) 為結束
+    const blocks = desc.match(/.*?\(PubMed:[^)]+\)\./g) || [desc];
+
+    let html = "";
+    let index = 1;
+
+    blocks.forEach(block => {
+
+        // 找 PMID
+        const pmids = [...block.matchAll(/PubMed:(\d+)/g)]
+            .map(m => m[1]);
+
+        // 移除 PMID
+        let text = block
+            .replace(/\(PubMed:[^)]+\)\./g, "")
+            .trim();
+
+        html += `
+        <div class="function-card">
+
+            <div class="function-title">
+                <span class="function-index">${index}.</span>
+                ${escapeHtml(text)}
+
+                📚 
+                ${
+                    pmids.map(id =>
+                        `<a href="https://pubmed.ncbi.nlm.nih.gov/${id}/"
+                           target="_blank">
+                           PMID:${id}
+                         </a>`
+                    ).join(",")
+                }
+            </div>
+
+        </div>
+        `;
+
+        index++;
+    });
+
+    return html;
+}
+
+    
+
+function showCopyMessage(msg){
+
+    let box =
+    document.querySelector(".copy-message");
+
+
+    if(!box){
+
+        box=document.createElement("div");
+
+        box.className="copy-message";
+
+        document.body.appendChild(box);
+
+    }
+
+
+    box.innerText=msg;
+
+    box.style.opacity=1;
+
+
+    setTimeout(()=>{
+
+        box.style.opacity=0;
+
+    },1500);
+
+}
+
+function loadProteinClass(enzymeClass){
+
+fetch(`/api/enzyme/${enzymeClass}`)
+
+.then(res=>res.json())
+
+.then(data=>{
+
+
+    const list =
+    document.getElementById("resultsList");
+
+
+    list.innerHTML="";
+
+
+    document.querySelector(".pane-title")
+    .innerHTML =
+    `${enzymeClass} (${data.length})`;
+
+
+    data.forEach(p=>{
+
+
+        const li=document.createElement("li");
+
+        li.className="result-item";
+
+
+        li.innerHTML=`
+
+        <div class="gene">
+            ${escapeHtml(p.gene_name || "")}
+        </div>
+
+        <div class="name">
+            ${escapeHtml(p.protein_name || "")}
+        </div>
+
+        <div class="name">
+            ${escapeHtml(p.uniprot_acc || "")}
+        </div>
+
+        <div class="name">
+            ${escapeHtml(p.enzyme_subfamily || "")}
+        </div>
+
+        `;
+
+
+        li.onclick=function(){
+
+            // 使用和 search 完全相同流程
+            loadProtein(p.protein_id);
+
+        };
+
+
+        list.appendChild(li);
+
+
+    });
+});
+}
+
+function openExpandedView() {
+    const p = currentProtein;
+    const data = currentData;
+
+    if (!p || !data) {
+        console.error("尚未載入蛋白質資料");
+        return;
+    }
+
+    const win = window.open(
+        "",
+        "_blank",
+        "width=900,height=800,scrollbars=yes,resizable=yes"
+    );
+
+    if (!win) {
+        alert("瀏覽器封鎖了彈出視窗，請允許彈出視窗後再試一次。");
+        return;
+    }
+
+    // --------------------------------------------------
+    // Paper date parser
+    // 支援：
+    //   paper.pub_date
+    //   paper.publication_date
+    //   paper.date
+    //   paper.year
+    // --------------------------------------------------
+    function getPaperDate(paper) {
+        const value =
+            paper.pub_date ||
+            paper.publication_date ||
+            paper.date ||
+            paper.year;
+
+        if (!value) {
+            return null;
+        }
+
+        // YYYY
+        if (/^\d{4}$/.test(String(value))) {
+            return new Date(
+                Number(value),
+                0,
+                1
+            );
+        }
+
+        const d = new Date(value);
+
+        if (!isNaN(d.getTime())) {
+            return d;
+        }
+
+        return null;
+    }
+
+    // --------------------------------------------------
+    // Filter papers by years
+    // --------------------------------------------------
+    function filterPapersByYears(papers, years) {
+        if (!Array.isArray(papers)) {
+            return [];
+        }
+
+        const now = new Date();
+
+        const startDate = new Date(now);
+        startDate.setFullYear(
+            now.getFullYear() - years
+        );
+
+        return papers.filter(paper => {
+            const paperDate = getPaperDate(paper);
+
+            // 沒有日期的 paper 不顯示
+            if (!paperDate) {
+                return false;
+            }
+
+            return paperDate >= startDate && paperDate <= now;
+        });
+    }
+
+    // --------------------------------------------------
+    // 依單一年份篩選 paper
+    // --------------------------------------------------
+    function filterPapersByYear(papers, year) {
+        return papers.filter(function (paper) {
+            // 依實際欄位調整，例如 paper.pub_year
+            return Number(paper.pub_year) === Number(year);
+        });
+    }
+
+    function updatePapersByYear(year) {
+        const papers = filterPapersByYear(data.papers, year);
+
+        const papersHtml = renderPapers(papers, { expandAll: true });
+
+        const container = win.document.getElementById("papers-container");
+        const count = win.document.getElementById("paper-count");
+
+        if (container) {
+            container.innerHTML = papersHtml;
+        }
+
+        if (count) {
+            count.textContent = `${papers.length} 篇`;
+        }
+    }
+
+    // --------------------------------------------------
+    // Render filtered papers
+    // --------------------------------------------------
+    function updatePapers(years) {
+
+        const papers = filterPapersByYears(
+            data.papers,
+            years
+        );
+
+        const papersHtml = renderPapers(
+            papers,
+            {
+                expandAll: true
+            }
+        );
+
+        const container =
+            win.document.getElementById("papers-container");
+
+        const count =
+            win.document.getElementById("paper-count");
+
+        if (container) {
+            container.innerHTML = papersHtml;
+        }
+
+        if (count) {
+            count.textContent =
+                `${papers.length} 篇`;
+        }
+    }
+
+    // 初始顯示 1 年
+    const initialYears = 1;
+
+    const initialPapers =
+        filterPapersByYears(
+            data.papers,
+            initialYears
+        );
+
+    const papersHtml = renderPapers(
+        initialPapers,
+        {
+            expandAll: true
+        }
+    );
+
+    const descHtml =
+        renderDescription(p.description);
+
+    win.document.write(`
+        <!DOCTYPE html>
+        <html lang="zh-Hant">
+
+        <head>
+            <meta charset="UTF-8">
+
+            <title>
+                ${escapeHtml(p.protein_name)}
+                (${escapeHtml(p.gene_name)})
+                - 詳細資料
+            </title>
+
+            <style>
+
+                body {
+                    font-family:
+                        -apple-system,
+                        BlinkMacSystemFont,
+                        "Noto Sans TC",
+                        sans-serif;
+
+                    max-width: 900px;
+                    margin: 0 auto;
+                    padding: 2em;
+
+                    line-height: 1.6;
+                    color: #222;
+                    background: #fff;
+                }
+
+                h1 {
+                    font-size: 1.4em;
+                    margin-bottom: 0.3em;
+                }
+
+                h5 {
+                    margin-top: 1.5em;
+                    margin-bottom: 0.8em;
+                }
+
+                .function-card {
+                    padding: 0.6em 0;
+                    border-bottom: 1px solid #eee;
+                }
+
+                .function-index {
+                    font-weight: 600;
+                    margin-right: 0.4em;
+                }
+
+                a {
+                    color: #2563eb;
+                }
+
+
+                /* ========================================
+                   Paper filter
+                ======================================== */
+
+                .paper-filter {
+                    margin: 15px 0 20px 0;
+
+                    padding: 14px 18px;
+
+                    background: #f7f7f7;
+
+                    border: 1px solid #ddd;
+
+                    border-radius: 8px;
+                }
+
+                .paper-filter-header {
+                    display: flex;
+
+                    justify-content:
+                        space-between;
+
+                    align-items: center;
+
+                    margin-bottom: 8px;
+                }
+
+                .paper-filter-title {
+                    font-weight: 600;
+                }
+
+                #paper-years-label {
+                    font-weight: 600;
+                    color: #2563eb;
+                }
+
+                #paper-count {
+                    color: #777;
+                    font-size: 0.9em;
+                    margin-left: 8px;
+                }
+
+                #paper-years {
+                    width: 100%;
+                    cursor: pointer;
+                }
+
+                .year-scale {
+                    display: flex;
+                    justify-content:
+                        space-between;
+
+                    color: #777;
+
+                    font-size: 0.8em;
+
+                    margin-top: 3px;
+                }
+
+                .paper-empty {
+                    padding: 20px;
+
+                    text-align: center;
+
+                    color: #888;
+
+                    background: #fafafa;
+
+                    border-radius: 6px;
+                }
+
+            </style>
+        </head>
+
+
+        <body>
+
+            <h1>
+                ${escapeHtml(p.protein_name)}
+
+                <span
+                    style="
+                        font-weight:400;
+                        color:#888;
+                    "
+                >
+                    (${escapeHtml(p.gene_name)})
+                </span>
+            </h1>
+
+
+            <p style="color:#888;">
+                UniProt:
+                ${escapeHtml(p.uniprot_acc)}
+                ·
+                ${escapeHtml(p.entry_name || "")}
+                ·
+                ${escapeHtml(p.organism)}
+                ·
+                ${p.length} aa
+            </p>
+
+
+            <h5>
+                📄 相關論文（PubMed，近期）
+            </h5>
+
+
+            <!-- Paper year filter -->
+
+            <div class="paper-filter">
+
+                <div class="paper-filter-header">
+
+                    <span class="paper-filter-title">
+                        論文時間範圍
+                    </span>
+
+                    <span>
+                        最近
+                        <span id="paper-years-label">
+                            1 年
+                        </span>
+
+                        <span id="paper-count">
+                            ${initialPapers.length} 篇
+                        </span>
+                    </span>
+
+                </div>
+
+
+                <input
+                    type="range"
+                    id="paper-years"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value="1"
+                >
+
+
+                <div class="year-scale">
+                    <span>1 年</span>
+                    <span>2 年</span>
+                    <span>3 年</span>
+                    <span>4 年</span>
+                    <span>5 年</span>
+                    <span>6 年</span>
+                    <span>7 年</span>
+                    <span>8 年</span>
+                    <span>9 年</span>
+                    <span>10 年</span>
+                </div>
+
+                <!-- 個別年度篩選 -->
+                <div class="year-buttons">
+                    <button class="year-btn" data-year="all">全部（依滑桿）</button>     依年份 ：
+                    <button class="year-btn" data-year="2026">2026</button>
+                    <button class="year-btn" data-year="2025">2025</button>
+                    <button class="year-btn" data-year="2024">2024</button>
+                    <button class="year-btn" data-year="2023">2023</button>
+                    <button class="year-btn" data-year="2022">2022</button>
+                    <button class="year-btn" data-year="2021">2021</button>
+                    <button class="year-btn" data-year="2020">2020</button>
+                    <button class="year-btn" data-year="2019">2019</button>
+                    <button class="year-btn" data-year="2018">2018</button>
+                    <button class="year-btn" data-year="2017">2017</button>
+                    <button class="year-btn" data-year="2016">2016</button>
+
+                </div>
+        
+            </div>
+
+            <!-- Papers -->
+
+            <div id="papers-container">
+                ${papersHtml}
+            </div>
+
+
+            <h5 style="color:#888;">
+                🗂 功能描述（UniProt，較舊）
+            </h5>
+
+            ${descHtml}
+
+
+        </body>
+        </html>
+    `);
+
+    win.document.close();
+
+
+    // --------------------------------------------------
+    // Slider event
+    // --------------------------------------------------
+
+    const slider =
+        win.document.getElementById("paper-years");
+
+    const yearLabel =
+        win.document.getElementById(
+            "paper-years-label"
+        );
+
+
+    if (slider) {
+
+        slider.addEventListener(
+            "input",
+            function () {
+
+                const years =
+                    Number(this.value);
+
+                // 更新文字
+                if (yearLabel) {
+                    yearLabel.textContent =
+                        `${years} 年`;
+                }
+
+                // 更新 paper
+                updatePapers(years);
+            }
+        );
+    }
+        // --------------------------------------------------
+    // 年份按鈕事件
+    // --------------------------------------------------
+    const yearButtons =
+        win.document.querySelectorAll(".year-btn");
+
+    yearButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+
+            // 切換 active 樣式
+            yearButtons.forEach(function (b) {
+                b.classList.remove("active");
+            });
+            btn.classList.add("active");
+
+            const year = btn.dataset.year;
+
+            if (year === "all") {
+                // 回到滑桿模式
+                if (slider) {
+                    updatePapers(Number(slider.value));
+                }
+            } else {
+                updatePapersByYear(year);
+            }
+        });
+    });
+}
+
+
+
+function toggleMorePapers(btn) {
+    const container = btn.closest(".scroll-box");
+    const hiddenPapers = container.querySelectorAll(".paper-hidden");
+    const isExpanded = btn.dataset.expanded === "true";
+
+    hiddenPapers.forEach(el => {
+        el.style.display = isExpanded ? "none" : "block";
+    });
+
+    btn.dataset.expanded = (!isExpanded).toString();
+    btn.textContent = isExpanded
+        ? `顯示更多（還有 ${hiddenPapers.length} 篇）`
+        : `收起`;
+}
+
+function renderPapers(papers, options = {}) {
+
+    if (!papers || papers.length === 0) {
+        return `<p style="color:var(--ink-dim)">No recent papers found.</p>`;
+    }
+
+    const expandAll = options.expandAll === true;
+    const VISIBLE_COUNT = 5;
+    let html = "";
+
+    papers.forEach((paper, i) => {
+        const meta = [paper.journal, paper.pub_date || paper.pub_year]
+            .filter(Boolean)
+            .map(escapeHtml)
+            .join(" · ");
+
+        const hiddenClass = (!expandAll && i >= VISIBLE_COUNT) ? "paper-hidden" : "";
+
+        html += `
+        <div class="function-card paper-card ${hiddenClass}">
+            <div class="function-title">
+                <span class="function-index">${i + 1}.</span>
+                <a href="https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}/" target="_blank">
+                    ${escapeHtml(paper.title)}
+                </a>
+                <div>
+                <span style="color:var(--ink-dim); font-size:0.85em;">
+                    * ${meta} · score: ${paper.relevance_score}
+                    ${paper.matched_term ? ` · matched: ${escapeHtml(paper.matched_term)}` : ""}
+                </span>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+
+    if (!expandAll && papers.length > VISIBLE_COUNT) {
+        html += `
+        <button class="show-more-btn" onclick="toggleMorePapers(this)">
+            顯示更多（還有 ${papers.length - VISIBLE_COUNT} 篇）
+        </button>
+        `;
+    }
+
+    return html;
+}
+
+function renderDetail(data) {
+
+  destroyNetwork();
+
+  if (pdbViewer) {
+    pdbViewer.plugin.clear();
+    pdbViewer = null;
+  }
+
+  console.log("renderdetail",data)
+  const p = data.protein;
+ 
+  detailPane.innerHTML = `
+    <div class="section-grid">
+      <div class="structure-viewer-card">
+        <button onclick="openPDBViewer()">
+            🔍 放大 Structure Viewer
+        </button>
+        <div id="pdb-viewer"></div>
+
+        請點選下側 PDB ID 以載入結構，或使用上方搜尋框查詢其他蛋白質。
+      </div>
+
+    <div class="relation-viewer-card">
+        <div id="network-toolbar">
+          <button class="network-btn" onclick="openNetworkWindow('${escapeHtml(p.gene_name)}')"> Full Screen</button>
+          <button onclick="changeLayout('dagre')">Dagre</button>
+          <button onclick="changeLayout('grid')">Grid</button>
+          <button onclick="changeLayout('circle')">Circle</button>
+          <button onclick="changeLayout('breadthfirst')">Tree</button>
+          <button onclick="changeLayout('cose')">COSE</button>
+          <button onclick="changeLayout('concentric')">Concentric</button>
+          <button onclick="changeLayout('random')">Random</button>
+        </div>
+        <div id="cy"></div>
+    </div>
+
+    <div class="section-card protein-header">
+        <h2>${escapeHtml(p.protein_name)} <span style="color:var(--ink-dim); font-weight:400;">(${escapeHtml(p.gene_name)})</span></h2>
+        <div class="meta">UniProt: ${escapeHtml(p.uniprot_acc)} · ${escapeHtml(p.entry_name || "")} · ${escapeHtml(p.organism)} · ${p.length} aa</div>
+
+        <div class="scroll-box papers">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h5 style="margin-top:1em;">📄 相關論文（PubMed，近期）</h5>
+                <button class="expand-btn" onclick="openExpandedView()" title="開新視窗放大檢視">🔍 放大檢視</button>
+            </div>
+            ${renderPapers(data.papers)}
+            <h5 style="margin-top:1em; color:var(--ink-dim);">🗂 功能描述（UniProt，較舊）</h5>
+            <div class="desc"> ${renderDescription(p.description)} </div>
+        </div>
+    </div>
+
+      <div class="scroll-box section-card structure-card">
+
+        <h5 style="margin-top:1em;">🧬 實驗結構（PDB）</h5>
+            ${renderStructures(data.structures)}
+
+            <h5 style="margin-top:1em;">🔮 預測結構（AlphaFold / AlphaFill / SWISS-MODEL）</h5>
+            ${renderPredictedStructures(data.predicted_structures)}
+
+       
+      </div>
+
+    <div class="section-card">
+        <h3>
+            ◈ 序列 Sequence
+            <button class="copy-btn" onclick="copySequence()">
+            📋 Copy
+            </button>
+        </h3>
+
+        <div class="scroll-box">
+            <div class="seq-block">
+            <div id="protein-sequence" class="seq-wrap" data-sequence="${escapeHtml(p.sequence)}">
+                ${renderSequence(p.sequence)}
+            </div>
+            <div class="ruler-legend">
+                <span>
+                <span class="dot gold"></span>
+                已知多泛素鏈接 Lysine 位點 (K${LYSINE_SITES.join(", K")})
+                </span>
+                <span>
+                <span class="dot rose"></span>
+                C端 Gly-Gly (與受質共價鍵結位置)
+                </span>
+            </div>
+
+            </div>
+
+        </div>
+    </div>
+    
+
+      <div class="section-card">
+        <h3>◈ Domain 架構</h3>
+        <div class="scroll-box">
+        ${renderDomains(data.domains, p.length)}
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>◈ 功能 Function（GO 註解）</h3>
+        <div class="scroll-box">
+        ${renderFunctions(data.functions)}
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>◈ E1 – E2 – E3 – Substrate 關係鏈</h3>
+        <div class="scroll-box">
+        ${renderRelations(data.ub_relations, p)}
+        </div>
+      </div>
+    </div>
+  `;
+//自動載入第一個 PDB
+(async () => {
+    await initViewer();
+
+    if (data.structures && data.structures.length > 0) {
+        await showPDBStructure(data.structures[0].pdb_url);
+        
+    }
+})();
+}
+
+function renderSequence(seq) {
+
+  if (!seq) return "";
+
+  const lineLength = 60;
+  const groupSize = 10;
+
+  let html = "";
+
+  for (let lineStart = 0; lineStart < seq.length; lineStart += lineLength) {
+
+    // ===== 上方座標 =====
+    let ruler = "";
+
+    for (let j = groupSize; j <= lineLength; j += groupSize) {
+
+      const pos = lineStart + j;
+
+      if (pos <= seq.length) {
+        ruler += `<span class="ruler-num">${String(pos).padStart(groupSize, " ")}</span>`;
+      }
+
+    }
+
+    html += `<div class="seq-ruler">${ruler}</div>`;
+
+    // ===== 序列 =====
+    let lineHtml = "";
+
+    const lineEnd = Math.min(lineStart + lineLength, seq.length);
+
+    for (let i = lineStart; i < lineEnd; i++) {
+
+      const pos = i + 1;
+      const aa = seq[i];
+
+      let cls = "res";
+
+      if (LYSINE_SITES.includes(pos) && aa === "K")
+        cls += " lys-site";
+
+      if (pos >= seq.length - 1 && aa === "G")
+        cls += " gg-site";
+
+      lineHtml += `<span class="${cls}" title="位置 ${pos}: ${aa}">${aa}</span>`;
+
+      if (pos % groupSize === 0)
+        lineHtml += " ";
+
+    }
+
+    html += `<div class="seq-line">${lineHtml}</div>`;
+  }
+
+  return html;
+}
+
+
+function copySequence(){
+
+    const seqBox =
+        document.getElementById("protein-sequence");
+
+
+    const sequence =
+        seqBox.dataset.sequence;
+
+
+    navigator.clipboard.writeText(sequence)
+    .then(()=>{
+
+        showCopyMessage("Sequence copied ✓");
+
+    });
+
+}
+
+let viewerOriginalParent = null;
+let viewerPlaceholder = null;
+
+function showModelDetail(source) {
+    const model = currentData?.predicted_structures?.[source];
+    if (!model) return;
+
+    const modal = document.getElementById("structureModal");
+    const title = document.getElementById("modalTitle");
+    const details = document.getElementById("modalDetails");
+    let structureUrl = "";
+    let detailHtml = "";
+
+    if (source === "alphafold") {
+        title.textContent = `AlphaFold 預測結構 — ${model.protein_id}`;
+        structureUrl = model.pdb_url;
+        detailHtml = `
+            <p><strong>模型版本：</strong>${escapeHtml(model.model_version || "—")}</p>
+            <p><strong>平均 pLDDT 信心分數：</strong>${model.confidence_avg ? model.confidence_avg.toFixed(1) : "—"}</p>
+            <p><strong>更新時間：</strong>${escapeHtml(model.updated_at || "—")}</p>
+            <p>${model.pdb_url ? `<a href="${model.pdb_url}" download="${model.protein_id}_alphafold.pdb">💾 下載 PDB</a>` : ""}</p>
+        `;
+    } else if (source === "alphafill") {
+        title.textContent = `AlphaFill 預測結構 — ${model.protein_id}`;
+        structureUrl = model.cif_url;
+        let ligands = [];
+        try { ligands = JSON.parse(model.ligands || "[]"); } catch (e) {}
+        detailHtml = `
+            <p><strong>Hit 數量：</strong>${model.hit_count ?? "—"}</p>
+            <p><strong>Ligands：</strong>${ligands.length ? escapeHtml(ligands.join(", ")) : "—"}</p>
+            <p><strong>更新時間：</strong>${escapeHtml(model.updated_at || "—")}</p>
+            <p>${model.cif_url ? `<a href="${model.cif_url}" download="${model.protein_id}_alphafill.cif">💾 下載 CIF</a>` : ""}</p>
+        `;
+    } else if (source === "swiss_model") {
+        title.textContent = `SWISS-MODEL 預測結構 — ${model.protein_id}`;
+        structureUrl = model.coordinates_url;
+        detailHtml = `
+            <p><strong>模板：</strong>${escapeHtml(model.template || "—")}</p>
+            <p><strong>QMEAN：</strong>${model.qmean ? model.qmean.toFixed(2) : "—"}</p>
+            <p><strong>GMQE：</strong>${model.gmqe ? model.gmqe.toFixed(2) : "—"}</p>
+            <p><strong>覆蓋率：</strong>${model.coverage ? (model.coverage * 100).toFixed(1) + "%" : "—"}</p>
+            <p><strong>更新時間：</strong>${escapeHtml(model.updated_at || "—")}</p>
+            <p>${model.coordinates_url ? `<a href="${model.coordinates_url}" download="${model.protein_id}_swissmodel.pdb">💾 下載 PDB</a>` : ""}</p>
+        `;
+    }
+
+    details.innerHTML = detailHtml;
+
+    // 把 Mol* 的容器搬進 modal
+    const viewerContainer = document.getElementById("pdb-viewer");
+    const modalViewerSlot = document.getElementById("modalViewer");
+
+    if (viewerContainer && !viewerOriginalParent) {
+        viewerOriginalParent = viewerContainer.parentNode;
+        viewerPlaceholder = document.createComment("viewer-placeholder");
+        viewerOriginalParent.replaceChild(viewerPlaceholder, viewerContainer);
+        modalViewerSlot.appendChild(viewerContainer);
+    }
+
+    modal.style.display = "flex";
+
+    if (structureUrl) {
+        showPDBStructure(structureUrl);
+    }
+}
+
+function closeStructureModal() {
+    const modal = document.getElementById("structureModal");
+    modal.style.display = "none";
+
+    // 把 Mol* 容器搬回原本的位置
+    const viewerContainer = document.getElementById("pdb-viewer");
+    if (viewerContainer && viewerOriginalParent && viewerPlaceholder) {
+        viewerOriginalParent.replaceChild(viewerContainer, viewerPlaceholder);
+        viewerOriginalParent = null;
+        viewerPlaceholder = null;
+    }
+}
+
+function renderPredictedStructures(predicted) {
+    if (!predicted) return "";
+
+    const rows = [];
+
+    if (predicted.alphafold) {
+        const af = predicted.alphafold;
+        const confidence = af.confidence_avg ? af.confidence_avg.toFixed(1) : "—";
+        rows.push(`
+        <tr>
+            <td>AlphaFold</td>
+            <td>
+                ${af.pdb_url ? `<a class="pdb-link" href="${af.pdb_url}" onclick="showPDBStructure('${escapeHtml(af.pdb_url)}');return false;">檢視</a>` : "—"}
+            </td>
+            <td>version ${escapeHtml(af.model_version || "")}</td>
+            <td>pLDDT: ${confidence}</td>
+
+            <td>
+                ${af.pdb_url ? `<a class="pdb-download" href="${af.pdb_url}" download="${escapeHtml(af.protein_id)}_alphafold.pdb" title="Download AlphaFold PDB">💾</a>` : "—"}
+            </td>
+        </tr>`);
+    }
+
+    if (predicted.alphafill) {
+        const afl = predicted.alphafill;
+        let ligands = [];
+        try { ligands = JSON.parse(afl.ligands || "[]"); } catch (e) { ligands = []; }
+        const ligandText = ligands.length ? ligands.join(", ") : "—";
+        rows.push(`
+        <tr>
+            <td>AlphaFill</td>
+            <td>${afl.hit_count || 0} hit(s)</td>
+            <td>ligands: ${escapeHtml(ligandText)}</td>
+            <td>—</td>
+            <td>
+                ${afl.cif_url ? `<a class="pdb-download" href="${afl.cif_url}" download="${escapeHtml(afl.protein_id)}_alphafill.cif" title="Download AlphaFill CIF">💾</a>` : "—"}
+            </td>
+        </tr>`);
+    }
+
+    if (predicted.swiss_model) {
+        const sm = predicted.swiss_model;
+        const qmean = sm.qmean ? sm.qmean.toFixed(2) : "—";
+        rows.push(`
+        <tr>
+            <td>SWISS-MODEL</td>
+            <td>
+                ${sm.coordinates_url ? `<a class="pdb-link" href="${sm.coordinates_url}" onclick="showPDBStructure('${escapeHtml(sm.coordinates_url)}');return false;">檢視</a>` : "—"}
+            </td>
+            <td>${escapeHtml(sm.template || "")}</td>
+            <td>QMEAN: ${qmean}</td>
+
+            <td>
+                ${sm.coordinates_url ? `<a class="pdb-download" href="${sm.coordinates_url}" download="${escapeHtml(sm.protein_id)}_swissmodel.pdb" title="Download SWISS-MODEL PDB">💾</a>` : "—"}
+            </td>
+        </tr>`);
+    }
+
+    if (rows.length === 0) {
+        return `<p style="color:var(--ink-dim)">目前資料庫中無預測結構資料。</p>`;
+    }
+
+    return `<table>
+        <thead><tr><th>來源</th><th>模型資訊</th><th>信心分數</th><th>檢視</th><th>下載</th></tr></thead>
+        <tbody>${rows.join("")}</tbody>
+    </table>`;
+}
+
+function renderStructures(structures) {
+  if (!structures.length) return `<p style="color:var(--ink-dim)">目前資料庫中無結構資料。</p>`;
+  const rows = structures.map(s => `
+    <tr>
+      <td><a class="pdb-link" href="${s.pdb_url}" onclick="showPDBStructure('${escapeHtml(s.pdb_url)}');return false;">${escapeHtml(s.pdb_id)}</a></td>
+      <td>${escapeHtml(s.method || "")}</td>
+      <td>${s.resolution_A ? s.resolution_A + "" : "—"}</td>
+      <td>${escapeHtml(s.chains || "")}</td>
+      <td>${escapeHtml(s.title || "")}</td>
+      <td>
+        <a class="pdb-download"
+            href="${s.pdb_url}"
+            download="${s.pdb_id}.pdb"
+            title="Download ${escapeHtml(s.pdb_id)} PDB file">
+            
+            💾
+            
+        </a>
+        </td>
+    </tr>`).join("");
+  return `<table>
+    <thead><tr><th>PDB ID</th><th>方法</th><th>解析度Å</th><th>鏈</th><th>標題</th><th>下載</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function renderDomains(domains, proteinLength) {
+  if (!domains.length) return `<p style="color:var(--ink-dim)">目前資料庫中無 domain 資料。</p>`;
+  const track = domains.map(d => {
+    const left = (d.start_pos / proteinLength) * 100;
+    const width = ((d.end_pos - d.start_pos + 1) / proteinLength) * 100;
+    return `<div class="domain-seg" style="left:${left}%; width:${width}%;" title="${escapeHtml(d.domain_name)} (${d.start_pos}-${d.end_pos})"></div>`;
+  }).join("");
+
+  const list = domains.map(d => `
+    <div class="domain-list-item">
+      <span>${escapeHtml(d.domain_name)}<br><span class="acc">${escapeHtml(d.source_db)}: ${escapeHtml(d.accession)}</span></span>
+      <span>aa ${d.start_pos}–${d.end_pos}</span>
+    </div>`).join("");
+
+  return `<div class="domain-track">${track}</div>${list}`;
+}
+
+function renderFunctions(functions) {
+
+    if (!functions.length) {
+        return `
+        <p style="color:var(--ink-dim)">
+        目前資料庫中無 GO 功能註解。
+        </p>`;
+    }
+
+
+    return functions.map(f => {
+
+
+        const goURL =
+        `https://www.ebi.ac.uk/QuickGO/term/${f.go_id}`;
+
+
+        return `
+
+        <span class="go-tag ${f.aspect}"
+              title="${escapeHtml(f.evidence_code || "")}">
+
+
+            <a class="go-link"
+               href="${goURL}"
+               target="_blank">
+
+               ${escapeHtml(f.go_id)}
+
+            </a>
+
+
+            · ${escapeHtml(f.go_term)}
+
+
+        </span>
+
+        `;
+
+
+    }).join("");
+
+}
+
+function renderEvidence(evidence, reference_pmid){
+
+    let html = "";
+
+    if(evidence){
+
+        html += `
+        <div class="evidence-text">
+            ${escapeHtml(evidence)}
+        </div>
+        `;
+
+    }
+
+
+    if(reference_pmid){
+
+        // 支援格式:
+        // 11927591
+        // 11927591;15034933
+        // 11927591,15034933
+
+        const pmids = String(reference_pmid)
+            .split(/[;, ]+/)
+            .filter(x => x.trim());
+
+
+        html += `
+
+        <div class="pmid-links">
+
+            📚 Evidence:
+
+            ${
+                pmids.map(id =>
+
+                `
+                <a href="https://pubmed.ncbi.nlm.nih.gov/${id}/"
+                   target="_blank">
+                    PMID:${id}
+                </a>
+                `
+
+                ).join(",")
+
+            }
+
+        </div>
+
+        `;
+
+    }
+    return html;
+
+}
+
+function renderRelations(relations, protein) {
+  if (!relations.length) {
+    return `<p style="color:var(--ink-dim)">此蛋白質目前在資料庫中沒有記錄作為 substrate 的 E1–E2–E3 關係鏈。
+    （ubiquitin 本身通常作為修飾分子而非 substrate；請改查 TP53 等範例受質蛋白）</p>`;
+  }
+  return relations.map(r => `
+    
+    <div class="chain-row">
+      <span class="chain-node e1">${escapeHtml(r.e1_gene || r.e1_id || "?")} (E1)</span>
+      <span class="chain-arrow">→</span>
+      <span class="chain-node e2">${escapeHtml(r.e2_gene || r.e2_id || "?")} (E2)</span>
+      <span class="chain-arrow">→</span>
+      <span class="chain-node e3">${escapeHtml(r.e3_gene || r.e3_id || "?")} (E3${r.e3_subfamily ? ", " + r.e3_subfamily : ""})</span>
+      <span class="chain-arrow">→</span>
+      <span class="chain-node sub">${escapeHtml(r.substrate_id)} (substrate)</span>
+      <div class="chain-meta">
+        <strong>類型：</strong>${escapeHtml(r.ub_type || "—")}　
+        <strong>結果：</strong>${escapeHtml(r.functional_outcome || "—")}<br>
+
+            ${renderEvidence(r.evidence, r.reference_pmid)}
+        <br><em>資料來源：${escapeHtml(r.source_db || "—")}</em>
+      </div>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+// ===============================
+// Load initial network
+// ===============================
+
+function loadNetwork(gene){
+    console.log("loadNetwork:", gene);
+    console.log(document.getElementById("cy"));
+
+    fetch(`/api/network/${gene}?level=1`)
+        .then(res => res.json())
+        .then(data => {
+
+            const elements = [];
+
+            data.nodes.forEach(n=>{
+                elements.push({
+                    data:n
+                });
+            });
+
+            data.edges.forEach(e=>{
+                elements.push({
+                    data:e
+                });
+            });
+
+            cy = cytoscape({
+
+                container:
+                    document.getElementById("cy"),
+
+
+                elements:elements,
+
+
+                layout:{
+                    name:"cose",
+                    directed:true,
+                    spacingFactor:1.5
+                },
+
+
+                style:[
+
+                    {
+                        selector:"node",
+
+                        style:{
+
+                            "label":"data(label)",
+
+                            "text-valign":"center",
+
+                            "text-halign":"center",
+
+                            "width":80,
+
+                            "height":80,
+
+                            "font-size":14,
+
+                            "font-weight":"bold",
+
+                            "text-wrap":"wrap"
+                        }
+                    },
+
+                    {
+                        selector:"node[type='E1']",
+
+                        style:{
+                            "background-color":"#228B22"
+                        }
+                    },
+
+                    {
+                        selector:"node[type='E2']",
+
+                        style:{
+                            "background-color":"#00BCD4"
+                        }
+                    },
+
+                    {
+                        selector:"node[type='E3']",
+
+                        style:{
+                            "background-color":"Violet"
+                        }
+                    },
+
+                    {
+                        selector:"node[type='DUB']",
+
+                        style:{
+                            "background-color":"#F28C28"
+                        }
+                    },
+
+                    {
+                        selector:"node[type='substrate']",
+
+                        style:{
+                            "background-color":"Gold"
+                        }
+                    },
+
+                    {
+                        selector:"edge",
+
+                        style:{
+
+                            "width":2,
+
+                            "line-color":"#888",
+
+                            "target-arrow-shape":"none"
+                        }
+                    }
+
+                ]
+
+            });
+
+            console.log(
+                "initial nodes:",
+                cy.nodes().length
+            );
+
+            console.log(
+                "initial edges:",
+                cy.edges().length
+            );
+
+            // ======================
+            // 點擊展開
+            // ======================
+
+            cy.on(
+                "tap",
+                "node",
+                function(evt){
+
+                    const id =
+                        evt.target.data("id");
+                    expandNode(id);
+
+                }
+            );
+        });
+}
+// ===============================
+// Expand node
+// ===============================
+function expandNode(id){
+
+    console.log(
+        "expand:",
+        id
+    );
+
+    fetch(`/api/network/${id}?level=2`)
+
+    .then(res=>res.json())
+
+    .then(data=>{
+
+        const newElements=[];
+
+        data.nodes.forEach(n=>{
+
+            // 已存在跳過
+
+            if(
+                cy.getElementById(n.id).length
+            ){
+                return;
+            }
+
+            newElements.push({
+                data:n
+            });
+
+        });
+
+        data.edges.forEach(e=>{
+            if(
+                cy.getElementById(e.id).length
+            ){
+                return;
+            }
+
+            newElements.push({
+                data:e
+            });
+
+        });
+
+        cy.add(newElements);
+
+        cy.layout({
+
+            name:"breadthfirst",
+            directed:true,
+            spacingFactor:1.5
+
+        })
+        .run();
+
+        console.log(
+            "nodes:",
+            cy.nodes().length
+        );
+
+    });
+
+}
+// ===============================
+// Change layout
+// ===============================
+window.changeLayout = function(type){
+
+    if (!cy) {
+
+        console.log("Cytoscape not ready");
+        return;
+
+    }
+
+    cy.stop();
+
+    let option = {
+
+        name:type,
+        animate:true,
+        fit:true,
+        padding:30
+
+    };
+
+    switch(type){
+
+        case "breadthfirst":
+
+            option.directed=true;
+            option.spacingFactor=1.5;
+            break;
+
+        case "dagre":
+
+            option.rankDir="LR";
+            option.nodeSep=100;
+            option.rankSep=150;
+            break;
+
+        case "cose":
+
+            option.idealEdgeLength=150;
+            option.nodeRepulsion=8000;
+            break;
+
+    }
+
+    cy.layout(option).run();
+
+};
+
+function openNetworkWindow(gene){
+
+    window.open(
+
+        `/network/${encodeURIComponent(gene)}`,
+
+        "_blank",
+
+        "width=1500,height=900"
+
+    );
+
+}
+
+window.exportPNG = function(){
+
+    console.log(
+        "exportPNG click",
+        cy
+    );
+
+
+    if(!cy){
+
+        alert(
+            "Network 尚未建立"
+        );
+
+        return;
+
+    }
+
+
+    const png =
+        cy.png({
+
+            full:true,
+
+            scale:3
+
+        });
+
+
+    const a =
+        document.createElement("a");
+
+
+    a.href=png;
+
+    a.download="network.png";
+
+    a.click();
+
+};
+
+window.openPDBViewer = function(){
+    
+    console.log("Open PDB Viewer:", currentPdbId);
+    if(!currentPdbId && !currentPdbUrl){
+        alert("沒有 PDB structure");
+        return;
+    }
+    
+    const viewerUrl =
+        `/pdb-viewer?pdb=${encodeURIComponent(currentPdbId)}`;
+
+    console.log("viewerUrl",viewerUrl)
+
+    window.open(
+        viewerUrl,
+        "_blank",
+        "width=1400,height=900"
+    );
+};
+
+// 頁面載入時自動查詢一次預設值
+window.addEventListener("DOMContentLoaded", () => {
+  doSearch(searchInput.value.trim());
+});

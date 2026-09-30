@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>PDB Structure Viewer</title>
+
+
+    <!-- =========================================
+         Mol* CSS
+    ========================================== -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='molstar/molstar.css') }}"
+    >
+
+
+    <!-- =========================================
+         Mol* JS
+    ========================================== -->
+
+    <script
+        src="{{ url_for('static', filename='molstar/molstar.js') }}"
+    ></script>
+
+
+    <style>
+
+        html,
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            overflow: hidden;
+
+            background: #ffffff;
+
+        }
+
+
+        #pdb-full-viewer {
+
+            position: absolute;
+
+            inset: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+        }
+
+
+        /* Loading message */
+
+        #viewer-loading {
+
+            position: absolute;
+
+            top: 20px;
+
+            left: 20px;
+
+            z-index: 1000;
+
+            padding: 8px 14px;
+
+            border-radius: 6px;
+
+            background: rgba(0,0,0,0.75);
+
+            color: white;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Noto Sans TC",
+                sans-serif;
+
+            font-size: 14px;
+
+        }
+
+
+        /* Error message */
+
+        #viewer-error {
+
+            display: none;
+
+            position: absolute;
+
+            top: 20px;
+
+            left: 20px;
+
+            right: 20px;
+
+            z-index: 1000;
+
+            padding: 12px 16px;
+
+            border-radius: 6px;
+
+            background: #fff1f2;
+
+            border: 1px solid #fecdd3;
+
+            color: #9f1239;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Noto Sans TC",
+                sans-serif;
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         Mol* container
+    ========================================== -->
+
+    <div id="pdb-full-viewer"></div>
+
+
+    <div id="viewer-loading">
+        Loading structure...
+    </div>
+
+
+    <div id="viewer-error"></div>
+
+
+<script>
+
+    /*
+    =====================================================
+    Structure URL — this MUST be the full downloadable path
+    (e.g. "/data/pdb/4P22.pdb" or "/data/cif/xxxx.cif"),
+    never a bare PDB ID. A bare ID resolves as a relative URL
+    against this very page and downloads the HTML page itself,
+    which Mol* then fails to parse.
+    =====================================================
+    */
+
+    const PDB_URL = {{ pdb_url | tojson }};
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "Full PDB Viewer"
+    );
+
+    console.log(
+        "PDB URL:",
+        PDB_URL
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    /*
+    =====================================================
+    Escape HTML
+    =====================================================
+    */
+
+    function escapeHtml(str) {
+
+        if (
+            str === null ||
+            str === undefined
+        ) {
+
+            return "";
+
+        }
+
+        return String(str)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    }
+
+
+    /*
+    =====================================================
+    Show error
+    =====================================================
+    */
+
+    function showViewerError(message) {
+
+        console.error(
+            "PDB Viewer Error:",
+            message
+        );
+
+        const loading =
+            document.getElementById(
+                "viewer-loading"
+            );
+
+        if (loading) {
+
+            loading.style.display = "none";
+
+        }
+
+
+        const error =
+            document.getElementById(
+                "viewer-error"
+            );
+
+        if (error) {
+
+            error.style.display = "block";
+
+            error.innerHTML =
+                "❌ " +
+                escapeHtml(message);
+
+        }
+
+    }
+
+
+    /*
+    =====================================================
+    Hide loading
+    =====================================================
+    */
+
+    function hideLoading() {
+
+        const loading =
+            document.getElementById(
+                "viewer-loading"
+            );
+
+        if (loading) {
+
+            loading.style.display = "none";
+
+        }
+
+    }
+
+
+    /*
+    =====================================================
+    Sanity-check the response before handing it to Mol*.
+    Catches the case where PDB_URL resolves to a 404 page,
+    an empty body, or the wrong page entirely — instead of
+    letting Mol* fail deep inside its own internal state
+    machine with an unhelpful error.
+    =====================================================
+    */
+
+    function isLikelyStructureFile(text, format) {
+
+        if (!text || !text.trim()) {
+
+            return false;
+
+        }
+
+        const head =
+            text.trimStart().slice(0, 500);
+
+        if (
+            /^<(!doctype|html)/i.test(head)
+        ) {
+
+            return false;
+
+        }
+
+        if (format === "mmcif") {
+
+            return (
+                /^data_/im.test(head) ||
+                /^_\w/m.test(head) ||
+                head.includes("loop_")
+            );
+
+        }
+
+        return /^(HEADER|ATOM|HETATM|REMARK|TITLE|COMPND|MODEL)\b/m.test(head);
+
+    }
+
+
+    /*
+    =====================================================
+    Initialize Mol*
+    =====================================================
+    */
+
+    async function initFullPDBViewer() {
+
+        try {
+
+            console.log(
+                "Checking Mol*..."
+            );
+
+
+            if (
+                typeof molstar ===
+                "undefined"
+            ) {
+
+                throw new Error(
+                    "Mol* library 尚未載入"
+                );
+
+            }
+
+
+            console.log(
+                "Mol* library OK"
+            );
+
+
+            if (!PDB_URL) {
+
+                throw new Error(
+                    "沒有指定 PDB URL"
+                );
+
+            }
+
+
+            const container =
+                document.getElementById(
+                    "pdb-full-viewer"
+                );
+
+
+            if (!container) {
+
+                throw new Error(
+                    "找不到 pdb-full-viewer"
+                );
+
+            }
+
+
+            /*
+            =============================================
+            Determine file type
+            =============================================
+            */
+
+            const lowerUrl =
+                String(PDB_URL)
+                    .toLowerCase();
+
+
+            let format = "pdb";
+
+
+            if (
+                lowerUrl.endsWith(".cif") ||
+                lowerUrl.endsWith(".mmcif")
+            ) {
+
+                format = "mmcif";
+
+            }
+
+
+            console.log(
+                "Structure format:",
+                format
+            );
+
+
+            /*
+            =============================================
+            Fetch + validate BEFORE creating the viewer,
+            so a bad URL fails with a clear message instead
+            of a half-initialized Mol* instance.
+            =============================================
+            */
+
+            console.log(
+                "Fetching:",
+                PDB_URL
+            );
+
+
+            const probe =
+                await fetch(PDB_URL);
+
+
+            if (!probe.ok) {
+
+                throw new Error(
+                    `HTTP ${probe.status} for ${PDB_URL}`
+                );
+
+            }
+
+
+            const rawText =
+                await probe.text();
+
+
+            if (
+                !isLikelyStructureFile(
+                    rawText,
+                    format
+                )
+            ) {
+
+                console.error(
+                    "Response does not look like a",
+                    format,
+                    "file. First 200 chars:",
+                    rawText.slice(0, 200)
+                );
+
+                throw new Error(
+                    "伺服器回傳的內容不是有效的結構檔（可能是路徑錯誤，請查看主控台）"
+                );
+
+            }
+
+
+            console.log(
+                "Fetched content looks valid, creating viewer..."
+            );
+
+
+            /*
+            =============================================
+            Create viewer
+            =============================================
+            */
+
+            const viewer =
+                await molstar.Viewer.create(
+
+                    "pdb-full-viewer",
+
+                    {
+
+                        layoutIsExpanded: true,
+
+                        layoutShowControls: true,
+
+                        collapseLeftPanel: false,
+
+                        collapseRightPanel: false,
+
+                        viewportShowExpand: true,
+
+                        viewportShowSelectionMode: true
+
+                    }
+
+                );
+
+
+            console.log(
+                "Mol* viewer created:",
+                viewer
+            );
+
+
+            /*
+            =============================================
+            Clear existing structure
+            =============================================
+            */
+
+            await viewer.plugin.clear();
+
+
+            /*
+            =============================================
+            Download (re-fetched by Mol*'s own asset
+            manager; the probe above is only a validity
+            check, Mol* needs to own the fetch itself)
+            =============================================
+            */
+
+            console.log(
+                "Downloading:",
+                PDB_URL
+            );
+
+
+            const data =
+                await viewer
+                    .plugin
+                    .builders
+                    .data
+                    .download({
+
+                        url: PDB_URL,
+
+                        isBinary: false
+
+                    });
+
+
+            console.log(
+                "Download complete:",
+                data
+            );
+
+
+            /*
+            =============================================
+            Parse trajectory
+            =============================================
+            */
+
+            const trajectory =
+                await viewer
+                    .plugin
+                    .builders
+                    .structure
+                    .parseTrajectory(
+
+                        data,
+
+                        format
+
+                    );
+
+
+            console.log(
+                "Trajectory parsed:",
+                trajectory
+            );
+
+
+            /*
+            =============================================
+            Apply default representation
+            =============================================
+            */
+
+            await viewer
+                .plugin
+                .builders
+                .structure
+                .hierarchy
+                .applyPreset(
+
+                    trajectory,
+
+                    "default"
+
+                );
+
+
+            console.log(
+                "Structure loaded successfully"
+            );
+
+
+            hideLoading();
+
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "================================"
+            );
+
+            console.error(
+                "Mol* ERROR"
+            );
+
+            console.error(
+                error
+            );
+
+            console.error(
+                "================================"
+            );
+
+
+            showViewerError(
+                error.message ||
+                String(error)
+            );
+
+        }
+
+    }
+
+
+    /*
+    =====================================================
+    Start
+    =====================================================
+    */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initFullPDBViewer
+        );
+
+    }
+
+    else {
+
+        initFullPDBViewer();
+    }
+</script>
+</body>
+
+</html>
