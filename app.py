@@ -460,15 +460,62 @@ def api_search():
 
 @app.route("/api/protein/<protein_id>")
 def api_protein_detail(protein_id):
-    """回傳單一蛋白質完整資訊：基本資料/結構/domain/GO功能/E1-E2-E3-substrate"""
+    """回傳單一蛋白質完整資訊：
+    基本資料 / 結構 / domain / GO功能 / E1-E2-E3-substrate
+    """
+
     db = get_db()
 
+    # ---------------------------------------------------------
+    # 1. 先直接查 canonical UniProt protein_id
+    # ---------------------------------------------------------
     protein = db.execute(
-        "SELECT * FROM proteins WHERE protein_id = ?", (protein_id,)
+        "SELECT * FROM proteins WHERE protein_id = ?",
+        (protein_id,)
     ).fetchone()
 
+    # ---------------------------------------------------------
+    # 2. 如果找不到，再查 identifier_table
+    #    例如：
+    #    舊 UniProt ID / RefSeq / Ensembl / GeneID / HGNC ...
+    # ---------------------------------------------------------
     if protein is None:
-        return jsonify({"error": "找不到此蛋白質"}), 404
+        identifier_row = db.execute(
+            """
+            SELECT protein_id, db, identifier
+            FROM identifier_table
+            WHERE identifier = ?
+            LIMIT 1
+            """,
+            (protein_id,)
+        ).fetchone()
+
+        if identifier_row is not None:
+            protein_id = identifier_row["protein_id"]
+
+            protein = db.execute(
+                "SELECT * FROM proteins WHERE protein_id = ?",
+                (protein_id,)
+            ).fetchone()
+
+            # 如果 identifier_table 有紀錄，但對應 protein 已不存在
+            if protein is None:
+                return jsonify({
+                    "error": "identifier 找到，但對應的 protein 不存在",
+                    "input_id": protein_id,
+                    "identifier_db": identifier_row["db"],
+                    "identifier": identifier_row["identifier"],
+                    "protein_id": protein_id
+                }), 404
+
+        else:
+            return jsonify({
+                "error": "找不到此蛋白質",
+                "protein_id": protein_id
+            }), 404
+
+
+
 
     structures = db.execute(
         "SELECT * FROM structures WHERE protein_id = ? ORDER BY pdb_id", (protein_id,)

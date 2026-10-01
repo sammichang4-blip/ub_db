@@ -10,6 +10,13 @@
  * Data:
  *   window.currentDomains
  *   window.currentProteinLength
+ *
+ * 配色邏輯(v2):
+ *   - 顏色代表「domain 家族」:以 InterPro ID 為準,沒有的退回用名稱
+ *   - 同一條 track 內重複的同家族 domain:同色 + 依序變亮 + 標序號
+ *   - segment 之間有白色分隔線
+ *   - 同一資料庫內位置重疊的 domain 自動分成多層 (lanes)
+ *   - Hover:高亮「同家族」或「位置重疊」的 domain,其餘變淡
  * ============================================================ */
 window.currentDomains = window.currentDomains || [];
 window.currentProteinLength =
@@ -19,94 +26,33 @@ window.currentProteinLength =
 // Domain colors
 // ============================================================
 
+// 色盲友善色盤 (Okabe-Ito + 3 色)。超過就用灰色,避免花花綠綠。
+const DOMAIN_FAMILY_PALETTE = [
+    "#E69F00",
+    "#56B4E9",
+    "#009E73",
+    "#D55E00",
+    "#0072B2",
+    "#CC79A7",
+    "#8E6BBF",
+    "#7FB069",
+    "#E07A5F",
+    "#c9b800"
+];
+
+const DOMAIN_OVERFLOW_COLOR = "#9ca3af";
+
+// 保留舊的 per-source 色盤,目前只用在 fallback
 const DOMAIN_SOURCE_COLORS = {
-
-    InterPro: [
-        "#2563eb",
-        "#3b82f6",
-        "#60a5fa",
-        "#93c5fd",
-        "#1d4ed8"
-    ],
-
-    Pfam: [
-        "#f29e17",
-        "#f603a9",
-        "#ccebb2",
-        "#abe8f4",
-        "#f5ed0e"
-    ],
-
-    SMART: [
-        "#9333ea",
-        "#55d4f7",
-        "#ee7690",
-        "#d2e93d",
-        "#7e22ce"
-    ],
-
-    PROSITE: [
-        "#ea580c",
-        "#f97316",
-        "#fb923c",
-        "#fdba74",
-        "#c2410c"
-    ],
-
-    PANTHER: [
-        "#0891b2",
-        "#06b6d4",
-        "#22d3ee",
-        "#67e8f9",
-        "#0e7490"
-    ],
-
-    SUPERFAMILY: [
-        "#db2777",
-        "#ec4899",
-        "#f472b6",
-        "#f9a8d4",
-        "#be185d"
-    ],
-
-    Gene3D: [
-        "#e3f664",
-        "#dfcd09",
-        "#c36e28",
-        "#ece671",
-        "#1536f3"
-    ],
-
-    PRINTS: [
-        "#db2777",
-        "#ecf501",
-        "#1df405",
-        "#580af4",
-        "#fa9a09"
-    ],
-
-    TIGRFAMs: [
-        "#ca8a04",
-        "#eab308",
-        "#facc15",
-        "#fde047",
-        "#a16207"
-    ],
-
-    CDD: [
-        "#475569",
-        "#64748b",
-        "#94a3b8",
-        "#cbd5e1",
-        "#334155"
-    ],
-
     Unknown: [
         "#6b7280",
         "#9ca3af",
         "#d1d5db"
     ]
 };
+
+// 目前蛋白質 family key -> color
+window.currentDomainColorMap = window.currentDomainColorMap || {};
 
 
 // ============================================================
@@ -126,8 +72,150 @@ const DOMAIN_SOURCE_ORDER = [
     "PROSITE",
     "PRINTS",
     "Other"
-    
 ];
+
+
+// ============================================================
+// 一次性注入 hover / 分隔線樣式
+// ============================================================
+
+(function injectDomainStyle() {
+
+    if (document.getElementById("ukw-domain-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "ukw-domain-style";
+
+    style.textContent = `
+        .domain-track { position: relative; }
+
+        .domain-seg {
+            position: absolute;
+            box-sizing: border-box;
+            border: 1px solid #fff;          /* 白色分隔線 */
+            border-radius: 3px;
+            transition: opacity .12s ease, filter .12s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 2px rgba(0,0,0,.55);
+            user-select: none;
+        }
+
+        .domain-seg.dim { opacity: .22; }
+        .domain-seg.hl  { filter: brightness(1.05) saturate(1.1); z-index: 2;
+                          box-shadow: 0 0 0 1.5px rgba(0,0,0,.45); }
+
+        .domain-swatch {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+    `;
+
+    document.head.appendChild(style);
+
+})();
+
+
+// ============================================================
+// Domain family key (統一 domain 身分)
+// ============================================================
+
+function getInterProId(d) {
+
+    // 1) 若有獨立欄位就直接用
+    const direct =
+        d.interpro_id ||
+        d.interpro_acc ||
+        d.interpro_accession ||
+        d.ipr_id ||
+        d.ipr ||
+        (d.source_db === "InterPro" ? d.accession : "") ||
+        "";
+
+    if (direct) return String(direct).trim();
+
+    // 2) 從 description 文字解析,例如 "InterPro accession: IPR015157"
+    const desc = String(d.description || "");
+
+    const labeled = desc.match(/InterPro\s*accession\s*:\s*(IPR\d{6})/i);
+    if (labeled) return labeled[1].toUpperCase();
+
+    // 3) 退而求其次:description 內第一個 IPR 編號
+    const any = desc.match(/\bIPR\d{6}\b/i);
+    if (any) return any[0].toUpperCase();
+
+    return "";
+}
+
+function getDomainFamilyKey(d) {
+
+    const ipr = getInterProId(d);
+
+    if (ipr) return "IPR:" + ipr;
+
+    const name = String(
+        d.domain_name || d.name || d.accession || "unknown"
+    ).trim().toLowerCase();
+
+    return "NAME:" + name;
+}
+
+
+// ============================================================
+// 建立「這個蛋白質」的 family -> color 對照
+// 依 domain 在序列上第一次出現的順序分配色盤
+// ============================================================
+
+function buildDomainColorMap(domains) {
+
+    const map = {};
+
+    if (!Array.isArray(domains)) {
+        window.currentDomainColorMap = map;
+        return map;
+    }
+
+    const sorted = domains.slice().sort(
+        (a, b) => Number(a.start_pos) - Number(b.start_pos)
+    );
+
+    let next = 0;
+
+    sorted.forEach(d => {
+
+        const key = getDomainFamilyKey(d);
+
+        if (map[key]) return;
+
+        map[key] =
+            next < DOMAIN_FAMILY_PALETTE.length
+                ? DOMAIN_FAMILY_PALETTE[next]
+                : DOMAIN_OVERFLOW_COLOR;
+
+        next++;
+
+    });
+
+    window.currentDomainColorMap = map;
+
+    return map;
+}
+
+function getFamilyColor(domain) {
+
+    const map = window.currentDomainColorMap || {};
+
+    return map[getDomainFamilyKey(domain)] || DOMAIN_OVERFLOW_COLOR;
+}
 
 
 // ============================================================
@@ -169,16 +257,36 @@ function groupDomainsBySource(domains) {
 
 
 // ============================================================
-// Get source color
+// 重疊的 domain 分層 (lane assignment)
 // ============================================================
 
-function getDomainColor(source, index) {
+function assignLanes(domains) {
 
-    const colors =
-        DOMAIN_SOURCE_COLORS[source] ||
-        DOMAIN_SOURCE_COLORS.Unknown;
+    const laneEnds = [];
+    const lanes = [];
 
-    return colors[index % colors.length];
+    domains.forEach(d => {
+
+        const start = Number(d.start_pos);
+        const end = Number(d.end_pos);
+
+        let lane = laneEnds.findIndex(e => e < start);
+
+        if (lane === -1) {
+            lane = laneEnds.length;
+            laneEnds.push(end);
+        } else {
+            laneEnds[lane] = end;
+        }
+
+        lanes.push(lane);
+
+    });
+
+    return {
+        lanes,
+        laneCount: Math.max(laneEnds.length, 1)
+    };
 }
 
 
@@ -189,8 +297,10 @@ function getDomainColor(source, index) {
 function createDomainSegment(
     domain,
     proteinLength,
-    index
+    opts
 ) {
+
+    opts = opts || {};
 
     const start = Number(domain.start_pos);
     const end = Number(domain.end_pos);
@@ -222,21 +332,59 @@ function createDomainSegment(
     const accession =
         domain.accession || "";
 
-    const color =
-        getDomainColor(source, index);
+    const ipr = getInterProId(domain);
+
+    const familyKey = getDomainFamilyKey(domain);
+
+    const color = getFamilyColor(domain);
+
+    // 同家族第 n 個重複:疊一層半透明白色讓它變亮
+    const repeatIdx = opts.repeatIdx || 0;
+    const repeatTotal = opts.repeatTotal || 1;
+    const lane = opts.lane || 0;
+    const laneCount = opts.laneCount || 1;
+
+    const lighten = (repeatIdx % 3) * 0.2;
+
+    const bgImage =
+        lighten > 0
+            ? `linear-gradient(rgba(255,255,255,${lighten}),rgba(255,255,255,${lighten}))`
+            : "none";
+
+    const laneTop = (lane / laneCount) * 100;
+    const laneHeight = 100 / laneCount;
+
+    // 重複 domain 且 segment 夠寬才顯示序號
+    const label =
+        repeatTotal > 1 && width >= 3 && laneCount === 1
+            ? String(repeatIdx + 1)
+            : "";
+
+    const tip =
+        `${domainName}` +
+        `\n${source}${accession ? " · " + accession : ""}` +
+        (ipr && ipr !== accession ? `\nInterPro: ${ipr}` : "") +
+        `\n${start}-${end}` +
+        (repeatTotal > 1
+            ? `\n(repeat ${repeatIdx + 1}/${repeatTotal})`
+            : "");
 
     return `
         <div
             class="domain-seg"
+            data-family="${escapeHtml(familyKey)}"
+            data-start="${start}"
+            data-end="${end}"
             style="
                 left:${left}%;
                 width:${Math.max(width, 0.4)}%;
-                background:${color};
+                top:${laneTop}%;
+                height:${laneHeight}%;
+                background-color:${color};
+                background-image:${bgImage};
                 cursor:pointer;
             "
-            title="${escapeHtml(domainName)}
-${escapeHtml(source)}
-${start}-${end}"
+            title="${escapeHtml(tip)}"
             onclick="selectDomain(
                 ${start},
                 ${end},
@@ -244,7 +392,7 @@ ${start}-${end}"
                 '${encodeURIComponent(source)}',
                 '${encodeURIComponent(accession)}'
             )"
-        ></div>
+        >${label}</div>
     `;
 }
 
@@ -259,17 +407,45 @@ function renderDomainSourceTrack(
     proteinLength
 ) {
 
+    // 同家族在這條 track 的總數 / 目前序號
+    const totals = {};
+
+    domains.forEach(d => {
+        const k = getDomainFamilyKey(d);
+        totals[k] = (totals[k] || 0) + 1;
+    });
+
+    const seen = {};
+
+    const { lanes, laneCount } = assignLanes(domains);
+
     const segments = domains.map(
         (domain, index) => {
+
+            const k = getDomainFamilyKey(domain);
+
+            const repeatIdx = seen[k] || 0;
+            seen[k] = repeatIdx + 1;
 
             return createDomainSegment(
                 domain,
                 proteinLength,
-                index
+                {
+                    repeatIdx,
+                    repeatTotal: totals[k],
+                    lane: lanes[index],
+                    laneCount
+                }
             );
 
         }
     ).join("");
+
+    // 有多層時把 track 拉高,讓每層都看得到
+    const trackStyle =
+        laneCount > 1
+            ? `style="height:${laneCount * 14}px;"`
+            : "";
 
     return `
         <div class="domain-source-row">
@@ -284,7 +460,7 @@ function renderDomainSourceTrack(
 
             </div>
 
-            <div class="domain-track">
+            <div class="domain-track" ${trackStyle}>
 
                 ${segments}
 
@@ -326,6 +502,8 @@ function renderDomainList(
             const accession =
                 domain.accession || "";
 
+            const color = getFamilyColor(domain);
+
             html += `
                 <div
                     class="domain-list-item"
@@ -343,7 +521,10 @@ function renderDomainList(
                     <span>
 
                         <strong>
-                            ${escapeHtml(domainName)}
+                            <span
+                                class="domain-swatch"
+                                style="background:${color};"
+                            ></span>${escapeHtml(domainName)}
                         </strong>
 
                         <br>
@@ -375,6 +556,29 @@ function renderDomainList(
     });
 
     return html;
+}
+
+
+// ============================================================
+// 共用:排序 source
+// ============================================================
+
+function sortDomainSources(grouped) {
+
+    return Object.keys(grouped).sort((a, b) => {
+
+        const ia = DOMAIN_SOURCE_ORDER.indexOf(a);
+        const ib = DOMAIN_SOURCE_ORDER.indexOf(b);
+
+        if (ia === -1 && ib === -1) {
+            return a.localeCompare(b);
+        }
+
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+
+        return ia - ib;
+    });
 }
 
 
@@ -421,45 +625,19 @@ function renderDomains(
 
 
     // --------------------------------------------------------
-    // Group
+    // 先建立 family -> color 對照(所有資料庫共用)
+    // --------------------------------------------------------
+
+    buildDomainColorMap(domains);
+
+
+    // --------------------------------------------------------
+    // Group + sort source
     // --------------------------------------------------------
 
     const grouped = groupDomainsBySource(domains);
 
-
-    // --------------------------------------------------------
-    // Sort source
-    // --------------------------------------------------------
-
-    const sources =
-        Object.keys(grouped).sort(
-            (a, b) => {
-
-                const ia =
-                    DOMAIN_SOURCE_ORDER.indexOf(a);
-
-                const ib =
-                    DOMAIN_SOURCE_ORDER.indexOf(b);
-
-                if (
-                    ia === -1 &&
-                    ib === -1
-                ) {
-                    return a.localeCompare(b);
-                }
-
-                if (ia === -1) {
-                    return 1;
-                }
-
-                if (ib === -1) {
-                    return -1;
-                }
-
-                return ia - ib;
-
-            }
-        );
+    const sources = sortDomainSources(grouped);
 
 
     // --------------------------------------------------------
@@ -578,22 +756,12 @@ function renderDomainExplorerArchitecture(domains, proteinLength) {
         `;
     }
 
+    // 確保顏色對照存在且與目前 domains 一致
+    buildDomainColorMap(domains);
+
     const grouped = groupDomainsBySource(domains);
 
-    const sources = Object.keys(grouped).sort((a, b) => {
-
-        const ia = DOMAIN_SOURCE_ORDER.indexOf(a);
-        const ib = DOMAIN_SOURCE_ORDER.indexOf(b);
-
-        if (ia === -1 && ib === -1) {
-            return a.localeCompare(b);
-        }
-
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-
-        return ia - ib;
-    });
+    const sources = sortDomainSources(grouped);
 
     const tracks = sources.map(source => {
 
@@ -650,6 +818,75 @@ function renderDomainExplorerArchitecture(domains, proteinLength) {
         </div>
     `;
 }
+
+
+// ============================================================
+// Hover 高亮:同家族 或 位置重疊 的 domain(跨資料庫)
+// 用 event delegation,不用每個 segment 綁事件
+// ============================================================
+
+function getDomainHoverScope(seg) {
+
+    return (
+        seg.closest(".domain-explorer-architecture") ||
+        seg.closest(".domain-architecture") ||
+        document
+    );
+}
+
+document.addEventListener("mouseover", event => {
+
+    const seg = event.target.closest?.(".domain-seg");
+
+    if (!seg) return;
+
+    const scope = getDomainHoverScope(seg);
+
+    const family = seg.dataset.family;
+    const s = Number(seg.dataset.start);
+    const e = Number(seg.dataset.end);
+    const len = e - s + 1;
+
+    scope.querySelectorAll(".domain-seg").forEach(other => {
+
+        const os = Number(other.dataset.start);
+        const oe = Number(other.dataset.end);
+
+        const overlap =
+            Math.min(e, oe) - Math.max(s, os) + 1;
+
+        const sameFamily = other.dataset.family === family;
+
+        // 重疊超過 hover 對象 50% 才算「對應」,避免只擦到邊就亮
+        const overlapping =
+            overlap > 0 && overlap / len >= 0.5;
+
+        const hit = other === seg || sameFamily || overlapping;
+
+        other.classList.toggle("hl", hit);
+        other.classList.toggle("dim", !hit);
+
+    });
+
+});
+
+document.addEventListener("mouseout", event => {
+
+    const seg = event.target.closest?.(".domain-seg");
+
+    if (!seg) return;
+
+    // 滑到另一個 segment 時交給 mouseover 處理
+    const to = event.relatedTarget?.closest?.(".domain-seg");
+
+    if (to) return;
+
+    getDomainHoverScope(seg)
+        .querySelectorAll(".domain-seg")
+        .forEach(o => o.classList.remove("hl", "dim"));
+
+});
+
 
 // ============================================================
 // Domain Explorer

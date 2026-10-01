@@ -1,0 +1,5 @@
+# Updated enzyme IDs
+# old_enzyme_id	new_enzyme_id	protein_name	identifier_db	enzyme_class
+
+# Not found
+# enzyme_id	gene_name	protein_name	enzyme_class

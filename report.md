@@ -1,0 +1,3546 @@
+# 📋 專案程式碼結構分析報告
+
+本報告自動掃描專案目錄下的原始碼檔案，並將結構彙整。
+
+## 🔍 掃描統計與摘要
+| 檔案路徑 | 類型 | 分析摘要 |
+| :--- | :--- | :--- |
+| `./db.py` | `PY` | 找到 8 個結構實體 |
+| `./config.py` | `PY` | 找到 59 個結構實體 |
+| `./update_ukw.py` | `PY` | 找到 9 個結構實體 |
+| `./normalize.py` | `PY` | 找到 5 個結構實體 |
+| `./import_biogrid_ubiquitin.py` | `PY` | 找到 8 個結構實體 |
+| `./go_sl_mapping.py` | `PY` | 找到 5 個結構實體 |
+| `./build_ub_relations.py` | `PY` | 找到 15 個結構實體 |
+| `./domain_nlp_parser.py` | `PY` | 找到 25 個結構實體 |
+| `./analyze_enzyme_id_mapping.py` | `PY` | 找到 8 個結構實體 |
+| `./test.html` | `HTML` | 找到 3 個結構實體 |
+| `./dedup.py` | `PY` | 找到 7 個結構實體 |
+| `./generate_report.py` | `PY` | 找到 5 個結構實體 |
+| `./domain_scan.py` | `PY` | 找到 11 個結構實體 |
+| `./app.py` | `PY` | 找到 25 個結構實體 |
+| `./test.css` | `CSS` | 找到 1 個結構實體 |
+| `./export_to_neo4j.py` | `PY` | 找到 3 個結構實體 |
+| `./run_paper_domain.py` | `PY` | 找到 15 個結構實體 |
+| `./schema.py` | `PY` | 找到 2 個結構實體 |
+| `./load/__init__.py` | `PY` | *無偵測到特定結構* |
+| `./load/load_uniprot.py` | `PY` | 找到 16 個結構實體 |
+| `./download/uniprot.py` | `PY` | 找到 4 個結構實體 |
+| `./download/biogrid.py` | `PY` | 找到 4 個結構實體 |
+| `./download/corum.py` | `PY` | 找到 2 個結構實體 |
+| `./download/intact.py` | `PY` | 找到 2 個結構實體 |
+| `./download/stringdb.py` | `PY` | 找到 3 個結構實體 |
+| `./download/__init__.py` | `PY` | *無偵測到特定結構* |
+| `./download/ubibrowser.py` | `PY` | 找到 4 個結構實體 |
+| `./download/reactome.py` | `PY` | 找到 8 個結構實體 |
+| `./download/phosphositeplus.py` | `PY` | 找到 2 個結構實體 |
+| `./static/css/cell_go_view.css` | `CSS` | 找到 40 個結構實體 |
+| `./static/css/style.css` | `CSS` | 找到 139 個結構實體 |
+| `./static/js/08-detail.js` | `JS` | 找到 3 個結構實體 |
+| `./static/js/05-search.js` | `JS` | 找到 25 個結構實體 |
+| `./static/js/cell_go_viewer.js` | `JS` | 找到 66 個結構實體 |
+| `./static/js/09-network.js` | `JS` | 找到 13 個結構實體 |
+| `./static/js/01-constants.js` | `JS` | 找到 1 個結構實體 |
+| `./static/js/07-papers-sequence.js` | `JS` | 找到 55 個結構實體 |
+| `./static/js/cell_go_viewer1.js` | `JS` | 找到 31 個結構實體 |
+| `./static/js/03-utils.js` | `JS` | 找到 1 個結構實體 |
+| `./static/js/02-state.js` | `JS` | 找到 14 個結構實體 |
+| `./static/js/11-domain.js` | `JS` | 找到 50 個結構實體 |
+| `./static/js/10-main.js` | `JS` | 找到 1 個結構實體 |
+| `./static/js/network_1.js` | `JS` | 找到 13 個結構實體 |
+| `./static/js/06-annotation-sections.js` | `JS` | 找到 35 個結構實體 |
+| `./static/js/04-viewer.js` | `JS` | 找到 30 個結構實體 |
+| `./static/js/cell_go_viewer2.js` | `JS` | 找到 92 個結構實體 |
+| `./static/js/network.js` | `JS` | 找到 68 個結構實體 |
+| `./static/js/cytoscape/cytoscape-dagre.js` | `JS` | 找到 61 個結構實體 |
+| `./static/js/cytoscape/cytoscape.min.js` | `JS` | 找到 3 個結構實體 |
+| `./static/img/Animal_cells.svg` | `SVG` | 找到 1892 個結構實體 |
+| `./static/molstar/molstar.css` | `CSS` | 找到 210 個結構實體 |
+| `./static/molstar/molstar.js` | `JS` | 找到 168 個結構實體 |
+| `./templates/index.html` | `HTML` | 找到 50 個結構實體 |
+| `./templates/network.html` | `HTML` | 找到 30 個結構實體 |
+| `./templates/cell_go_view.html` | `HTML` | 找到 20 個結構實體 |
+| `./templates/pdb.html` | `HTML` | 找到 3 個結構實體 |
+
+## 📂 檔案結構詳細清單
+
+### 📄 檔案: `./db.py`
+  - ⚡ **[函式]** `get_connection()`
+  - ⚡ **[函式]** `now()`
+  - ⚡ **[函式]** `execute()`
+  - ⚡ **[函式]** `executemany()`
+  - ⚡ **[函式]** `commit()`
+  - ⚡ **[函式]** `rollback()`
+  - ⚡ **[函式]** `json_dumps()`
+  - ⚡ **[函式]** `table_exists()`
+
+### 📄 檔案: `./config.py`
+  - 🔹 **[變數]** `PROJECT_ROOT`
+  - 🔹 **[變數]** `CONFIG_FILE`
+  - 🔹 **[變數]** `cfg`
+  - 🔹 **[變數]** `config`
+  - 🔹 **[變數]** `read_files`
+  - ⚡ **[函式]** `get()`
+  - ⚡ **[函式]** `get_int()`
+  - ⚡ **[函式]** `get_bool()`
+  - ⚡ **[函式]** `get_path()`
+  - 🔹 **[變數]** `USER_AGENT`
+  - 🔹 **[變數]** `REQUEST_TIMEOUT`
+  - 🔹 **[變數]** `MAX_RETRIES`
+  - 🔹 **[變數]** `RETRY_DELAY`
+  - 🔹 **[變數]** `CA_BUNDLE`
+  - 🔹 **[變數]** `DATABASE_PATH`
+  - 🔹 **[變數]** `UNIPROT_BASE_URL`
+  - 🔹 **[變數]** `UNIPROT_VERSION`
+  - 🔹 **[變數]** `UNIPROT_PROTEOME_FILE`
+  - 🔹 **[變數]** `UNIPROT_FASTA_FILE`
+  - 🔹 **[變數]** `UNIPROT_OUTPUT_DIR`
+  - 🔹 **[變數]** `REACTOME_BASE`
+  - 🔹 **[變數]** `REACTOME_VERSION_URL`
+  - 🔹 **[變數]** `REACTOME_DOWNLOAD_BASE`
+  - 🔹 **[變數]** `REACTOME_VERSION`
+  - 🔹 **[變數]** `REACTOME_OUTPUT_DIR`
+  - 🔹 **[變數]** `BIOGRID_BASE_URL`
+  - 🔹 **[變數]** `BIOGRID_VERSION`
+  - 🔹 **[變數]** `BIOGRID_FILENAME`
+  - 🔹 **[變數]** `BIOGRID_OUTPUT_DIR`
+  - 🔹 **[變數]** `CORUM_BASE_URL`
+  - 🔹 **[變數]** `CORUM_DOWNLOAD_ENDPOINT`
+  - 🔹 **[變數]** `CORUM_FILE_ID`
+  - 🔹 **[變數]** `CORUM_FILE_FORMAT`
+  - 🔹 **[變數]** `CORUM_VERSION`
+  - 🔹 **[變數]** `CORUM_OUTPUT_DIR`
+  - 🔹 **[變數]** `INTACT_BASE_URL`
+  - 🔹 **[變數]** `INTACT_QUERY`
+  - 🔹 **[變數]** `INTACT_FORMAT`
+  - 🔹 **[變數]** `INTACT_PAGE_SIZE`
+  - 🔹 **[變數]** `INTACT_VERSION`
+  - 🔹 **[變數]** `INTACT_OUTPUT_FILE`
+  - 🔹 **[變數]** `INTACT_OUTPUT_DIR`
+  - 🔹 **[變數]** `STRING_BASE_URL`
+  - 🔹 **[變數]** `STRING_SPECIES`
+  - 🔹 **[變數]** `STRING_VERSION`
+  - 🔹 **[變數]** `STRING_OUTPUT_DIR`
+  - 🔹 **[變數]** `UBIBROWSER_URL_E3`
+  - 🔹 **[變數]** `UBIBROWSER_URL_DUB`
+  - 🔹 **[變數]** `UBIBROWSER_SPECIES`
+  - 🔹 **[變數]** `UBIBROWSER_OUTPUT_DIR`
+  - 🔹 **[變數]** `UBIBROWSER_VERSION`
+  - 🔹 **[變數]** `PHOSPHOSITEPLUS_BASE_URL`
+  - 🔹 **[變數]** `PHOSPHOSITEPLUS_VERSION`
+  - 🔹 **[變數]** `PHOSPHOSITEPLUS_OUTPUT_DIR`
+  - 🔹 **[變數]** `UKW_DATA_DIR`
+  - 🔹 **[變數]** `UKW_RAW_DIR`
+  - 🔹 **[變數]** `UKW_DB_DIR`
+  - 🔹 **[變數]** `LOG_DIR`
+  - 🔹 **[變數]** `LOG_LEVEL`
+
+### 📄 檔案: `./update_ukw.py`
+  - ⚡ **[函式]** `register_source()`
+  - ⚡ **[函式]** `update_uniprot()`
+  - ⚡ **[函式]** `update_reactome()`
+  - ⚡ **[函式]** `update_biogrid()`
+  - ⚡ **[函式]** `update_string()`
+  - ⚡ **[函式]** `update_ubibrowser()`
+  - ⚡ **[函式]** `update_phosphositeplus()`
+  - ⚡ **[函式]** `update_corum()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./normalize.py`
+  - ⚡ **[函式]** `clean()`
+  - ⚡ **[函式]** `normalize_uniprot()`
+  - ⚡ **[函式]** `normalize_relation_type()`
+  - ⚡ **[函式]** `normalize_residue()`
+  - ⚡ **[函式]** `normalize_ub_type()`
+
+### 📄 檔案: `./import_biogrid_ubiquitin.py`
+  - 🔹 **[變數]** `BATCH_SIZE`
+  - ⚡ **[函式]** `load_enzyme_lookup()`
+  - ⚡ **[函式]** `load_valid_protein_ids()`
+  - ⚡ **[函式]** `resolve_role()`
+  - ⚡ **[函式]** `first_accession()`
+  - ⚡ **[函式]** `classify_pair()`
+  - ⚡ **[函式]** `parse_row()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./go_sl_mapping.py`
+  - 🔹 **[變數]** `GO_ID_TO_SL`
+  - 🔹 **[變數]** `NAME_TO_SL`
+  - ⚡ **[函式]** `_normalize()`
+  - ⚡ **[函式]** `map_go_term_to_sl()`
+  - ⚡ **[函式]** `annotate_go_terms()`
+
+### 📄 檔案: `./build_ub_relations.py`
+  - 🔹 **[變數]** `DB_PATH`
+  - 🔹 **[變數]** `CONFLICT`
+  - 🔹 **[變數]** `MOD_GROUPS`
+  - 🔹 **[變數]** `MOD_GROUP_KEYWORDS`
+  - ⚡ **[函式]** `classify_modification()`
+  - ⚡ **[函式]** `normalize_direction()`
+  - ⚡ **[函式]** `fetch_interactions()`
+  - ⚡ **[函式]** `bucket_by_group_and_type()`
+  - ⚡ **[函式]** `mod_consistent()`
+  - ⚡ **[函式]** `merge_field()`
+  - ⚡ **[函式]** `build_chains_for_group()`
+  - ⚡ **[函式]** `build_all_chains()`
+  - ⚡ **[函式]** `relation_exists()`
+  - ⚡ **[函式]** `insert_chains()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./domain_nlp_parser.py`
+  - 🔹 **[變數]** `DB_CONFIG`
+  - 🔹 **[變數]** `DOMAIN_TERMS`
+  - 🔹 **[變數]** `PATTERN_SPAN`
+  - 🔹 **[變數]** `PATTERN_PAREN`
+  - 🔹 **[變數]** `PATTERN_REVERSE`
+  - 🔹 **[變數]** `PATTERN_BETWEEN`
+  - 🔹 **[變數]** `PATTERN_COLON`
+  - 🔹 **[變數]** `PATTERN_DOMAIN_DIRECT`
+  - ⚡ **[函式]** `extract_xml_text()`
+  - ⚡ **[函式]** `read_text_file()`
+  - ⚡ **[函式]** `load_text()`
+  - ⚡ **[函式]** `normalize_text()`
+  - ⚡ **[函式]** `split_sentences()`
+  - ⚡ **[函式]** `clean_domain_name()`
+  - ⚡ **[函式]** `classify_evidence()`
+  - ⚡ **[函式]** `calculate_confidence()`
+  - ⚡ **[函式]** `make_candidate()`
+  - ⚡ **[函式]** `is_valid_domain_name()`
+  - ⚡ **[函式]** `extract_from_sentence()`
+  - ⚡ **[函式]** `deduplicate_candidates()`
+  - ⚡ **[函式]** `validate_candidate()`
+  - ⚡ **[函式]** `get_protein_length()`
+  - ⚡ **[函式]** `insert_candidates()`
+  - ⚡ **[函式]** `parse_paper()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./analyze_enzyme_id_mapping.py`
+  - 🔹 **[變數]** `VALID_CLASSES`
+  - ⚡ **[函式]** `connect_db()`
+  - ⚡ **[函式]** `check_tables()`
+  - ⚡ **[函式]** `analyze()`
+  - ⚡ **[函式]** `print_summary()`
+  - ⚡ **[函式]** `print_details()`
+  - ⚡ **[函式]** `export_csv()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./test.html`
+  - ✨ **[Class 樣式]** `.special`
+  - ✨ **[Class 樣式]** `.special`
+  - ✨ **[Class 樣式]** `.special`
+
+### 📄 檔案: `./dedup.py`
+  - ⚡ **[函式]** `clean()`
+  - ⚡ **[函式]** `merge_semicolon()`
+  - ⚡ **[函式]** `merge_field()`
+  - ⚡ **[函式]** `upsert_protein()`
+  - ⚡ **[函式]** `upsert_enzyme()`
+  - ⚡ **[函式]** `find_relation()`
+  - ⚡ **[函式]** `upsert_ub_relation()`
+
+### 📄 檔案: `./generate_report.py`
+  - ⚡ **[函式]** `parse_python()`
+  - ⚡ **[函式]** `parse_javascript()`
+  - ⚡ **[函式]** `parse_css()`
+  - ⚡ **[函式]** `parse_html_or_svg()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./domain_scan.py`
+  - 📦 **[類別]** `DomainHit`
+  - ⚡ **[函式]** `hmmscan_sequence()`
+  - ⚡ **[函式]** `resolve_overlaps()`
+  - 🔹 **[變數]** `_DUPLICATED_PFAM_ORDER`
+  - ⚡ **[函式]** `_pfam_to_domain_id()`
+  - ⚡ **[函式]** `_assign_abbrs()`
+  - ⚡ **[函式]** `scan_protein()`
+  - ⚡ **[函式]** `scan_all_proteins()`
+  - ⚡ **[函式]** `get_domain_architecture()`
+  - ⚡ **[函式]** `get_proteins_with_domain()`
+  - ⚡ **[函式]** `get_proteins_by_category()`
+
+### 📄 檔案: `./app.py`
+  - 🔹 **[變數]** `BASE_DIR`
+  - 🔹 **[變數]** `DB_PATH`
+  - 🔹 **[變數]** `PDB_DIR`
+  - 🔹 **[變數]** `CIF_DIR`
+  - 🔹 **[變數]** `ALLOWED_STRUCTURE_PREFIXES`
+  - 🔹 **[變數]** `app`
+  - ⚡ **[函式]** `get_db()`
+  - ⚡ **[函式]** `close_db()`
+  - ⚡ **[函式]** `index()`
+  - ⚡ **[函式]** `_is_safe_structure_url()`
+  - ⚡ **[函式]** `structure_viewer()`
+  - ⚡ **[函式]** `pdb_viewer()`
+  - ⚡ **[函式]** `serve_pdb()`
+  - ⚡ **[函式]** `serve_cif()`
+  - ⚡ **[函式]** `show_network()`
+  - ⚡ **[函式]** `network()`
+  - ⚡ **[函式]** `ubiquitin_interaction()`
+  - ⚡ **[函式]** `api_complexes()`
+  - ⚡ **[函式]** `get_enzyme_class()`
+  - ⚡ **[函式]** `api_search()`
+  - ⚡ **[函式]** `api_protein_detail()`
+  - ⚡ **[函式]** `_normalize_go_aspect()`
+  - ⚡ **[函式]** `_normalize_go_row()`
+  - ⚡ **[函式]** `protein_cell_view()`
+  - ⚡ **[函式]** `api_protein_cell_go()`
+
+### 📄 檔案: `./test.css`
+  - 🎨 **[選擇器]** `.special`
+
+### 📄 檔案: `./export_to_neo4j.py`
+  - 🔹 **[變數]** `DB_FILE`
+  - 🔹 **[變數]** `OUTPUT_DIR`
+  - ⚡ **[函式]** `clean_and_export()`
+
+### 📄 檔案: `./run_paper_domain.py`
+  - 🔹 **[變數]** `DB_PATH`
+  - 🔹 **[變數]** `OUTPUT_DIR`
+  - 🔹 **[變數]** `NCBI_EUTILS`
+  - ⚡ **[函式]** `get_db_connection()`
+  - ⚡ **[函式]** `get_all_proteins()`
+  - ⚡ **[函式]** `get_single_protein()`
+  - ⚡ **[函式]** `search_pubmed()`
+  - ⚡ **[函式]** `fetch_pubmed_article()`
+  - ⚡ **[函式]** `extract_article_metadata()`
+  - 🔹 **[變數]** `DOMAIN_KEYWORDS`
+  - ⚡ **[函式]** `calculate_paper_relevance()`
+  - 🔹 **[變數]** `CSV_FIELDS`
+  - ⚡ **[函式]** `save_csv()`
+  - ⚡ **[函式]** `process_protein()`
+  - ⚡ **[函式]** `main()`
+
+### 📄 檔案: `./schema.py`
+  - 🔹 **[變數]** `SCHEMA`
+  - ⚡ **[函式]** `init_db()`
+
+### 📄 檔案: `./load/load_uniprot.py`
+  - 🔹 **[變數]** `TAXON_ID`
+  - 🔹 **[變數]** `ORGANISM`
+  - ⚡ **[函式]** `clean_gene_name()`
+  - ⚡ **[函式]** `get_gene_name()`
+  - ⚡ **[函式]** `get_gene_aliases()`
+  - ⚡ **[函式]** `get_protein_name()`
+  - ⚡ **[函式]** `get_aliases()`
+  - ⚡ **[函式]** `get_function()`
+  - ⚡ **[函式]** `get_go_annotations()`
+  - ⚡ **[函式]** `get_identifiers()`
+  - ⚡ **[函式]** `is_human()`
+  - ⚡ **[函式]** `upsert_protein()`
+  - ⚡ **[函式]** `load_aliases()`
+  - ⚡ **[函式]** `load_identifiers()`
+  - ⚡ **[函式]** `load_go()`
+  - ⚡ **[函式]** `load_uniprot()`
+
+### 📄 檔案: `./download/uniprot.py`
+  - 🔹 **[變數]** `ROOT`
+  - 🔹 **[變數]** `BASE_URL`
+  - 🔹 **[變數]** `HUMAN_QUERY`
+  - ⚡ **[函式]** `download_uniprot()`
+
+### 📄 檔案: `./download/biogrid.py`
+  - 🔹 **[變數]** `ROOT`
+  - 🔹 **[變數]** `CONFIG_FILE`
+  - ⚡ **[函式]** `load_biogrid_config()`
+  - ⚡ **[函式]** `download_biogrid()`
+
+### 📄 檔案: `./download/corum.py`
+  - 🔹 **[變數]** `ROOT`
+  - ⚡ **[函式]** `download_corum()`
+
+### 📄 檔案: `./download/intact.py`
+  - 🔹 **[變數]** `ROOT`
+  - ⚡ **[函式]** `download_intact()`
+
+### 📄 檔案: `./download/stringdb.py`
+  - 🔹 **[變數]** `ROOT`
+  - ⚡ **[函式]** `build_string_url()`
+  - ⚡ **[函式]** `download_stringdb()`
+
+### 📄 檔案: `./download/ubibrowser.py`
+  - 🔹 **[變數]** `ROOT`
+  - 🔹 **[變數]** `CHUNK_SIZE`
+  - ⚡ **[函式]** `_download_one()`
+  - ⚡ **[函式]** `download_ubibrowser()`
+
+### 📄 檔案: `./download/reactome.py`
+  - 🔹 **[變數]** `ROOT`
+  - 🔹 **[變數]** `RAW_DIR`
+  - ⚡ **[函式]** `create_session()`
+  - ⚡ **[函式]** `get_reactome_version()`
+  - ⚡ **[函式]** `download_file()`
+  - ⚡ **[函式]** `download_uniprot_pathways()`
+  - ⚡ **[函式]** `download_uniprot_reactions()`
+  - ⚡ **[函式]** `download_reactome()`
+
+### 📄 檔案: `./download/phosphositeplus.py`
+  - 🔹 **[變數]** `ROOT`
+  - ⚡ **[函式]** `get_phosphositeplus_file()`
+
+### 📄 檔案: `./static/css/cell_go_view.css`
+  - 🎨 **[選擇器]** `#cell-container`
+  - 🎨 **[選擇器]** `#cell-detail-card`
+  - 🎨 **[選擇器]** `.accession`
+  - 🎨 **[選擇器]** `.active`
+  - 🎨 **[選擇器]** `.cell-detail-description`
+  - 🎨 **[選擇器]** `.cell-detail-sl`
+  - 🎨 **[選擇器]** `.cell-detail-title`
+  - 🎨 **[選擇器]** `.cell-panel`
+  - 🎨 **[選擇器]** `.coloured`
+  - 🎨 **[選擇器]** `.go-evidence`
+  - 🎨 **[選擇器]** `.go-group`
+  - 🎨 **[選擇器]** `.go-id`
+  - 🎨 **[選擇器]** `.go-list`
+  - 🎨 **[選擇器]** `.go-panel`
+  - 🎨 **[選擇器]** `.hint`
+  - 🎨 **[選擇器]** `.inspector-active`
+  - 🎨 **[選擇器]** `.inspector-empty`
+  - 🎨 **[選擇器]** `.inspector-evidence`
+  - 🎨 **[選擇器]** `.inspector-go-id`
+  - 🎨 **[選擇器]** `.inspector-go-item`
+  - 🎨 **[選擇器]** `.inspector-go-name`
+  - 🎨 **[選擇器]** `.inspector-grid`
+  - 🎨 **[選擇器]** `.inspector-label`
+  - 🎨 **[選擇器]** `.inspector-section`
+  - 🎨 **[選擇器]** `.inspector-sl`
+  - 🎨 **[選擇器]** `.inspector-title`
+  - 🎨 **[選擇器]** `.inspector-value`
+  - 🎨 **[選擇器]** `.layout`
+  - 🎨 **[選擇器]** `.loading`
+  - 🎨 **[選擇器]** `.mappable`
+  - 🎨 **[選擇器]** `.sl-glow-strong`
+  - 🎨 **[選擇器]** `.sl-selected`
+  - 🎨 **[選擇器]** `.svg-inspector`
+  - 🎨 **[選擇器]** `.topbar`
+  - 🎨 **[選擇器]** `.ukw-description-box`
+  - 🎨 **[選擇器]** `.ukw-description-line`
+  - 🎨 **[選擇器]** `.ukw-description-sl`
+  - 🎨 **[選擇器]** `.ukw-description-text`
+  - 🎨 **[選擇器]** `.ukw-description-title`
+  - 🎨 **[選擇器]** `.visible`
+
+### 📄 檔案: `./static/css/style.css`
+  - 🎨 **[選擇器]** `#bigcy`
+  - 🎨 **[選擇器]** `#cy`
+  - 🎨 **[選擇器]** `#domainExplorerPdb`
+  - 🎨 **[選擇器]** `#edgeLegend`
+  - 🎨 **[選擇器]** `#network-editor-toolbar`
+  - 🎨 **[選擇器]** `#nodeLegend`
+  - 🎨 **[選擇器]** `#pdb-full-viewer`
+  - 🎨 **[選擇器]** `#pdb-viewer`
+  - 🎨 **[選擇器]** `#subfamily-filters`
+  - 🎨 **[選擇器]** `#toolbar`
+  - 🎨 **[選擇器]** `.acc`
+  - 🎨 **[選擇器]** `.active`
+  - 🎨 **[選擇器]** `.brand`
+  - 🎨 **[選擇器]** `.brand-mark`
+  - 🎨 **[選擇器]** `.category-buttons`
+  - 🎨 **[選擇器]** `.cellgo-cell-panel`
+  - 🎨 **[選擇器]** `.cellgo-evidence`
+  - 🎨 **[選擇器]** `.cellgo-evidence--author`
+  - 🎨 **[選擇器]** `.cellgo-evidence--auto`
+  - 🎨 **[選擇器]** `.cellgo-evidence--exp`
+  - 🎨 **[選擇器]** `.cellgo-evidence--other`
+  - 🎨 **[選擇器]** `.cellgo-evidence--phylo`
+  - 🎨 **[選擇器]** `.cellgo-evidence--seq`
+  - 🎨 **[選擇器]** `.cellgo-expand-btn`
+  - 🎨 **[選擇器]** `.cellgo-go-panel`
+  - 🎨 **[選擇器]** `.cellgo-goid`
+  - 🎨 **[選擇器]** `.cellgo-group`
+  - 🎨 **[選擇器]** `.cellgo-header`
+  - 🎨 **[選擇器]** `.cellgo-hint`
+  - 🎨 **[選擇器]** `.cellgo-layout`
+  - 🎨 **[選擇器]** `.cellgo-legend`
+  - 🎨 **[選擇器]** `.cellgo-legend-item`
+  - 🎨 **[選擇器]** `.cellgo-list`
+  - 🎨 **[選擇器]** `.cellgo-tag`
+  - 🎨 **[選擇器]** `.cellgo-taglist`
+  - 🎨 **[選擇器]** `.chain-arrow`
+  - 🎨 **[選擇器]** `.chain-meta`
+  - 🎨 **[選擇器]** `.chain-node`
+  - 🎨 **[選擇器]** `.chain-row`
+  - 🎨 **[選擇器]** `.class-btn`
+  - 🎨 **[選擇器]** `.coloured`
+  - 🎨 **[選擇器]** `.copy-btn`
+  - 🎨 **[選擇器]** `.copy-message`
+  - 🎨 **[選擇器]** `.desc`
+  - 🎨 **[選擇器]** `.detail-pane`
+  - 🎨 **[選擇器]** `.domain-architecture`
+  - 🎨 **[選擇器]** `.domain-axis`
+  - 🎨 **[選擇器]** `.domain-count`
+  - 🎨 **[選擇器]** `.domain-explorer-body`
+  - 🎨 **[選擇器]** `.domain-explorer-domains`
+  - 🎨 **[選擇器]** `.domain-explorer-header`
+  - 🎨 **[選擇器]** `.domain-explorer-left`
+  - 🎨 **[選擇器]** `.domain-explorer-modal`
+  - 🎨 **[選擇器]** `.domain-explorer-pdb`
+  - 🎨 **[選擇器]** `.domain-explorer-protein`
+  - 🎨 **[選擇器]** `.domain-explorer-right`
+  - 🎨 **[選擇器]** `.domain-explorer-section-title`
+  - 🎨 **[選擇器]** `.domain-explorer-window`
+  - 🎨 **[選擇器]** `.domain-header`
+  - 🎨 **[選擇器]** `.domain-left`
+  - 🎨 **[選擇器]** `.domain-list`
+  - 🎨 **[選擇器]** `.domain-list-item`
+  - 🎨 **[選擇器]** `.domain-modal`
+  - 🎨 **[選擇器]** `.domain-modal-body`
+  - 🎨 **[選擇器]** `.domain-modal-content`
+  - 🎨 **[選擇器]** `.domain-modal-header`
+  - 🎨 **[選擇器]** `.domain-pdb-empty`
+  - 🎨 **[選擇器]** `.domain-right`
+  - 🎨 **[選擇器]** `.domain-seg`
+  - 🎨 **[選擇器]** `.domain-source-label`
+  - 🎨 **[選擇器]** `.domain-source-row`
+  - 🎨 **[選擇器]** `.domain-title`
+  - 🎨 **[選擇器]** `.domain-tooltip`
+  - 🎨 **[選擇器]** `.domain-track`
+  - 🎨 **[選擇器]** `.dot`
+  - 🎨 **[選擇器]** `.dub-btn`
+  - 🎨 **[選擇器]** `.e1`
+  - 🎨 **[選擇器]** `.e1-btn`
+  - 🎨 **[選擇器]** `.e2`
+  - 🎨 **[選擇器]** `.e2-btn`
+  - 🎨 **[選擇器]** `.e3`
+  - 🎨 **[選擇器]** `.e3-btn`
+  - 🎨 **[選擇器]** `.edge-legend-item`
+  - 🎨 **[選擇器]** `.edge-legend-items`
+  - 🎨 **[選擇器]** `.edge-sample`
+  - 🎨 **[選擇器]** `.empty-state`
+  - 🎨 **[選擇器]** `.filter-label`
+  - 🎨 **[選擇器]** `.footer-note`
+  - 🎨 **[選擇器]** `.function-card`
+  - 🎨 **[選擇器]** `.function-evidence`
+  - 🎨 **[選擇器]** `.function-index`
+  - 🎨 **[選擇器]** `.function-title`
+  - 🎨 **[選擇器]** `.gene`
+  - 🎨 **[選擇器]** `.gg-site`
+  - 🎨 **[選擇器]** `.gold`
+  - 🎨 **[選擇器]** `.icon-btn`
+  - 🎨 **[選擇器]** `.keep-selected`
+  - 🎨 **[選擇器]** `.layout`
+  - 🎨 **[選擇器]** `.legend-complex`
+  - 🎨 **[選擇器]** `.legend-dub`
+  - 🎨 **[選擇器]** `.legend-e1`
+  - 🎨 **[選擇器]** `.legend-e2`
+  - 🎨 **[選擇器]** `.legend-e3`
+  - 🎨 **[選擇器]** `.legend-item`
+  - 🎨 **[選擇器]** `.legend-items`
+  - 🎨 **[選擇器]** `.legend-shape`
+  - 🎨 **[選擇器]** `.legend-substrate`
+  - 🎨 **[選擇器]** `.legend-text`
+  - 🎨 **[選擇器]** `.legend-title`
+  - 🎨 **[選擇器]** `.lys-site`
+  - 🎨 **[選擇器]** `.mappable`
+  - 🎨 **[選擇器]** `.meta`
+  - 🎨 **[選擇器]** `.name`
+  - 🎨 **[選擇器]** `.pane-title`
+  - 🎨 **[選擇器]** `.pdb-link`
+  - 🎨 **[選擇器]** `.relation-viewer-card`
+  - 🎨 **[選擇器]** `.res`
+  - 🎨 **[選擇器]** `.result-item`
+  - 🎨 **[選擇器]** `.results-list`
+  - 🎨 **[選擇器]** `.results-pane`
+  - 🎨 **[選擇器]** `.rose`
+  - 🎨 **[選擇器]** `.ruler-legend`
+  - 🎨 **[選擇器]** `.ruler-num`
+  - 🎨 **[選擇器]** `.scroll-box`
+  - 🎨 **[選擇器]** `.search-highlight`
+  - 🎨 **[選擇器]** `.searchbar`
+  - 🎨 **[選擇器]** `.section-card`
+  - 🎨 **[選擇器]** `.section-grid`
+  - 🎨 **[選擇器]** `.seq-block`
+  - 🎨 **[選擇器]** `.seq-line`
+  - 🎨 **[選擇器]** `.seq-ruler`
+  - 🎨 **[選擇器]** `.seq-wrap`
+  - 🎨 **[選擇器]** `.show`
+  - 🎨 **[選擇器]** `.structure-viewer-card`
+  - 🎨 **[選擇器]** `.sub`
+  - 🎨 **[選擇器]** `.subfamily-select`
+  - 🎨 **[選擇器]** `.topbar`
+  - 🎨 **[選擇器]** `.year-btn`
+  - 🎨 **[選擇器]** `.year-buttons`
+
+### 📄 檔案: `./static/js/08-detail.js`
+  - 🔹 **[變數]** `p`
+  - 🔹 **[變數]** `ready`
+  - 🔹 **[變數]** `active`
+
+### 📄 檔案: `./static/js/05-search.js`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `safeText`
+  - 🔹 **[變數]** `safeKeyword`
+  - 🔹 **[變數]** `regex`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `isCurrent`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `filterBar`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `showFilters`
+  - 🔹 **[變數]** `subfamilies`
+  - 🔹 **[變數]** `label`
+  - 🔹 **[變數]** `select`
+  - 🔹 **[變數]** `allOption`
+  - 🔹 **[變數]** `option`
+  - 🔹 **[變數]** `filtered`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `filtered`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `li`
+
+### 📄 檔案: `./static/js/cell_go_viewer.js`
+  - 🔹 **[變數]** `state`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `svgText`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `grouped`
+  - 🔹 **[變數]** `aspect`
+  - 🔹 **[變數]** `nodes`
+  - 🔹 **[變數]** `ul`
+  - 🔹 **[變數]** `sortedTerms`
+  - 🔹 **[變數]** `aMapped`
+  - 🔹 **[變數]** `bMapped`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `dividerInserted`
+  - 🔹 **[變數]** `mapped`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `divider`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `term`
+  - 🔹 **[變數]** `items`
+  - 🔹 **[變數]** `STEP_MS`
+  - 🔹 **[變數]** `index`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `selectedNode`
+  - 🔹 **[變數]** `selector`
+  - 🔹 **[變數]** `aspect`
+  - 🔹 **[變數]** `term`
+  - 🔹 **[變數]** `svgNodes`
+  - 🔹 **[變數]** `goId`
+  - 🔹 **[變數]** `url`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `related`
+  - 🔹 **[變數]** `slId`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `related`
+  - 🔹 **[變數]** `path`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `cls`
+  - 🔹 **[變數]** `card`
+  - 🔹 **[變數]** `meta`
+  - 🔹 **[變數]** `card`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `slId`
+  - 🔹 **[變數]** `meta`
+  - 🔹 **[變數]** `term`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `nameElement`
+  - 🔹 **[變數]** `descriptionElement`
+  - 🔹 **[變數]** `target`
+  - 🔹 **[變數]** `terms`
+  - 🔹 **[變數]** `nodes`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `target`
+  - 🔹 **[變數]** `svgNodes`
+  - 🔹 **[變數]** `meta`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `ids`
+  - 🔹 **[變數]** `goIds`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `nodes`
+  - 🔹 **[變數]** `nodes`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `id`
+
+### 📄 檔案: `./static/js/09-network.js`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `elements`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `newElements`
+  - 🔹 **[變數]** `option`
+  - 🔹 **[變數]** `url`
+  - 🔹 **[變數]** `png`
+  - 🔹 **[變數]** `a`
+
+### 📄 檔案: `./static/js/01-constants.js`
+  - 🔹 **[變數]** `LYSINE_SITES`
+
+### 📄 檔案: `./static/js/07-papers-sequence.js`
+  - 🔹 **[變數]** `blocks`
+  - 🔹 **[變數]** `html`
+  - 🔹 **[變數]** `index`
+  - 🔹 **[變數]** `pmids`
+  - 🔹 **[變數]** `text`
+  - 🔹 **[變數]** `expandAll`
+  - 🔹 **[變數]** `VISIBLE_COUNT`
+  - 🔹 **[變數]** `html`
+  - 🔹 **[變數]** `meta`
+  - 🔹 **[變數]** `hiddenClass`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `hiddenPapers`
+  - 🔹 **[變數]** `isExpanded`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `p`
+  - 🔹 **[變數]** `win`
+  - 🔹 **[變數]** `value`
+  - 🔹 **[變數]** `d`
+  - 🔹 **[變數]** `now`
+  - 🔹 **[變數]** `startDate`
+  - 🔹 **[變數]** `paperDate`
+  - 🔹 **[變數]** `papers`
+  - 🔹 **[變數]** `papersHtml`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `count`
+  - 🔹 **[變數]** `papers`
+  - 🔹 **[變數]** `papersHtml`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `count`
+  - 🔹 **[變數]** `initialYears`
+  - 🔹 **[變數]** `initialPapers`
+  - 🔹 **[變數]** `papersHtml`
+  - 🔹 **[變數]** `descHtml`
+  - 🔹 **[變數]** `slider`
+  - 🔹 **[變數]** `yearLabel`
+  - 🔹 **[變數]** `years`
+  - 🔹 **[變數]** `allBtn`
+  - 🔹 **[變數]** `yearButtons`
+  - 🔹 **[變數]** `year`
+  - 🔹 **[變數]** `lineLength`
+  - 🔹 **[變數]** `groupSize`
+  - 🔹 **[變數]** `html`
+  - 🔹 **[變數]** `lineStart`
+  - 🔹 **[變數]** `ruler`
+  - 🔹 **[變數]** `j`
+  - 🔹 **[變數]** `pos`
+  - 🔹 **[變數]** `lineHtml`
+  - 🔹 **[變數]** `lineEnd`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `pos`
+  - 🔹 **[變數]** `aa`
+  - 🔹 **[變數]** `cls`
+  - 🔹 **[變數]** `seqBox`
+  - 🔹 **[變數]** `sequence`
+  - 🔹 **[變數]** `textarea`
+
+### 📄 檔案: `./static/js/cell_go_viewer1.js`
+  - 🔹 **[變數]** `state`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `svgText`
+  - 🔹 **[變數]** `slNodes`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `grouped`
+  - 🔹 **[變數]** `aspect`
+  - 🔹 **[變數]** `ul`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `rawSlIds`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `items`
+  - 🔹 **[變數]** `STEP_MS`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `prev`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `list`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `normalizedId`
+  - 🔹 **[變數]** `ids`
+  - 🔹 **[變數]** `slId`
+  - 🔹 **[變數]** `node`
+
+### 📄 檔案: `./static/js/03-utils.js`
+  - 🔹 **[變數]** `box`
+
+### 📄 檔案: `./static/js/02-state.js`
+  - 🔹 **[變數]** `resultsList`
+  - 🔹 **[變數]** `detailPane`
+  - 🔹 **[變數]** `searchForm`
+  - 🔹 **[變數]** `searchInput`
+  - 🔹 **[變數]** `currentProteinId`
+  - 🔹 **[變數]** `currentData`
+  - 🔹 **[變數]** `currentProtein`
+  - 🔹 **[變數]** `currentDomains`
+  - 🔹 **[變數]** `pdbViewer`
+  - 🔹 **[變數]** `currentPdbId`
+  - 🔹 **[變數]** `currentPdbUrl`
+  - 🔹 **[變數]** `viewerOriginalParent`
+  - 🔹 **[變數]** `viewerPlaceholder`
+  - 🔹 **[變數]** `cy`
+
+### 📄 檔案: `./static/js/11-domain.js`
+  - 🔹 **[變數]** `DOMAIN_SOURCE_COLORS`
+  - 🔹 **[變數]** `DOMAIN_SOURCE_ORDER`
+  - 🔹 **[變數]** `grouped`
+  - 🔹 **[變數]** `source`
+  - 🔹 **[變數]** `colors`
+  - 🔹 **[變數]** `start`
+  - 🔹 **[變數]** `end`
+  - 🔹 **[變數]** `left`
+  - 🔹 **[變數]** `width`
+  - 🔹 **[變數]** `source`
+  - 🔹 **[變數]** `domainName`
+  - 🔹 **[變數]** `accession`
+  - 🔹 **[變數]** `color`
+  - 🔹 **[變數]** `segments`
+  - 🔹 **[變數]** `html`
+  - 🔹 **[變數]** `domains`
+  - 🔹 **[變數]** `start`
+  - 🔹 **[變數]** `end`
+  - 🔹 **[變數]** `domainName`
+  - 🔹 **[變數]** `accession`
+  - 🔹 **[變數]** `grouped`
+  - 🔹 **[變數]** `sources`
+  - 🔹 **[變數]** `ia`
+  - 🔹 **[變數]** `ib`
+  - 🔹 **[變數]** `tracks`
+  - 🔹 **[變數]** `list`
+  - 🔹 **[變數]** `grouped`
+  - 🔹 **[變數]** `sources`
+  - 🔹 **[變數]** `ia`
+  - 🔹 **[變數]** `ib`
+  - 🔹 **[變數]** `tracks`
+  - 🔹 **[變數]** `list`
+  - 🔹 **[變數]** `modal`
+  - 🔹 **[變數]** `proteinLength`
+  - 🔹 **[變數]** `domains`
+  - 🔹 **[變數]** `proteinName`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `domainContainer`
+  - 🔹 **[變數]** `viewerContainer`
+  - 🔹 **[變數]** `pdbUrl`
+  - 🔹 **[變數]** `structures`
+  - 🔹 **[變數]** `structure`
+  - 🔹 **[變數]** `mainViewer`
+  - 🔹 **[變數]** `ready`
+  - 🔹 **[變數]** `modal`
+  - 🔹 **[變數]** `mainViewer`
+  - 🔹 **[變數]** `domainName`
+  - 🔹 **[變數]** `source`
+  - 🔹 **[變數]** `accession`
+  - 🔹 **[變數]** `info`
+
+### 📄 檔案: `./static/js/10-main.js`
+  - 🔹 **[變數]** `q`
+
+### 📄 檔案: `./static/js/network_1.js`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `elements`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `newElements`
+  - 🔹 **[變數]** `option`
+  - 🔹 **[變數]** `url`
+  - 🔹 **[變數]** `png`
+  - 🔹 **[變數]** `a`
+
+### 📄 檔案: `./static/js/06-annotation-sections.js`
+  - 🔹 **[變數]** `rows`
+  - 🔹 **[變數]** `pdbId`
+  - 🔹 **[變數]** `pdbUrl`
+  - 🔹 **[變數]** `rows`
+  - 🔹 **[變數]** `af`
+  - 🔹 **[變數]** `confidence`
+  - 🔹 **[變數]** `afl`
+  - 🔹 **[變數]** `ligands`
+  - 🔹 **[變數]** `ligandText`
+  - 🔹 **[變數]** `sm`
+  - 🔹 **[變數]** `qmean`
+  - 🔹 **[變數]** `EVIDENCE_CATEGORY`
+  - 🔹 **[變數]** `CELLGO_LEGEND`
+  - 🔹 **[變數]** `cat`
+  - 🔹 **[變數]** `_cellgoSvgTextPromise`
+  - 🔹 **[變數]** `groups`
+  - 🔹 **[變數]** `key`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `mappable`
+  - 🔹 **[變數]** `cellPanel`
+  - 🔹 **[變數]** `listC`
+  - 🔹 **[變數]** `expandBtn`
+  - 🔹 **[變數]** `url`
+  - 🔹 **[變數]** `splitSl`
+  - 🔹 **[變數]** `items`
+  - 🔹 **[變數]** `STEP_MS`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `prev`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `html`
+  - 🔹 **[變數]** `pmids`
+
+### 📄 檔案: `./static/js/04-viewer.js`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `marking`
+  - 🔹 **[變數]** `nextMarking`
+  - 🔹 **[變數]** `match`
+  - 🔹 **[變數]** `ready`
+  - 🔹 **[變數]** `probe`
+  - 🔹 **[變數]** `ext`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `trajectory`
+  - 🔹 **[變數]** `head`
+  - 🔹 **[變數]** `chainId`
+  - 🔹 **[變數]** `plugin`
+  - 🔹 **[變數]** `elements`
+  - 🔹 **[變數]** `lib`
+  - 🔹 **[變數]** `idListModule`
+  - 🔹 **[變數]** `rangeSpec`
+  - 🔹 **[變數]** `query`
+  - 🔹 **[變數]** `sel`
+  - 🔹 **[變數]** `viewerUrl`
+  - 🔹 **[變數]** `model`
+  - 🔹 **[變數]** `modal`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `details`
+  - 🔹 **[變數]** `modalViewerSlot`
+  - 🔹 **[變數]** `structureUrl`
+  - 🔹 **[變數]** `detailHtml`
+  - 🔹 **[變數]** `ligands`
+  - 🔹 **[變數]** `viewerContainer`
+  - 🔹 **[變數]** `modal`
+  - 🔹 **[變數]** `viewerContainer`
+
+### 📄 檔案: `./static/js/cell_go_viewer2.js`
+  - 🔹 **[變數]** `state`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `svgText`
+  - 🔹 **[變數]** `slNodes`
+  - 🔹 **[變數]** `res`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `grouped`
+  - 🔹 **[變數]** `aspect`
+  - 🔹 **[變數]** `ul`
+  - 🔹 **[變數]** `sortedTerms`
+  - 🔹 **[變數]** `aMapped`
+  - 🔹 **[變數]** `bMapped`
+  - 🔹 **[變數]** `aName`
+  - 🔹 **[變數]** `bName`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `rawSlIds`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `items`
+  - 🔹 **[變數]** `STEP_MS`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `prev`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `list`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `li`
+  - 🔹 **[變數]** `slIds`
+  - 🔹 **[變數]** `target`
+  - 🔹 **[變數]** `termName`
+  - 🔹 **[變數]** `path`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `slId`
+  - 🔹 **[變數]** `normalizedId`
+  - 🔹 **[變數]** `goTerms`
+  - 🔹 **[變數]** `normalizedId`
+  - 🔹 **[變數]** `results`
+  - 🔹 **[變數]** `ids`
+  - 🔹 **[變數]** `normalizedId`
+  - 🔹 **[變數]** `ids`
+  - 🔹 **[變數]** `matched`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `bbox`
+  - 🔹 **[變數]** `x`
+  - 🔹 **[變數]** `y`
+  - 🔹 **[變數]** `width`
+  - 🔹 **[變數]** `height`
+  - 🔹 **[變數]** `centerX`
+  - 🔹 **[變數]** `centerY`
+  - 🔹 **[變數]** `goHtml`
+  - 🔹 **[變數]** `goId`
+  - 🔹 **[變數]** `name`
+  - 🔹 **[變數]** `evidence`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `container`
+  - 🔹 **[變數]** `normalizedId`
+  - 🔹 **[變數]** `ids`
+  - 🔹 **[變數]** `slId`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `ids`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `data`
+  - 🔹 **[變數]** `card`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `nameEl`
+  - 🔹 **[變數]** `descriptionEl`
+  - 🔹 **[變數]** `name`
+  - 🔹 **[變數]** `description`
+  - 🔹 **[變數]** `annotation`
+  - 🔹 **[變數]** `layer`
+  - 🔹 **[變數]** `bbox`
+  - 🔹 **[變數]** `centerX`
+  - 🔹 **[變數]** `centerY`
+  - 🔹 **[變數]** `boxWidth`
+  - 🔹 **[變數]** `boxHeight`
+  - 🔹 **[變數]** `vb`
+  - 🔹 **[變數]** `x`
+  - 🔹 **[變數]** `y`
+  - 🔹 **[變數]** `ns`
+  - 🔹 **[變數]** `line`
+  - 🔹 **[變數]** `rect`
+  - 🔹 **[變數]** `title`
+  - 🔹 **[變數]** `sl`
+  - 🔹 **[變數]** `foreignObject`
+  - 🔹 **[變數]** `div`
+
+### 📄 檔案: `./static/js/network.js`
+  - 🔹 **[變數]** `cy`
+  - 🔹 **[變數]** `editMode`
+  - 🔹 **[變數]** `originalElements`
+  - 🔹 **[變數]** `complexBadges`
+  - 🔹 **[變數]** `cyContainer`
+  - 🔹 **[變數]** `layer`
+  - 🔹 **[變數]** `layer`
+  - 🔹 **[變數]** `currentIds`
+  - 🔹 **[變數]** `count`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `badge`
+  - 🔹 **[變數]** `pos`
+  - 🔹 **[變數]** `w`
+  - 🔹 **[變數]** `h`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `pmids`
+  - 🔹 **[變數]** `uniquePMIDs`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `closeBtnHtml`
+  - 🔹 **[變數]** `records`
+  - 🔹 **[變數]** `closeBtn`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `closeBtnHtml`
+  - 🔹 **[變數]** `records`
+  - 🔹 **[變數]** `pmids`
+  - 🔹 **[變數]** `closeBtn`
+  - 🔹 **[變數]** `panel`
+  - 🔹 **[變數]** `allowedTypes`
+  - 🔹 **[變數]** `url`
+  - 🔹 **[變數]** `tooltip`
+  - 🔹 **[變數]** `tooltip`
+  - 🔹 **[變數]** `first`
+  - 🔹 **[變數]** `pmids`
+  - 🔹 **[變數]** `tooltip`
+  - 🔹 **[變數]** `allowedTypes`
+  - 🔹 **[變數]** `url`
+  - 🔹 **[變數]** `button`
+  - 🔹 **[變數]** `elements`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `type`
+  - 🔹 **[變數]** `edge`
+  - 🔹 **[變數]** `source`
+  - 🔹 **[變數]** `target`
+  - 🔹 **[變數]** `interactionType`
+  - 🔹 **[變數]** `linkages`
+  - 🔹 **[變數]** `edge`
+  - 🔹 **[變數]** `source`
+  - 🔹 **[變數]** `target`
+  - 🔹 **[變數]** `interactionType`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `type`
+  - 🔹 **[變數]** `count`
+  - 🔹 **[變數]** `counter`
+  - 🔹 **[變數]** `selectedNodes`
+  - 🔹 **[變數]** `keepNodeIds`
+  - 🔹 **[變數]** `source`
+  - 🔹 **[變數]** `target`
+  - 🔹 **[變數]** `nodesBothKept`
+  - 🔹 **[變數]** `newElements`
+  - 🔹 **[變數]** `option`
+  - 🔹 **[變數]** `png`
+  - 🔹 **[變數]** `a`
+  - 🔹 **[變數]** `cyContainer`
+  - 🔹 **[變數]** `toolbar`
+  - 🔹 **[變數]** `toolbar`
+
+### 📄 檔案: `./static/js/cytoscape/cytoscape-dagre.js`
+  - 🔹 **[變數]** `e`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `n`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `defaults`
+  - 🔹 **[變數]** `assign`
+  - 🔹 **[變數]** `_len`
+  - 🔹 **[變數]** `ge`
+  - 🔹 **[變數]** `isFunction`
+  - 🔹 **[變數]** `EPSILON`
+  - 🔹 **[變數]** `len`
+  - 🔹 **[變數]** `d`
+  - 🔹 **[變數]** `_norm`
+  - 🔹 **[變數]** `dir`
+  - 🔹 **[變數]** `normal`
+  - 🔹 **[變數]** `vector`
+  - 🔹 **[變數]** `weight`
+  - 🔹 **[變數]** `distance`
+  - 🔹 **[變數]** `min`
+  - 🔹 **[變數]** `max`
+  - 🔹 **[變數]** `_iterator`
+  - 🔹 **[變數]** `p`
+  - 🔹 **[變數]** `range`
+  - 🔹 **[變數]** `fromNode`
+  - 🔹 **[變數]** `toNode`
+  - 🔹 **[變數]** `frame`
+  - 🔹 **[變數]** `coords`
+  - 🔹 **[變數]** `controlPointWeights`
+  - 🔹 **[變數]** `controlPointDistances`
+  - 🔹 **[變數]** `result`
+  - 🔹 **[變數]** `options`
+  - 🔹 **[變數]** `layout`
+  - 🔹 **[變數]** `cy`
+  - 🔹 **[變數]** `eles`
+  - 🔹 **[變數]** `getVal`
+  - 🔹 **[變數]** `bb`
+  - 🔹 **[變數]** `g`
+  - 🔹 **[變數]** `gObj`
+  - 🔹 **[變數]** `setGObj`
+  - 🔹 **[變數]** `nodes`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `node`
+  - 🔹 **[變數]** `nbb`
+  - 🔹 **[變數]** `_i`
+  - 🔹 **[變數]** `_node`
+  - 🔹 **[變數]** `edges`
+  - 🔹 **[變數]** `_i2`
+  - 🔹 **[變數]** `edge`
+  - 🔹 **[變數]** `gNodeIds`
+  - 🔹 **[變數]** `_i3`
+  - 🔹 **[變數]** `id`
+  - 🔹 **[變數]** `n`
+  - 🔹 **[變數]** `dModel`
+  - 🔹 **[變數]** `constrainPos`
+  - 🔹 **[變數]** `xPct`
+  - 🔹 **[變數]** `yPct`
+  - 🔹 **[變數]** `dModel`
+  - 🔹 **[變數]** `cyEdge`
+  - 🔹 **[變數]** `dEdge`
+  - 🔹 **[變數]** `register`
+
+### 📄 檔案: `./static/js/cytoscape/cytoscape.min.js`
+  - 🔹 **[變數]** `n`
+  - 🔹 **[變數]** `cr`
+  - 🔹 **[變數]** `is`
+
+### 📄 檔案: `./static/img/Animal_cells.svg`
+  - 🆔 **[ID 節點]** `#SL0243`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0112`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#path_1_`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0111`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0466`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0086`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0091`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#path_2_`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0138`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0198`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0090`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#Intermediate_filaments`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#Actin`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#Microtubules`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0501`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0484`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0048`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0046`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0485`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0039`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0310`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0191`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0190`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0182`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0188`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0494`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0031`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0465`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0127`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0186`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0180`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0179`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0173`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0170`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0167`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#InterMembrane`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0171`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0172`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0168`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0095`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#MitochondriaAssociatedMembranes`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0248`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0250`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0235`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0237`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0097`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0132`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0266`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0267`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0135`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0136`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0067`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0068`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0068`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0280`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0295`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0286`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0148`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0066`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0087`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#xol`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0304`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0145`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0144`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0204`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0128`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0161`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0160`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0351`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0352`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0073`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0074`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0023`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0022`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0075`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0076`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0077`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0078`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0230`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0098`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#Ergic`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0099`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0101`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0152`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0151`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0094`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0093`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0174`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0175`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0100`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0035`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0070`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0070`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0071`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0071`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0072`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - 🆔 **[ID 節點]** `#SL0069`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0158`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0547`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0473`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0206`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0205`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0118`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0154`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0061`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0062`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#SL0281`
+  - ✨ **[Class 樣式]** `.subcellular_location`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - ✨ **[Class 樣式]** `.coloured`
+  - 🆔 **[ID 節點]** `#SL0282`
+  - ✨ **[Class 樣式]** `.subcell_link`
+  - 🆔 **[ID 節點]** `#Layer_1`
+  - 🆔 **[ID 節點]** `#sib_copyright`
+  - 🆔 **[ID 節點]** `#defs750`
+  - 🆔 **[ID 節點]** `#clip1`
+  - 🆔 **[ID 節點]** `#path29`
+  - 🆔 **[ID 節點]** `#clip2`
+  - 🆔 **[ID 節點]** `#path32`
+  - 🆔 **[ID 節點]** `#clip3`
+  - 🆔 **[ID 節點]** `#path35`
+  - 🆔 **[ID 節點]** `#clip4`
+  - 🆔 **[ID 節點]** `#path38`
+  - 🆔 **[ID 節點]** `#clip5`
+  - 🆔 **[ID 節點]** `#path426`
+  - 🆔 **[ID 節點]** `#clip6`
+  - 🆔 **[ID 節點]** `#path429`
+  - 🆔 **[ID 節點]** `#clip7`
+  - 🆔 **[ID 節點]** `#path432`
+  - 🆔 **[ID 節點]** `#clip8`
+  - 🆔 **[ID 節點]** `#path820`
+  - 🆔 **[ID 節點]** `#clip9`
+  - 🆔 **[ID 節點]** `#path823`
+  - 🆔 **[ID 節點]** `#clip10`
+  - 🆔 **[ID 節點]** `#path826`
+  - 🆔 **[ID 節點]** `#clip11`
+  - 🆔 **[ID 節點]** `#path1214`
+  - 🆔 **[ID 節點]** `#clip12`
+  - 🆔 **[ID 節點]** `#path1217`
+  - 🆔 **[ID 節點]** `#clip13`
+  - 🆔 **[ID 節點]** `#path1220`
+  - 🆔 **[ID 節點]** `#radial0`
+  - 🆔 **[ID 節點]** `#stop41`
+  - 🆔 **[ID 節點]** `#stop43`
+  - 🆔 **[ID 節點]** `#stop45`
+  - 🆔 **[ID 節點]** `#stop47`
+  - 🆔 **[ID 節點]** `#stop49`
+  - 🆔 **[ID 節點]** `#stop51`
+  - 🆔 **[ID 節點]** `#stop53`
+  - 🆔 **[ID 節點]** `#stop55`
+  - 🆔 **[ID 節點]** `#stop57`
+  - 🆔 **[ID 節點]** `#stop59`
+  - 🆔 **[ID 節點]** `#stop61`
+  - 🆔 **[ID 節點]** `#stop63`
+  - 🆔 **[ID 節點]** `#stop65`
+  - 🆔 **[ID 節點]** `#stop67`
+  - 🆔 **[ID 節點]** `#stop69`
+  - 🆔 **[ID 節點]** `#stop71`
+  - 🆔 **[ID 節點]** `#stop73`
+  - 🆔 **[ID 節點]** `#stop75`
+  - 🆔 **[ID 節點]** `#stop77`
+  - 🆔 **[ID 節點]** `#stop79`
+  - 🆔 **[ID 節點]** `#stop81`
+  - 🆔 **[ID 節點]** `#stop83`
+  - 🆔 **[ID 節點]** `#stop85`
+  - 🆔 **[ID 節點]** `#stop87`
+  - 🆔 **[ID 節點]** `#stop89`
+  - 🆔 **[ID 節點]** `#stop91`
+  - 🆔 **[ID 節點]** `#stop93`
+  - 🆔 **[ID 節點]** `#stop95`
+  - 🆔 **[ID 節點]** `#stop97`
+  - 🆔 **[ID 節點]** `#stop99`
+  - 🆔 **[ID 節點]** `#stop101`
+  - 🆔 **[ID 節點]** `#stop103`
+  - 🆔 **[ID 節點]** `#stop105`
+  - 🆔 **[ID 節點]** `#stop107`
+  - 🆔 **[ID 節點]** `#stop109`
+  - 🆔 **[ID 節點]** `#stop111`
+  - 🆔 **[ID 節點]** `#stop113`
+  - 🆔 **[ID 節點]** `#stop115`
+  - 🆔 **[ID 節點]** `#stop117`
+  - 🆔 **[ID 節點]** `#stop119`
+  - 🆔 **[ID 節點]** `#stop121`
+  - 🆔 **[ID 節點]** `#stop123`
+  - 🆔 **[ID 節點]** `#stop125`
+  - 🆔 **[ID 節點]** `#stop127`
+  - 🆔 **[ID 節點]** `#stop129`
+  - 🆔 **[ID 節點]** `#stop131`
+  - 🆔 **[ID 節點]** `#stop133`
+  - 🆔 **[ID 節點]** `#stop135`
+  - 🆔 **[ID 節點]** `#stop137`
+  - 🆔 **[ID 節點]** `#stop139`
+  - 🆔 **[ID 節點]** `#stop141`
+  - 🆔 **[ID 節點]** `#stop143`
+  - 🆔 **[ID 節點]** `#stop145`
+  - 🆔 **[ID 節點]** `#stop147`
+  - 🆔 **[ID 節點]** `#stop149`
+  - 🆔 **[ID 節點]** `#stop151`
+  - 🆔 **[ID 節點]** `#stop153`
+  - 🆔 **[ID 節點]** `#stop155`
+  - 🆔 **[ID 節點]** `#stop157`
+  - 🆔 **[ID 節點]** `#stop159`
+  - 🆔 **[ID 節點]** `#stop161`
+  - 🆔 **[ID 節點]** `#stop163`
+  - 🆔 **[ID 節點]** `#stop165`
+  - 🆔 **[ID 節點]** `#stop167`
+  - 🆔 **[ID 節點]** `#stop169`
+  - 🆔 **[ID 節點]** `#stop171`
+  - 🆔 **[ID 節點]** `#stop173`
+  - 🆔 **[ID 節點]** `#stop175`
+  - 🆔 **[ID 節點]** `#stop177`
+  - 🆔 **[ID 節點]** `#stop179`
+  - 🆔 **[ID 節點]** `#stop181`
+  - 🆔 **[ID 節點]** `#stop183`
+  - 🆔 **[ID 節點]** `#stop185`
+  - 🆔 **[ID 節點]** `#stop187`
+  - 🆔 **[ID 節點]** `#stop189`
+  - 🆔 **[ID 節點]** `#stop191`
+  - 🆔 **[ID 節點]** `#stop193`
+  - 🆔 **[ID 節點]** `#stop195`
+  - 🆔 **[ID 節點]** `#stop197`
+  - 🆔 **[ID 節點]** `#stop199`
+  - 🆔 **[ID 節點]** `#stop201`
+  - 🆔 **[ID 節點]** `#stop203`
+  - 🆔 **[ID 節點]** `#stop205`
+  - 🆔 **[ID 節點]** `#stop207`
+  - 🆔 **[ID 節點]** `#stop209`
+  - 🆔 **[ID 節點]** `#stop211`
+  - 🆔 **[ID 節點]** `#stop213`
+  - 🆔 **[ID 節點]** `#stop215`
+  - 🆔 **[ID 節點]** `#stop217`
+  - 🆔 **[ID 節點]** `#stop219`
+  - 🆔 **[ID 節點]** `#stop221`
+  - 🆔 **[ID 節點]** `#stop223`
+  - 🆔 **[ID 節點]** `#stop225`
+  - 🆔 **[ID 節點]** `#stop227`
+  - 🆔 **[ID 節點]** `#stop229`
+  - 🆔 **[ID 節點]** `#stop231`
+  - 🆔 **[ID 節點]** `#stop233`
+  - 🆔 **[ID 節點]** `#stop235`
+  - 🆔 **[ID 節點]** `#stop237`
+  - 🆔 **[ID 節點]** `#stop239`
+  - 🆔 **[ID 節點]** `#stop241`
+  - 🆔 **[ID 節點]** `#stop243`
+  - 🆔 **[ID 節點]** `#stop245`
+  - 🆔 **[ID 節點]** `#stop247`
+  - 🆔 **[ID 節點]** `#stop249`
+  - 🆔 **[ID 節點]** `#stop251`
+  - 🆔 **[ID 節點]** `#stop253`
+  - 🆔 **[ID 節點]** `#stop255`
+  - 🆔 **[ID 節點]** `#stop257`
+  - 🆔 **[ID 節點]** `#stop259`
+  - 🆔 **[ID 節點]** `#stop261`
+  - 🆔 **[ID 節點]** `#stop263`
+  - 🆔 **[ID 節點]** `#stop265`
+  - 🆔 **[ID 節點]** `#stop267`
+  - 🆔 **[ID 節點]** `#stop269`
+  - 🆔 **[ID 節點]** `#stop271`
+  - 🆔 **[ID 節點]** `#stop273`
+  - 🆔 **[ID 節點]** `#stop275`
+  - 🆔 **[ID 節點]** `#stop277`
+  - 🆔 **[ID 節點]** `#stop279`
+  - 🆔 **[ID 節點]** `#stop281`
+  - 🆔 **[ID 節點]** `#stop283`
+  - 🆔 **[ID 節點]** `#stop285`
+  - 🆔 **[ID 節點]** `#stop287`
+  - 🆔 **[ID 節點]** `#stop289`
+  - 🆔 **[ID 節點]** `#stop291`
+  - 🆔 **[ID 節點]** `#stop293`
+  - 🆔 **[ID 節點]** `#stop295`
+  - 🆔 **[ID 節點]** `#stop297`
+  - 🆔 **[ID 節點]** `#stop299`
+  - 🆔 **[ID 節點]** `#stop301`
+  - 🆔 **[ID 節點]** `#stop303`
+  - 🆔 **[ID 節點]** `#stop305`
+  - 🆔 **[ID 節點]** `#stop307`
+  - 🆔 **[ID 節點]** `#stop309`
+  - 🆔 **[ID 節點]** `#stop311`
+  - 🆔 **[ID 節點]** `#stop313`
+  - 🆔 **[ID 節點]** `#stop315`
+  - 🆔 **[ID 節點]** `#stop317`
+  - 🆔 **[ID 節點]** `#stop319`
+  - 🆔 **[ID 節點]** `#stop321`
+  - 🆔 **[ID 節點]** `#stop323`
+  - 🆔 **[ID 節點]** `#stop325`
+  - 🆔 **[ID 節點]** `#stop327`
+  - 🆔 **[ID 節點]** `#stop329`
+  - 🆔 **[ID 節點]** `#stop331`
+  - 🆔 **[ID 節點]** `#stop333`
+  - 🆔 **[ID 節點]** `#stop335`
+  - 🆔 **[ID 節點]** `#stop337`
+  - 🆔 **[ID 節點]** `#stop339`
+  - 🆔 **[ID 節點]** `#stop341`
+  - 🆔 **[ID 節點]** `#stop343`
+  - 🆔 **[ID 節點]** `#stop345`
+  - 🆔 **[ID 節點]** `#stop347`
+  - 🆔 **[ID 節點]** `#stop349`
+  - 🆔 **[ID 節點]** `#stop351`
+  - 🆔 **[ID 節點]** `#stop353`
+  - 🆔 **[ID 節點]** `#stop355`
+  - 🆔 **[ID 節點]** `#stop357`
+  - 🆔 **[ID 節點]** `#stop359`
+  - 🆔 **[ID 節點]** `#stop361`
+  - 🆔 **[ID 節點]** `#stop363`
+  - 🆔 **[ID 節點]** `#stop365`
+  - 🆔 **[ID 節點]** `#stop367`
+  - 🆔 **[ID 節點]** `#stop369`
+  - 🆔 **[ID 節點]** `#stop371`
+  - 🆔 **[ID 節點]** `#stop373`
+  - 🆔 **[ID 節點]** `#stop375`
+  - 🆔 **[ID 節點]** `#stop377`
+  - 🆔 **[ID 節點]** `#stop379`
+  - 🆔 **[ID 節點]** `#stop381`
+  - 🆔 **[ID 節點]** `#stop383`
+  - 🆔 **[ID 節點]** `#stop385`
+  - 🆔 **[ID 節點]** `#stop387`
+  - 🆔 **[ID 節點]** `#stop389`
+  - 🆔 **[ID 節點]** `#stop391`
+  - 🆔 **[ID 節點]** `#stop393`
+  - 🆔 **[ID 節點]** `#stop395`
+  - 🆔 **[ID 節點]** `#stop397`
+  - 🆔 **[ID 節點]** `#stop399`
+  - 🆔 **[ID 節點]** `#stop401`
+  - 🆔 **[ID 節點]** `#stop403`
+  - 🆔 **[ID 節點]** `#stop405`
+  - 🆔 **[ID 節點]** `#stop407`
+  - 🆔 **[ID 節點]** `#stop409`
+  - 🆔 **[ID 節點]** `#stop411`
+  - 🆔 **[ID 節點]** `#stop413`
+  - 🆔 **[ID 節點]** `#stop415`
+  - 🆔 **[ID 節點]** `#stop417`
+  - 🆔 **[ID 節點]** `#stop419`
+  - 🆔 **[ID 節點]** `#stop421`
+  - 🆔 **[ID 節點]** `#stop423`
+  - 🆔 **[ID 節點]** `#radial1`
+  - 🆔 **[ID 節點]** `#stop435`
+  - 🆔 **[ID 節點]** `#stop437`
+  - 🆔 **[ID 節點]** `#stop439`
+  - 🆔 **[ID 節點]** `#stop441`
+  - 🆔 **[ID 節點]** `#stop443`
+  - 🆔 **[ID 節點]** `#stop445`
+  - 🆔 **[ID 節點]** `#stop447`
+  - 🆔 **[ID 節點]** `#stop449`
+  - 🆔 **[ID 節點]** `#stop451`
+  - 🆔 **[ID 節點]** `#stop453`
+  - 🆔 **[ID 節點]** `#stop455`
+  - 🆔 **[ID 節點]** `#stop457`
+  - 🆔 **[ID 節點]** `#stop459`
+  - 🆔 **[ID 節點]** `#stop461`
+  - 🆔 **[ID 節點]** `#stop463`
+  - 🆔 **[ID 節點]** `#stop465`
+  - 🆔 **[ID 節點]** `#stop467`
+  - 🆔 **[ID 節點]** `#stop469`
+  - 🆔 **[ID 節點]** `#stop471`
+  - 🆔 **[ID 節點]** `#stop473`
+  - 🆔 **[ID 節點]** `#stop475`
+  - 🆔 **[ID 節點]** `#stop477`
+  - 🆔 **[ID 節點]** `#stop479`
+  - 🆔 **[ID 節點]** `#stop481`
+  - 🆔 **[ID 節點]** `#stop483`
+  - 🆔 **[ID 節點]** `#stop485`
+  - 🆔 **[ID 節點]** `#stop487`
+  - 🆔 **[ID 節點]** `#stop489`
+  - 🆔 **[ID 節點]** `#stop491`
+  - 🆔 **[ID 節點]** `#stop493`
+  - 🆔 **[ID 節點]** `#stop495`
+  - 🆔 **[ID 節點]** `#stop497`
+  - 🆔 **[ID 節點]** `#stop499`
+  - 🆔 **[ID 節點]** `#stop501`
+  - 🆔 **[ID 節點]** `#stop503`
+  - 🆔 **[ID 節點]** `#stop505`
+  - 🆔 **[ID 節點]** `#stop507`
+  - 🆔 **[ID 節點]** `#stop509`
+  - 🆔 **[ID 節點]** `#stop511`
+  - 🆔 **[ID 節點]** `#stop513`
+  - 🆔 **[ID 節點]** `#stop515`
+  - 🆔 **[ID 節點]** `#stop517`
+  - 🆔 **[ID 節點]** `#stop519`
+  - 🆔 **[ID 節點]** `#stop521`
+  - 🆔 **[ID 節點]** `#stop523`
+  - 🆔 **[ID 節點]** `#stop525`
+  - 🆔 **[ID 節點]** `#stop527`
+  - 🆔 **[ID 節點]** `#stop529`
+  - 🆔 **[ID 節點]** `#stop531`
+  - 🆔 **[ID 節點]** `#stop533`
+  - 🆔 **[ID 節點]** `#stop535`
+  - 🆔 **[ID 節點]** `#stop537`
+  - 🆔 **[ID 節點]** `#stop539`
+  - 🆔 **[ID 節點]** `#stop541`
+  - 🆔 **[ID 節點]** `#stop543`
+  - 🆔 **[ID 節點]** `#stop545`
+  - 🆔 **[ID 節點]** `#stop547`
+  - 🆔 **[ID 節點]** `#stop549`
+  - 🆔 **[ID 節點]** `#stop551`
+  - 🆔 **[ID 節點]** `#stop553`
+  - 🆔 **[ID 節點]** `#stop555`
+  - 🆔 **[ID 節點]** `#stop557`
+  - 🆔 **[ID 節點]** `#stop559`
+  - 🆔 **[ID 節點]** `#stop561`
+  - 🆔 **[ID 節點]** `#stop563`
+  - 🆔 **[ID 節點]** `#stop565`
+  - 🆔 **[ID 節點]** `#stop567`
+  - 🆔 **[ID 節點]** `#stop569`
+  - 🆔 **[ID 節點]** `#stop571`
+  - 🆔 **[ID 節點]** `#stop573`
+  - 🆔 **[ID 節點]** `#stop575`
+  - 🆔 **[ID 節點]** `#stop577`
+  - 🆔 **[ID 節點]** `#stop579`
+  - 🆔 **[ID 節點]** `#stop581`
+  - 🆔 **[ID 節點]** `#stop583`
+  - 🆔 **[ID 節點]** `#stop585`
+  - 🆔 **[ID 節點]** `#stop587`
+  - 🆔 **[ID 節點]** `#stop589`
+  - 🆔 **[ID 節點]** `#stop591`
+  - 🆔 **[ID 節點]** `#stop593`
+  - 🆔 **[ID 節點]** `#stop595`
+  - 🆔 **[ID 節點]** `#stop597`
+  - 🆔 **[ID 節點]** `#stop599`
+  - 🆔 **[ID 節點]** `#stop601`
+  - 🆔 **[ID 節點]** `#stop603`
+  - 🆔 **[ID 節點]** `#stop605`
+  - 🆔 **[ID 節點]** `#stop607`
+  - 🆔 **[ID 節點]** `#stop609`
+  - 🆔 **[ID 節點]** `#stop611`
+  - 🆔 **[ID 節點]** `#stop613`
+  - 🆔 **[ID 節點]** `#stop615`
+  - 🆔 **[ID 節點]** `#stop617`
+  - 🆔 **[ID 節點]** `#stop619`
+  - 🆔 **[ID 節點]** `#stop621`
+  - 🆔 **[ID 節點]** `#stop623`
+  - 🆔 **[ID 節點]** `#stop625`
+  - 🆔 **[ID 節點]** `#stop627`
+  - 🆔 **[ID 節點]** `#stop629-6`
+  - 🆔 **[ID 節點]** `#stop631-1`
+  - 🆔 **[ID 節點]** `#stop633`
+  - 🆔 **[ID 節點]** `#stop635`
+  - 🆔 **[ID 節點]** `#stop637`
+  - 🆔 **[ID 節點]** `#stop639`
+  - 🆔 **[ID 節點]** `#stop641`
+  - 🆔 **[ID 節點]** `#stop643`
+  - 🆔 **[ID 節點]** `#stop645`
+  - 🆔 **[ID 節點]** `#stop647`
+  - 🆔 **[ID 節點]** `#stop649`
+  - 🆔 **[ID 節點]** `#stop651`
+  - 🆔 **[ID 節點]** `#stop653`
+  - 🆔 **[ID 節點]** `#stop655`
+  - 🆔 **[ID 節點]** `#stop657`
+  - 🆔 **[ID 節點]** `#stop659`
+  - 🆔 **[ID 節點]** `#stop661`
+  - 🆔 **[ID 節點]** `#stop663`
+  - 🆔 **[ID 節點]** `#stop665`
+  - 🆔 **[ID 節點]** `#stop667`
+  - 🆔 **[ID 節點]** `#stop669`
+  - 🆔 **[ID 節點]** `#stop671`
+  - 🆔 **[ID 節點]** `#stop673`
+  - 🆔 **[ID 節點]** `#stop675`
+  - 🆔 **[ID 節點]** `#stop677`
+  - 🆔 **[ID 節點]** `#stop679`
+  - 🆔 **[ID 節點]** `#stop681`
+  - 🆔 **[ID 節點]** `#stop683`
+  - 🆔 **[ID 節點]** `#stop685`
+  - 🆔 **[ID 節點]** `#stop687`
+  - 🆔 **[ID 節點]** `#stop689`
+  - 🆔 **[ID 節點]** `#stop691`
+  - 🆔 **[ID 節點]** `#stop693`
+  - 🆔 **[ID 節點]** `#stop695`
+  - 🆔 **[ID 節點]** `#stop697`
+  - 🆔 **[ID 節點]** `#stop699`
+  - 🆔 **[ID 節點]** `#stop701`
+  - 🆔 **[ID 節點]** `#stop703`
+  - 🆔 **[ID 節點]** `#stop705`
+  - 🆔 **[ID 節點]** `#stop707`
+  - 🆔 **[ID 節點]** `#stop709`
+  - 🆔 **[ID 節點]** `#stop711`
+  - 🆔 **[ID 節點]** `#stop713`
+  - 🆔 **[ID 節點]** `#stop715`
+  - 🆔 **[ID 節點]** `#stop717-0`
+  - 🆔 **[ID 節點]** `#stop719-6`
+  - 🆔 **[ID 節點]** `#stop721`
+  - 🆔 **[ID 節點]** `#stop723`
+  - 🆔 **[ID 節點]** `#stop725`
+  - 🆔 **[ID 節點]** `#stop727`
+  - 🆔 **[ID 節點]** `#stop729`
+  - 🆔 **[ID 節點]** `#stop731-1`
+  - 🆔 **[ID 節點]** `#stop733-5`
+  - 🆔 **[ID 節點]** `#stop735`
+  - 🆔 **[ID 節點]** `#stop737`
+  - 🆔 **[ID 節點]** `#stop739`
+  - 🆔 **[ID 節點]** `#stop741`
+  - 🆔 **[ID 節點]** `#stop743`
+  - 🆔 **[ID 節點]** `#stop745`
+  - 🆔 **[ID 節點]** `#stop747`
+  - 🆔 **[ID 節點]** `#stop749`
+  - 🆔 **[ID 節點]** `#stop751`
+  - 🆔 **[ID 節點]** `#stop753`
+  - 🆔 **[ID 節點]** `#stop755`
+  - 🆔 **[ID 節點]** `#stop757`
+  - 🆔 **[ID 節點]** `#stop759`
+  - 🆔 **[ID 節點]** `#stop761`
+  - 🆔 **[ID 節點]** `#stop763`
+  - 🆔 **[ID 節點]** `#stop765`
+  - 🆔 **[ID 節點]** `#stop767`
+  - 🆔 **[ID 節點]** `#stop769`
+  - 🆔 **[ID 節點]** `#stop771`
+  - 🆔 **[ID 節點]** `#stop773`
+  - 🆔 **[ID 節點]** `#stop775`
+  - 🆔 **[ID 節點]** `#stop777`
+  - 🆔 **[ID 節點]** `#stop779`
+  - 🆔 **[ID 節點]** `#stop781`
+  - 🆔 **[ID 節點]** `#stop783`
+  - 🆔 **[ID 節點]** `#stop785`
+  - 🆔 **[ID 節點]** `#stop787`
+  - 🆔 **[ID 節點]** `#stop789`
+  - 🆔 **[ID 節點]** `#stop791`
+  - 🆔 **[ID 節點]** `#stop793`
+  - 🆔 **[ID 節點]** `#stop795`
+  - 🆔 **[ID 節點]** `#stop797`
+  - 🆔 **[ID 節點]** `#stop799`
+  - 🆔 **[ID 節點]** `#stop801`
+  - 🆔 **[ID 節點]** `#stop803`
+  - 🆔 **[ID 節點]** `#stop805`
+  - 🆔 **[ID 節點]** `#stop807`
+  - 🆔 **[ID 節點]** `#stop809`
+  - 🆔 **[ID 節點]** `#stop811`
+  - 🆔 **[ID 節點]** `#stop813`
+  - 🆔 **[ID 節點]** `#stop815`
+  - 🆔 **[ID 節點]** `#stop817`
+  - 🆔 **[ID 節點]** `#radial2`
+  - 🆔 **[ID 節點]** `#stop829`
+  - 🆔 **[ID 節點]** `#stop831`
+  - 🆔 **[ID 節點]** `#stop833`
+  - 🆔 **[ID 節點]** `#stop835`
+  - 🆔 **[ID 節點]** `#stop837`
+  - 🆔 **[ID 節點]** `#stop839`
+  - 🆔 **[ID 節點]** `#stop841`
+  - 🆔 **[ID 節點]** `#stop843`
+  - 🆔 **[ID 節點]** `#stop845`
+  - 🆔 **[ID 節點]** `#stop847`
+  - 🆔 **[ID 節點]** `#stop849`
+  - 🆔 **[ID 節點]** `#stop851`
+  - 🆔 **[ID 節點]** `#stop853`
+  - 🆔 **[ID 節點]** `#stop855`
+  - 🆔 **[ID 節點]** `#stop857`
+  - 🆔 **[ID 節點]** `#stop859`
+  - 🆔 **[ID 節點]** `#stop861`
+  - 🆔 **[ID 節點]** `#stop863`
+  - 🆔 **[ID 節點]** `#stop865`
+  - 🆔 **[ID 節點]** `#stop867`
+  - 🆔 **[ID 節點]** `#stop869`
+  - 🆔 **[ID 節點]** `#stop871`
+  - 🆔 **[ID 節點]** `#stop873`
+  - 🆔 **[ID 節點]** `#stop875`
+  - 🆔 **[ID 節點]** `#stop877`
+  - 🆔 **[ID 節點]** `#stop879`
+  - 🆔 **[ID 節點]** `#stop881`
+  - 🆔 **[ID 節點]** `#stop883`
+  - 🆔 **[ID 節點]** `#stop885`
+  - 🆔 **[ID 節點]** `#stop887`
+  - 🆔 **[ID 節點]** `#stop889`
+  - 🆔 **[ID 節點]** `#stop891`
+  - 🆔 **[ID 節點]** `#stop893`
+  - 🆔 **[ID 節點]** `#stop895`
+  - 🆔 **[ID 節點]** `#stop897`
+  - 🆔 **[ID 節點]** `#stop899`
+  - 🆔 **[ID 節點]** `#stop901`
+  - 🆔 **[ID 節點]** `#stop903`
+  - 🆔 **[ID 節點]** `#stop905`
+  - 🆔 **[ID 節點]** `#stop907`
+  - 🆔 **[ID 節點]** `#stop909`
+  - 🆔 **[ID 節點]** `#stop911`
+  - 🆔 **[ID 節點]** `#stop913`
+  - 🆔 **[ID 節點]** `#stop915`
+  - 🆔 **[ID 節點]** `#stop917`
+  - 🆔 **[ID 節點]** `#stop919`
+  - 🆔 **[ID 節點]** `#stop921`
+  - 🆔 **[ID 節點]** `#stop923`
+  - 🆔 **[ID 節點]** `#stop925`
+  - 🆔 **[ID 節點]** `#stop927`
+  - 🆔 **[ID 節點]** `#stop929`
+  - 🆔 **[ID 節點]** `#stop931`
+  - 🆔 **[ID 節點]** `#stop933`
+  - 🆔 **[ID 節點]** `#stop935`
+  - 🆔 **[ID 節點]** `#stop937`
+  - 🆔 **[ID 節點]** `#stop939`
+  - 🆔 **[ID 節點]** `#stop941`
+  - 🆔 **[ID 節點]** `#stop943`
+  - 🆔 **[ID 節點]** `#stop945`
+  - 🆔 **[ID 節點]** `#stop947`
+  - 🆔 **[ID 節點]** `#stop949`
+  - 🆔 **[ID 節點]** `#stop951`
+  - 🆔 **[ID 節點]** `#stop953`
+  - 🆔 **[ID 節點]** `#stop955`
+  - 🆔 **[ID 節點]** `#stop957`
+  - 🆔 **[ID 節點]** `#stop959`
+  - 🆔 **[ID 節點]** `#stop961`
+  - 🆔 **[ID 節點]** `#stop963`
+  - 🆔 **[ID 節點]** `#stop965`
+  - 🆔 **[ID 節點]** `#stop967`
+  - 🆔 **[ID 節點]** `#stop969`
+  - 🆔 **[ID 節點]** `#stop971`
+  - 🆔 **[ID 節點]** `#stop973`
+  - 🆔 **[ID 節點]** `#stop975`
+  - 🆔 **[ID 節點]** `#stop977`
+  - 🆔 **[ID 節點]** `#stop979`
+  - 🆔 **[ID 節點]** `#stop981`
+  - 🆔 **[ID 節點]** `#stop983`
+  - 🆔 **[ID 節點]** `#stop985`
+  - 🆔 **[ID 節點]** `#stop987`
+  - 🆔 **[ID 節點]** `#stop989`
+  - 🆔 **[ID 節點]** `#stop991`
+  - 🆔 **[ID 節點]** `#stop993`
+  - 🆔 **[ID 節點]** `#stop995`
+  - 🆔 **[ID 節點]** `#stop997`
+  - 🆔 **[ID 節點]** `#stop999`
+  - 🆔 **[ID 節點]** `#stop1001`
+  - 🆔 **[ID 節點]** `#stop1003`
+  - 🆔 **[ID 節點]** `#stop1005`
+  - 🆔 **[ID 節點]** `#stop1007`
+  - 🆔 **[ID 節點]** `#stop1009`
+  - 🆔 **[ID 節點]** `#stop1011`
+  - 🆔 **[ID 節點]** `#stop1013`
+  - 🆔 **[ID 節點]** `#stop1015`
+  - 🆔 **[ID 節點]** `#stop1017`
+  - 🆔 **[ID 節點]** `#stop1019`
+  - 🆔 **[ID 節點]** `#stop1021`
+  - 🆔 **[ID 節點]** `#stop1023`
+  - 🆔 **[ID 節點]** `#stop1025`
+  - 🆔 **[ID 節點]** `#stop1027`
+  - 🆔 **[ID 節點]** `#stop1029`
+  - 🆔 **[ID 節點]** `#stop1031`
+  - 🆔 **[ID 節點]** `#stop1033`
+  - 🆔 **[ID 節點]** `#stop1035`
+  - 🆔 **[ID 節點]** `#stop1037`
+  - 🆔 **[ID 節點]** `#stop1039`
+  - 🆔 **[ID 節點]** `#stop1041`
+  - 🆔 **[ID 節點]** `#stop1043`
+  - 🆔 **[ID 節點]** `#stop1045`
+  - 🆔 **[ID 節點]** `#stop1047`
+  - 🆔 **[ID 節點]** `#stop1049`
+  - 🆔 **[ID 節點]** `#stop1051`
+  - 🆔 **[ID 節點]** `#stop1053`
+  - 🆔 **[ID 節點]** `#stop1055`
+  - 🆔 **[ID 節點]** `#stop1057`
+  - 🆔 **[ID 節點]** `#stop1059`
+  - 🆔 **[ID 節點]** `#stop1061`
+  - 🆔 **[ID 節點]** `#stop1063`
+  - 🆔 **[ID 節點]** `#stop1065`
+  - 🆔 **[ID 節點]** `#stop1067`
+  - 🆔 **[ID 節點]** `#stop1069`
+  - 🆔 **[ID 節點]** `#stop1071`
+  - 🆔 **[ID 節點]** `#stop1073`
+  - 🆔 **[ID 節點]** `#stop1075`
+  - 🆔 **[ID 節點]** `#stop1077`
+  - 🆔 **[ID 節點]** `#stop1079`
+  - 🆔 **[ID 節點]** `#stop1081`
+  - 🆔 **[ID 節點]** `#stop1083`
+  - 🆔 **[ID 節點]** `#stop1085`
+  - 🆔 **[ID 節點]** `#stop1087`
+  - 🆔 **[ID 節點]** `#stop1089`
+  - 🆔 **[ID 節點]** `#stop1091`
+  - 🆔 **[ID 節點]** `#stop1093`
+  - 🆔 **[ID 節點]** `#stop1095`
+  - 🆔 **[ID 節點]** `#stop1097`
+  - 🆔 **[ID 節點]** `#stop1099`
+  - 🆔 **[ID 節點]** `#stop1101`
+  - 🆔 **[ID 節點]** `#stop1103`
+  - 🆔 **[ID 節點]** `#stop1105`
+  - 🆔 **[ID 節點]** `#stop1107`
+  - 🆔 **[ID 節點]** `#stop1109`
+  - 🆔 **[ID 節點]** `#stop1111`
+  - 🆔 **[ID 節點]** `#stop1113`
+  - 🆔 **[ID 節點]** `#stop1115`
+  - 🆔 **[ID 節點]** `#stop1117`
+  - 🆔 **[ID 節點]** `#stop1119`
+  - 🆔 **[ID 節點]** `#stop1121`
+  - 🆔 **[ID 節點]** `#stop1123`
+  - 🆔 **[ID 節點]** `#stop1125`
+  - 🆔 **[ID 節點]** `#stop1127`
+  - 🆔 **[ID 節點]** `#stop1129`
+  - 🆔 **[ID 節點]** `#stop1131`
+  - 🆔 **[ID 節點]** `#stop1133`
+  - 🆔 **[ID 節點]** `#stop1135`
+  - 🆔 **[ID 節點]** `#stop1137`
+  - 🆔 **[ID 節點]** `#stop1139`
+  - 🆔 **[ID 節點]** `#stop1141`
+  - 🆔 **[ID 節點]** `#stop1143`
+  - 🆔 **[ID 節點]** `#stop1145`
+  - 🆔 **[ID 節點]** `#stop1147`
+  - 🆔 **[ID 節點]** `#stop1149`
+  - 🆔 **[ID 節點]** `#stop1151`
+  - 🆔 **[ID 節點]** `#stop1153`
+  - 🆔 **[ID 節點]** `#stop1155`
+  - 🆔 **[ID 節點]** `#stop1157`
+  - 🆔 **[ID 節點]** `#stop1159`
+  - 🆔 **[ID 節點]** `#stop1161`
+  - 🆔 **[ID 節點]** `#stop1163`
+  - 🆔 **[ID 節點]** `#stop1165`
+  - 🆔 **[ID 節點]** `#stop1167`
+  - 🆔 **[ID 節點]** `#stop1169`
+  - 🆔 **[ID 節點]** `#stop1171`
+  - 🆔 **[ID 節點]** `#stop1173`
+  - 🆔 **[ID 節點]** `#stop1175`
+  - 🆔 **[ID 節點]** `#stop1177`
+  - 🆔 **[ID 節點]** `#stop1179`
+  - 🆔 **[ID 節點]** `#stop1181`
+  - 🆔 **[ID 節點]** `#stop1183`
+  - 🆔 **[ID 節點]** `#stop1185`
+  - 🆔 **[ID 節點]** `#stop1187`
+  - 🆔 **[ID 節點]** `#stop1189`
+  - 🆔 **[ID 節點]** `#stop1191`
+  - 🆔 **[ID 節點]** `#stop1193`
+  - 🆔 **[ID 節點]** `#stop1195`
+  - 🆔 **[ID 節點]** `#stop1197`
+  - 🆔 **[ID 節點]** `#stop1199`
+  - 🆔 **[ID 節點]** `#stop1201`
+  - 🆔 **[ID 節點]** `#stop1203`
+  - 🆔 **[ID 節點]** `#stop1205`
+  - 🆔 **[ID 節點]** `#stop1207`
+  - 🆔 **[ID 節點]** `#stop1209`
+  - 🆔 **[ID 節點]** `#stop1211`
+  - 🆔 **[ID 節點]** `#radial3`
+  - 🆔 **[ID 節點]** `#stop1223`
+  - 🆔 **[ID 節點]** `#stop1225`
+  - 🆔 **[ID 節點]** `#stop1227`
+  - 🆔 **[ID 節點]** `#stop1229`
+  - 🆔 **[ID 節點]** `#stop1231`
+  - 🆔 **[ID 節點]** `#stop1233`
+  - 🆔 **[ID 節點]** `#stop1235`
+  - 🆔 **[ID 節點]** `#stop1237`
+  - 🆔 **[ID 節點]** `#stop1239`
+  - 🆔 **[ID 節點]** `#stop1241`
+  - 🆔 **[ID 節點]** `#stop1243`
+  - 🆔 **[ID 節點]** `#stop1245`
+  - 🆔 **[ID 節點]** `#stop1247`
+  - 🆔 **[ID 節點]** `#stop1249`
+  - 🆔 **[ID 節點]** `#stop1251`
+  - 🆔 **[ID 節點]** `#stop1253`
+  - 🆔 **[ID 節點]** `#stop1255`
+  - 🆔 **[ID 節點]** `#stop1257`
+  - 🆔 **[ID 節點]** `#stop1259`
+  - 🆔 **[ID 節點]** `#stop1261`
+  - 🆔 **[ID 節點]** `#stop1263`
+  - 🆔 **[ID 節點]** `#stop1265`
+  - 🆔 **[ID 節點]** `#stop1267`
+  - 🆔 **[ID 節點]** `#stop1269`
+  - 🆔 **[ID 節點]** `#stop1271`
+  - 🆔 **[ID 節點]** `#stop1273`
+  - 🆔 **[ID 節點]** `#stop1275`
+  - 🆔 **[ID 節點]** `#stop1277`
+  - 🆔 **[ID 節點]** `#stop1279`
+  - 🆔 **[ID 節點]** `#stop1281`
+  - 🆔 **[ID 節點]** `#stop1283`
+  - 🆔 **[ID 節點]** `#stop1285`
+  - 🆔 **[ID 節點]** `#stop1287`
+  - 🆔 **[ID 節點]** `#stop1289`
+  - 🆔 **[ID 節點]** `#stop1291`
+  - 🆔 **[ID 節點]** `#stop1293`
+  - 🆔 **[ID 節點]** `#stop1295`
+  - 🆔 **[ID 節點]** `#stop1297`
+  - 🆔 **[ID 節點]** `#stop1299`
+  - 🆔 **[ID 節點]** `#stop1301`
+  - 🆔 **[ID 節點]** `#stop1303`
+  - 🆔 **[ID 節點]** `#stop1305`
+  - 🆔 **[ID 節點]** `#stop1307`
+  - 🆔 **[ID 節點]** `#stop1309`
+  - 🆔 **[ID 節點]** `#stop1311`
+  - 🆔 **[ID 節點]** `#stop1313`
+  - 🆔 **[ID 節點]** `#stop1315`
+  - 🆔 **[ID 節點]** `#stop1317`
+  - 🆔 **[ID 節點]** `#stop1319`
+  - 🆔 **[ID 節點]** `#stop1321`
+  - 🆔 **[ID 節點]** `#stop1323`
+  - 🆔 **[ID 節點]** `#stop1325`
+  - 🆔 **[ID 節點]** `#stop1327`
+  - 🆔 **[ID 節點]** `#stop1329`
+  - 🆔 **[ID 節點]** `#stop1331`
+  - 🆔 **[ID 節點]** `#stop1333`
+  - 🆔 **[ID 節點]** `#stop1335`
+  - 🆔 **[ID 節點]** `#stop1337`
+  - 🆔 **[ID 節點]** `#stop1339`
+  - 🆔 **[ID 節點]** `#stop1341`
+  - 🆔 **[ID 節點]** `#stop1343`
+  - 🆔 **[ID 節點]** `#stop1345`
+  - 🆔 **[ID 節點]** `#stop1347`
+  - 🆔 **[ID 節點]** `#stop1349`
+  - 🆔 **[ID 節點]** `#stop1351`
+  - 🆔 **[ID 節點]** `#stop1353`
+  - 🆔 **[ID 節點]** `#stop1355`
+  - 🆔 **[ID 節點]** `#stop1357`
+  - 🆔 **[ID 節點]** `#stop1359`
+  - 🆔 **[ID 節點]** `#stop1361`
+  - 🆔 **[ID 節點]** `#stop1363`
+  - 🆔 **[ID 節點]** `#stop1365`
+  - 🆔 **[ID 節點]** `#stop1367`
+  - 🆔 **[ID 節點]** `#stop1369`
+  - 🆔 **[ID 節點]** `#stop1371`
+  - 🆔 **[ID 節點]** `#stop1373`
+  - 🆔 **[ID 節點]** `#stop1375`
+  - 🆔 **[ID 節點]** `#stop1377`
+  - 🆔 **[ID 節點]** `#stop1379`
+  - 🆔 **[ID 節點]** `#stop1381`
+  - 🆔 **[ID 節點]** `#stop1383`
+  - 🆔 **[ID 節點]** `#stop1385`
+  - 🆔 **[ID 節點]** `#stop1387`
+  - 🆔 **[ID 節點]** `#stop1389`
+  - 🆔 **[ID 節點]** `#stop1391`
+  - 🆔 **[ID 節點]** `#stop1393`
+  - 🆔 **[ID 節點]** `#stop1395`
+  - 🆔 **[ID 節點]** `#stop1397`
+  - 🆔 **[ID 節點]** `#stop1399`
+  - 🆔 **[ID 節點]** `#stop1401`
+  - 🆔 **[ID 節點]** `#stop1403`
+  - 🆔 **[ID 節點]** `#stop1405`
+  - 🆔 **[ID 節點]** `#stop1407`
+  - 🆔 **[ID 節點]** `#stop1409`
+  - 🆔 **[ID 節點]** `#stop1411`
+  - 🆔 **[ID 節點]** `#stop1413`
+  - 🆔 **[ID 節點]** `#stop1415`
+  - 🆔 **[ID 節點]** `#stop1417`
+  - 🆔 **[ID 節點]** `#stop1419`
+  - 🆔 **[ID 節點]** `#stop1421`
+  - 🆔 **[ID 節點]** `#stop1423`
+  - 🆔 **[ID 節點]** `#stop1425`
+  - 🆔 **[ID 節點]** `#stop1427`
+  - 🆔 **[ID 節點]** `#stop1429`
+  - 🆔 **[ID 節點]** `#stop1431`
+  - 🆔 **[ID 節點]** `#stop1433`
+  - 🆔 **[ID 節點]** `#stop1435`
+  - 🆔 **[ID 節點]** `#stop1437`
+  - 🆔 **[ID 節點]** `#stop1439`
+  - 🆔 **[ID 節點]** `#stop1441`
+  - 🆔 **[ID 節點]** `#stop1443`
+  - 🆔 **[ID 節點]** `#stop1445`
+  - 🆔 **[ID 節點]** `#stop1447`
+  - 🆔 **[ID 節點]** `#stop1449`
+  - 🆔 **[ID 節點]** `#stop1451`
+  - 🆔 **[ID 節點]** `#stop1453`
+  - 🆔 **[ID 節點]** `#stop1455`
+  - 🆔 **[ID 節點]** `#stop1457`
+  - 🆔 **[ID 節點]** `#stop1459`
+  - 🆔 **[ID 節點]** `#stop1461`
+  - 🆔 **[ID 節點]** `#stop1463`
+  - 🆔 **[ID 節點]** `#stop1465`
+  - 🆔 **[ID 節點]** `#stop1467`
+  - 🆔 **[ID 節點]** `#stop1469`
+  - 🆔 **[ID 節點]** `#stop1471`
+  - 🆔 **[ID 節點]** `#stop1473`
+  - 🆔 **[ID 節點]** `#stop1475`
+  - 🆔 **[ID 節點]** `#stop1477`
+  - 🆔 **[ID 節點]** `#stop1479`
+  - 🆔 **[ID 節點]** `#stop1481`
+  - 🆔 **[ID 節點]** `#stop1483`
+  - 🆔 **[ID 節點]** `#stop1485`
+  - 🆔 **[ID 節點]** `#stop1487`
+  - 🆔 **[ID 節點]** `#stop1489`
+  - 🆔 **[ID 節點]** `#stop1491`
+  - 🆔 **[ID 節點]** `#stop1493`
+  - 🆔 **[ID 節點]** `#stop1495`
+  - 🆔 **[ID 節點]** `#stop1497`
+  - 🆔 **[ID 節點]** `#stop1499`
+  - 🆔 **[ID 節點]** `#stop1501`
+  - 🆔 **[ID 節點]** `#stop1503`
+  - 🆔 **[ID 節點]** `#stop1505`
+  - 🆔 **[ID 節點]** `#stop1507`
+  - 🆔 **[ID 節點]** `#stop1509`
+  - 🆔 **[ID 節點]** `#stop1511`
+  - 🆔 **[ID 節點]** `#stop1513`
+  - 🆔 **[ID 節點]** `#stop1515`
+  - 🆔 **[ID 節點]** `#stop1517`
+  - 🆔 **[ID 節點]** `#stop1519`
+  - 🆔 **[ID 節點]** `#stop1521`
+  - 🆔 **[ID 節點]** `#stop1523`
+  - 🆔 **[ID 節點]** `#stop1525`
+  - 🆔 **[ID 節點]** `#stop1527`
+  - 🆔 **[ID 節點]** `#stop1529`
+  - 🆔 **[ID 節點]** `#stop1531`
+  - 🆔 **[ID 節點]** `#stop1533`
+  - 🆔 **[ID 節點]** `#stop1535`
+  - 🆔 **[ID 節點]** `#stop1537`
+  - 🆔 **[ID 節點]** `#stop1539`
+  - 🆔 **[ID 節點]** `#stop1541`
+  - 🆔 **[ID 節點]** `#stop1543`
+  - 🆔 **[ID 節點]** `#stop1545`
+  - 🆔 **[ID 節點]** `#stop1547`
+  - 🆔 **[ID 節點]** `#stop1549`
+  - 🆔 **[ID 節點]** `#stop1551`
+  - 🆔 **[ID 節點]** `#stop1553`
+  - 🆔 **[ID 節點]** `#stop1555`
+  - 🆔 **[ID 節點]** `#stop1557`
+  - 🆔 **[ID 節點]** `#stop1559`
+  - 🆔 **[ID 節點]** `#stop1561`
+  - 🆔 **[ID 節點]** `#stop1563`
+  - 🆔 **[ID 節點]** `#stop1565`
+  - 🆔 **[ID 節點]** `#stop1567`
+  - 🆔 **[ID 節點]** `#stop1569`
+  - 🆔 **[ID 節點]** `#stop1571`
+  - 🆔 **[ID 節點]** `#stop1573`
+  - 🆔 **[ID 節點]** `#stop1575`
+  - 🆔 **[ID 節點]** `#stop1577`
+  - 🆔 **[ID 節點]** `#stop1579`
+  - 🆔 **[ID 節點]** `#stop1581`
+  - 🆔 **[ID 節點]** `#stop1583`
+  - 🆔 **[ID 節點]** `#stop1585`
+  - 🆔 **[ID 節點]** `#stop1587`
+  - 🆔 **[ID 節點]** `#stop1589`
+  - 🆔 **[ID 節點]** `#stop1591`
+  - 🆔 **[ID 節點]** `#stop1593`
+  - 🆔 **[ID 節點]** `#stop1595`
+  - 🆔 **[ID 節點]** `#stop1597`
+  - 🆔 **[ID 節點]** `#stop1599`
+  - 🆔 **[ID 節點]** `#stop1601`
+  - 🆔 **[ID 節點]** `#stop1603`
+  - 🆔 **[ID 節點]** `#stop1605`
+  - 🆔 **[ID 節點]** `#radialGradient4226`
+  - 🆔 **[ID 節點]** `#linearGradient4224`
+  - 🆔 **[ID 節點]** `#SwissBioPics_logo`
+  - 🆔 **[ID 節點]** `#SVGID_1_`
+  - 🆔 **[ID 節點]** `#stop629`
+  - 🆔 **[ID 節點]** `#stop631`
+  - 🆔 **[ID 節點]** `#path634`
+  - 🆔 **[ID 節點]** `#g676`
+  - 🆔 **[ID 節點]** `#g650`
+  - 🆔 **[ID 節點]** `#path636`
+  - 🆔 **[ID 節點]** `#path638`
+  - 🆔 **[ID 節點]** `#path640`
+  - 🆔 **[ID 節點]** `#path642`
+  - 🆔 **[ID 節點]** `#path644`
+  - 🆔 **[ID 節點]** `#path646`
+  - 🆔 **[ID 節點]** `#path648`
+  - 🆔 **[ID 節點]** `#path652`
+  - 🆔 **[ID 節點]** `#path654`
+  - 🆔 **[ID 節點]** `#path656`
+  - 🆔 **[ID 節點]** `#path658`
+  - 🆔 **[ID 節點]** `#path660`
+  - 🆔 **[ID 節點]** `#path662`
+  - 🆔 **[ID 節點]** `#path664`
+  - 🆔 **[ID 節點]** `#path666`
+  - 🆔 **[ID 節點]** `#path668`
+  - 🆔 **[ID 節點]** `#path670`
+  - 🆔 **[ID 節點]** `#path672`
+  - 🆔 **[ID 節點]** `#path674`
+  - 🆔 **[ID 節點]** `#path678`
+  - 🆔 **[ID 節點]** `#g703`
+  - 🆔 **[ID 節點]** `#Trans_Golgi_1_`
+  - 🆔 **[ID 節點]** `#path680`
+  - 🆔 **[ID 節點]** `#ellipse682`
+  - 🆔 **[ID 節點]** `#ellipse684`
+  - 🆔 **[ID 節點]** `#ellipse686`
+  - 🆔 **[ID 節點]** `#ellipse688`
+  - 🆔 **[ID 節點]** `#ellipse690`
+  - 🆔 **[ID 節點]** `#ellipse692`
+  - 🆔 **[ID 節點]** `#path695`
+  - 🆔 **[ID 節點]** `#path697`
+  - 🆔 **[ID 節點]** `#ellipse699`
+  - 🆔 **[ID 節點]** `#path701`
+  - 🆔 **[ID 節點]** `#polygon705`
+  - 🆔 **[ID 節點]** `#sib_logo`
+  - 🆔 **[ID 節點]** `#g1612`
+  - 🆔 **[ID 節點]** `#path1610`
+  - 🆔 **[ID 節點]** `#g1620`
+  - 🆔 **[ID 節點]** `#g1618`
+  - 🆔 **[ID 節點]** `#g1616`
+  - 🆔 **[ID 節點]** `#path1614`
+  - 🆔 **[ID 節點]** `#g1628`
+  - 🆔 **[ID 節點]** `#g1626`
+  - 🆔 **[ID 節點]** `#g1624`
+  - 🆔 **[ID 節點]** `#path1622`
+  - 🆔 **[ID 節點]** `#g1636`
+  - 🆔 **[ID 節點]** `#g1634`
+  - 🆔 **[ID 節點]** `#g1632`
+  - 🆔 **[ID 節點]** `#path1630`
+  - 🆔 **[ID 節點]** `#g1644`
+  - 🆔 **[ID 節點]** `#g1642`
+  - 🆔 **[ID 節點]** `#g1640`
+  - 🆔 **[ID 節點]** `#path1638`
+
+### 📄 檔案: `./static/molstar/molstar.css`
+  - 🎨 **[選擇器]** `.hide`
+  - 🎨 **[選擇器]** `.info`
+  - 🎨 **[選擇器]** `.label`
+  - 🎨 **[選擇器]** `.msp-25-lower-contrast-text`
+  - 🎨 **[選擇器]** `.msp-accent-bg-blue`
+  - 🎨 **[選擇器]** `.msp-accent-bg-cyan`
+  - 🎨 **[選擇器]** `.msp-accent-bg-gray`
+  - 🎨 **[選擇器]** `.msp-accent-bg-green`
+  - 🎨 **[選擇器]** `.msp-accent-bg-orange`
+  - 🎨 **[選擇器]** `.msp-accent-bg-purple`
+  - 🎨 **[選擇器]** `.msp-accent-bg-red`
+  - 🎨 **[選擇器]** `.msp-accent-color-blue`
+  - 🎨 **[選擇器]** `.msp-accent-color-cyan`
+  - 🎨 **[選擇器]** `.msp-accent-color-gray`
+  - 🎨 **[選擇器]** `.msp-accent-color-green`
+  - 🎨 **[選擇器]** `.msp-accent-color-orange`
+  - 🎨 **[選擇器]** `.msp-accent-color-purple`
+  - 🎨 **[選擇器]** `.msp-accent-color-red`
+  - 🎨 **[選擇器]** `.msp-accent-offset`
+  - 🎨 **[選擇器]** `.msp-action-menu-button`
+  - 🎨 **[選擇器]** `.msp-action-select`
+  - 🎨 **[選擇器]** `.msp-animation-viewport-controls`
+  - 🎨 **[選擇器]** `.msp-animation-viewport-controls-select`
+  - 🎨 **[選擇器]** `.msp-background-tasks`
+  - 🎨 **[選擇器]** `.msp-btn`
+  - 🎨 **[選擇器]** `.msp-btn-action`
+  - 🎨 **[選擇器]** `.msp-btn-apply-simple`
+  - 🎨 **[選擇器]** `.msp-btn-commit`
+  - 🎨 **[選擇器]** `.msp-btn-icon`
+  - 🎨 **[選擇器]** `.msp-btn-icon-small`
+  - 🎨 **[選擇器]** `.msp-btn-link`
+  - 🎨 **[選擇器]** `.msp-btn-link-toggle-off`
+  - 🎨 **[選擇器]** `.msp-btn-link-toggle-on`
+  - 🎨 **[選擇器]** `.msp-btn-tree-label`
+  - 🎨 **[選擇器]** `.msp-button-row`
+  - 🎨 **[選擇器]** `.msp-canvas`
+  - 🎨 **[選擇器]** `.msp-color-picker`
+  - 🎨 **[選擇器]** `.msp-combined-color-button`
+  - 🎨 **[選擇器]** `.msp-combined-color-swatch`
+  - 🎨 **[選擇器]** `.msp-control-button-label`
+  - 🎨 **[選擇器]** `.msp-control-col-2`
+  - 🎨 **[選擇器]** `.msp-control-current`
+  - 🎨 **[選擇器]** `.msp-control-group`
+  - 🎨 **[選擇器]** `.msp-control-group-children`
+  - 🎨 **[選擇器]** `.msp-control-group-expander`
+  - 🎨 **[選擇器]** `.msp-control-group-footer`
+  - 🎨 **[選擇器]** `.msp-control-group-header`
+  - 🎨 **[選擇器]** `.msp-control-group-presets-wrapper`
+  - 🎨 **[選擇器]** `.msp-control-group-wrapper`
+  - 🎨 **[選擇器]** `.msp-control-offset`
+  - 🎨 **[選擇器]** `.msp-control-row`
+  - 🎨 **[選擇器]** `.msp-control-row-ctrl`
+  - 🎨 **[選擇器]** `.msp-control-row-text`
+  - 🎨 **[選擇器]** `.msp-control-text-area-wrapper`
+  - 🎨 **[選擇器]** `.msp-control-top-offset`
+  - 🎨 **[選擇器]** `.msp-control-twoline`
+  - 🎨 **[選擇器]** `.msp-controls-section`
+  - 🎨 **[選擇器]** `.msp-copy-image-wrapper`
+  - 🎨 **[選擇器]** `.msp-current-header`
+  - 🎨 **[選擇器]** `.msp-data-beh`
+  - 🎨 **[選擇器]** `.msp-default-bg`
+  - 🎨 **[選擇器]** `.msp-description`
+  - 🎨 **[選擇器]** `.msp-drag-drop-overlay`
+  - 🎨 **[選擇器]** `.msp-empty-control`
+  - 🎨 **[選擇器]** `.msp-entity-badge`
+  - 🎨 **[選擇器]** `.msp-expandable-group-color-stripe`
+  - 🎨 **[選擇器]** `.msp-flex-item`
+  - 🎨 **[選擇器]** `.msp-help-description`
+  - 🎨 **[選擇器]** `.msp-help-legend`
+  - 🎨 **[選擇器]** `.msp-help-row`
+  - 🎨 **[選擇器]** `.msp-help-text`
+  - 🎨 **[選擇器]** `.msp-highlight-info`
+  - 🎨 **[選擇器]** `.msp-highlight-info-additional`
+  - 🎨 **[選擇器]** `.msp-highlight-info-hr`
+  - 🎨 **[選擇器]** `.msp-highlight-markdown-row`
+  - 🎨 **[選擇器]** `.msp-highlight-simple-row`
+  - 🎨 **[選擇器]** `.msp-highlight-toast-wrapper`
+  - 🎨 **[選擇器]** `.msp-hover-box-body`
+  - 🎨 **[選擇器]** `.msp-hover-box-spacer`
+  - 🎨 **[選擇器]** `.msp-hover-box-wrapper`
+  - 🎨 **[選擇器]** `.msp-icon`
+  - 🎨 **[選擇器]** `.msp-icon-inline`
+  - 🎨 **[選擇器]** `.msp-image-preview`
+  - 🎨 **[選擇器]** `.msp-layout-bottom`
+  - 🎨 **[選擇器]** `.msp-layout-expanded`
+  - 🎨 **[選擇器]** `.msp-layout-left`
+  - 🎨 **[選擇器]** `.msp-layout-main`
+  - 🎨 **[選擇器]** `.msp-layout-region`
+  - 🎨 **[選擇器]** `.msp-layout-right`
+  - 🎨 **[選擇器]** `.msp-layout-scrollable`
+  - 🎨 **[選擇器]** `.msp-layout-standard`
+  - 🎨 **[選擇器]** `.msp-layout-standard-landscape`
+  - 🎨 **[選擇器]** `.msp-layout-standard-outside`
+  - 🎨 **[選擇器]** `.msp-layout-standard-portrait`
+  - 🎨 **[選擇器]** `.msp-layout-standard-reactive`
+  - 🎨 **[選擇器]** `.msp-layout-static`
+  - 🎨 **[選擇器]** `.msp-layout-top`
+  - 🎨 **[選擇器]** `.msp-left-panel-controls-button-data-dirty`
+  - 🎨 **[選擇器]** `.msp-left-panel-controls-buttons`
+  - 🎨 **[選擇器]** `.msp-left-panel-controls-buttons-bottom`
+  - 🎨 **[選擇器]** `.msp-list-unstyled`
+  - 🎨 **[選擇器]** `.msp-loader-msp-btn-file`
+  - 🎨 **[選擇器]** `.msp-log`
+  - 🎨 **[選擇器]** `.msp-log-entry`
+  - 🎨 **[選擇器]** `.msp-log-entry-badge`
+  - 🎨 **[選擇器]** `.msp-log-entry-error`
+  - 🎨 **[選擇器]** `.msp-log-entry-info`
+  - 🎨 **[選擇器]** `.msp-log-entry-message`
+  - 🎨 **[選擇器]** `.msp-log-entry-warning`
+  - 🎨 **[選擇器]** `.msp-log-timestamp`
+  - 🎨 **[選擇器]** `.msp-log-wrap`
+  - 🎨 **[選擇器]** `.msp-logo`
+  - 🎨 **[選擇器]** `.msp-mapped-parameter-group`
+  - 🎨 **[選擇器]** `.msp-material-icon`
+  - 🎨 **[選擇器]** `.msp-no-overflow`
+  - 🎨 **[選擇器]** `.msp-no-webgl`
+  - 🎨 **[選擇器]** `.msp-overlay-tasks`
+  - 🎨 **[選擇器]** `.msp-panel-description-content`
+  - 🎨 **[選擇器]** `.msp-param-object-list-item`
+  - 🎨 **[選擇器]** `.msp-plugin`
+  - 🎨 **[選擇器]** `.msp-plugin-content`
+  - 🎨 **[選擇器]** `.msp-plugin-init-error`
+  - 🎨 **[選擇器]** `.msp-plugin-layout_controls`
+  - 🎨 **[選擇器]** `.msp-representation-entry`
+  - 🎨 **[選擇器]** `.msp-row-text`
+  - 🎨 **[選擇器]** `.msp-scrollable`
+  - 🎨 **[選擇器]** `.msp-scrollable-container`
+  - 🎨 **[選擇器]** `.msp-section-header`
+  - 🎨 **[選擇器]** `.msp-selection-viewport-controls`
+  - 🎨 **[選擇器]** `.msp-selection-viewport-controls-actions`
+  - 🎨 **[選擇器]** `.msp-semi-transparent-background`
+  - 🎨 **[選擇器]** `.msp-sequence`
+  - 🎨 **[選擇器]** `.msp-sequence-chain-label`
+  - 🎨 **[選擇器]** `.msp-sequence-label`
+  - 🎨 **[選擇器]** `.msp-sequence-missing`
+  - 🎨 **[選擇器]** `.msp-sequence-number`
+  - 🎨 **[選擇器]** `.msp-sequence-number-long`
+  - 🎨 **[選擇器]** `.msp-sequence-number-long-negative`
+  - 🎨 **[選擇器]** `.msp-sequence-number-negative`
+  - 🎨 **[選擇器]** `.msp-sequence-present`
+  - 🎨 **[選擇器]** `.msp-sequence-residue-focused`
+  - 🎨 **[選擇器]** `.msp-sequence-residue-long`
+  - 🎨 **[選擇器]** `.msp-sequence-residue-long-begin`
+  - 🎨 **[選擇器]** `.msp-sequence-select`
+  - 🎨 **[選擇器]** `.msp-sequence-wrapper`
+  - 🎨 **[選擇器]** `.msp-sequence-wrapper-non-empty`
+  - 🎨 **[選擇器]** `.msp-shape-empty`
+  - 🎨 **[選擇器]** `.msp-shape-filled`
+  - 🎨 **[選擇器]** `.msp-simple-help-section`
+  - 🎨 **[選擇器]** `.msp-slider-base`
+  - 🎨 **[選擇器]** `.msp-slider-base-disabled`
+  - 🎨 **[選擇器]** `.msp-slider-base-dot`
+  - 🎨 **[選擇器]** `.msp-slider-base-dot-active`
+  - 🎨 **[選擇器]** `.msp-slider-base-handle`
+  - 🎨 **[選擇器]** `.msp-slider-base-mark`
+  - 🎨 **[選擇器]** `.msp-slider-base-mark-text`
+  - 🎨 **[選擇器]** `.msp-slider-base-mark-text-active`
+  - 🎨 **[選擇器]** `.msp-slider-base-rail`
+  - 🎨 **[選擇器]** `.msp-slider-base-step`
+  - 🎨 **[選擇器]** `.msp-slider-base-track`
+  - 🎨 **[選擇器]** `.msp-snapshot-description-wrapper`
+  - 🎨 **[選擇器]** `.msp-state-image-row`
+  - 🎨 **[選擇器]** `.msp-state-list`
+  - 🎨 **[選擇器]** `.msp-state-snapshot-animation-button`
+  - 🎨 **[選擇器]** `.msp-state-snapshot-animation-slider`
+  - 🎨 **[選擇器]** `.msp-state-snapshot-viewport-controls`
+  - 🎨 **[選擇器]** `.msp-svg-text`
+  - 🎨 **[選擇器]** `.msp-table-legend-color`
+  - 🎨 **[選擇器]** `.msp-table-legend-text`
+  - 🎨 **[選擇器]** `.msp-task-state`
+  - 🎨 **[選擇器]** `.msp-text-area-wrapper`
+  - 🎨 **[選擇器]** `.msp-toast-container`
+  - 🎨 **[選擇器]** `.msp-toast-entry`
+  - 🎨 **[選擇器]** `.msp-toast-hide`
+  - 🎨 **[選擇器]** `.msp-toast-message`
+  - 🎨 **[選擇器]** `.msp-toast-title`
+  - 🎨 **[選擇器]** `.msp-traj-controls`
+  - 🎨 **[選擇器]** `.msp-transform-apply`
+  - 🎨 **[選擇器]** `.msp-transform-apply-wider`
+  - 🎨 **[選擇器]** `.msp-transform-apply-wrap`
+  - 🎨 **[選擇器]** `.msp-transform-default-params`
+  - 🎨 **[選擇器]** `.msp-transform-header`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-blue`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-cyan`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-gray`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-green`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-orange`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-purple`
+  - 🎨 **[選擇器]** `.msp-transform-header-brand-red`
+  - 🎨 **[選擇器]** `.msp-transform-refresh`
+  - 🎨 **[選擇器]** `.msp-transform-update-wrapper-collapsed`
+  - 🎨 **[選擇器]** `.msp-transform-wrapper`
+  - 🎨 **[選擇器]** `.msp-transformer-wrapper`
+  - 🎨 **[選擇器]** `.msp-transparent-bg`
+  - 🎨 **[選擇器]** `.msp-tree-row`
+  - 🎨 **[選擇器]** `.msp-type-class-Behavior`
+  - 🎨 **[選擇器]** `.msp-type-class-Data`
+  - 🎨 **[選擇器]** `.msp-type-class-Group`
+  - 🎨 **[選擇器]** `.msp-type-class-Object`
+  - 🎨 **[選擇器]** `.msp-type-class-Representation3D`
+  - 🎨 **[選擇器]** `.msp-type-class-Root`
+  - 🎨 **[選擇器]** `.msp-viewport`
+  - 🎨 **[選擇器]** `.msp-viewport-controls`
+  - 🎨 **[選擇器]** `.msp-viewport-controls-buttons`
+  - 🎨 **[選擇器]** `.msp-viewport-controls-panel`
+  - 🎨 **[選擇器]** `.msp-viewport-controls-panel-controls`
+  - 🎨 **[選擇器]** `.msp-viewport-expanded`
+  - 🎨 **[選擇器]** `.msp-viewport-top-left-controls`
+  - 🎨 **[選擇器]** `.show`
+
+### 📄 檔案: `./static/molstar/molstar.js`
+  - 🔹 **[變數]** `molstar`
+  - 🔹 **[變數]** `k`
+  - 🔹 **[變數]** `ye`
+  - 🔹 **[變數]** `k`
+  - 🔹 **[變數]** `Fr`
+  - 🔹 **[變數]** `RAe`
+  - 🔹 **[變數]** `destructors`
+  - 🔹 **[變數]** `Ese`
+  - 🔹 **[變數]** `rv`
+  - 🔹 **[變數]** `ret`
+  - 🔹 **[變數]** `Nw`
+  - 🔹 **[變數]** `$n`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `Sie`
+  - 🔹 **[變數]** `s`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `dae`
+  - 🔹 **[變數]** `bHt`
+  - 🔹 **[變數]** `S`
+  - 🔹 **[變數]** `me`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `a`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `$g`
+  - 🔹 **[變數]** `Mpe`
+  - 🔹 **[變數]** `kpe`
+  - 🔹 **[變數]** `Vpe`
+  - 🔹 **[變數]** `Hpe`
+  - 🔹 **[變數]** `_pe`
+  - 🔹 **[變數]** `Ype`
+  - 🔹 **[變數]** `Ope`
+  - 🔹 **[變數]** `Jpe`
+  - 🔹 **[變數]** `Kpe`
+  - 🔹 **[變數]** `zpe`
+  - 🔹 **[變數]** `jpe`
+  - 🔹 **[變數]** `Wpe`
+  - 🔹 **[變數]** `Zpe`
+  - 🔹 **[變數]** `qpe`
+  - 🔹 **[變數]** `Xpe`
+  - 🔹 **[變數]** `$pe`
+  - 🔹 **[變數]** `efe`
+  - 🔹 **[變數]** `tfe`
+  - 🔹 **[變數]** `rfe`
+  - 🔹 **[變數]** `nfe`
+  - 🔹 **[變數]** `ofe`
+  - 🔹 **[變數]** `ife`
+  - 🔹 **[變數]** `afe`
+  - 🔹 **[變數]** `Afe`
+  - 🔹 **[變數]** `sfe`
+  - 🔹 **[變數]** `cfe`
+  - 🔹 **[變數]** `lfe`
+  - 🔹 **[變數]** `ufe`
+  - 🔹 **[變數]** `gfe`
+  - 🔹 **[變數]** `mfe`
+  - 🔹 **[變數]** `dfe`
+  - 🔹 **[變數]** `pfe`
+  - 🔹 **[變數]** `ffe`
+  - 🔹 **[變數]** `Bfe`
+  - 🔹 **[變數]** `Ife`
+  - 🔹 **[變數]** `Cfe`
+  - 🔹 **[變數]** `hfe`
+  - 🔹 **[變數]** `Qfe`
+  - 🔹 **[變數]** `yfe`
+  - 🔹 **[變數]** `Efe`
+  - 🔹 **[變數]** `bfe`
+  - 🔹 **[變數]** `xfe`
+  - 🔹 **[變數]** `Sfe`
+  - 🔹 **[變數]** `Dfe`
+  - 🔹 **[變數]** `vfe`
+  - 🔹 **[變數]** `Ffe`
+  - 🔹 **[變數]** `wfe`
+  - 🔹 **[變數]** `Rfe`
+  - 🔹 **[變數]** `Ufe`
+  - 🔹 **[變數]** `Gfe`
+  - 🔹 **[變數]** `o`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `AXe`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `o`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `go`
+  - 🔹 **[變數]** `b$e`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `q0e`
+  - 🔹 **[變數]** `X0e`
+  - 🔹 **[變數]** `TAt`
+  - 🔹 **[變數]** `$Se`
+  - 🔹 **[變數]** `eDe`
+  - 🔹 **[變數]** `rDe`
+  - 🔹 **[變數]** `nDe`
+  - 🔹 **[變數]** `oDe`
+  - 🔹 **[變數]** `iDe`
+  - 🔹 **[變數]** `aDe`
+  - 🔹 **[變數]** `ADe`
+  - 🔹 **[變數]** `cDe`
+  - 🔹 **[變數]** `dDe`
+  - 🔹 **[變數]** `fDe`
+  - 🔹 **[變數]** `tV`
+  - 🔹 **[變數]** `CDe`
+  - 🔹 **[變數]** `hDe`
+  - 🔹 **[變數]** `fZ`
+  - 🔹 **[變數]** `nV`
+  - 🔹 **[變數]** `oV`
+  - 🔹 **[變數]** `bDe`
+  - 🔹 **[變數]** `AV`
+  - 🔹 **[變數]** `Kgt`
+  - 🔹 **[變數]** `$gt`
+  - 🔹 **[變數]** `GDe`
+  - 🔹 **[變數]** `rmt`
+  - 🔹 **[變數]** `MDe`
+  - 🔹 **[變數]** `pV`
+  - 🔹 **[變數]** `VDe`
+  - 🔹 **[變數]** `HDe`
+  - 🔹 **[變數]** `_De`
+  - 🔹 **[變數]** `zmt`
+  - 🔹 **[變數]** `Zc`
+  - 🔹 **[變數]** `JRe`
+  - 🔹 **[變數]** `pyt`
+  - 🔹 **[變數]** `yyt`
+  - 🔹 **[變數]** `Syt`
+  - 🔹 **[變數]** `yUe`
+  - 🔹 **[變數]** `Uyt`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `hee`
+  - 🔹 **[變數]** `Ree`
+  - 🔹 **[變數]** `o`
+  - 🔹 **[變數]** `c`
+  - 🔹 **[變數]** `c`
+  - 🔹 **[變數]** `o`
+  - 🔹 **[變數]** `Gee`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `Ng`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `c`
+  - 🔹 **[變數]** `Le`
+  - 🔹 **[變數]** `Re`
+  - 🔹 **[變數]** `n`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `i`
+  - 🔹 **[變數]** `s`
+  - 🔹 **[變數]** `c`
+  - 🔹 **[變數]** `$E`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `o`
+  - 🔹 **[變數]** `Iu`
+  - 🔹 **[變數]** `DMt`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `r`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `a`
+  - 🔹 **[變數]** `o`
+  - 🔹 **[變數]** `I`
+  - 🔹 **[變數]** `I`
+  - 🔹 **[變數]** `t`
+  - 🔹 **[變數]** `ST`
+  - 🔹 **[變數]** `A`
+  - 🔹 **[變數]** `r`
+
+### 📄 檔案: `./templates/index.html`
+  - ✨ **[Class 樣式]** `.topbar`
+  - ✨ **[Class 樣式]** `.brand`
+  - ✨ **[Class 樣式]** `.brand-mark`
+  - ✨ **[Class 樣式]** `.brand-text`
+  - ✨ **[Class 樣式]** `.category-buttons`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.ubiquitin-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.e1-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.e2-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.e3-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.dub-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.ubl-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - ✨ **[Class 樣式]** `.class-btn`
+  - 🆔 **[ID 節點]** `#searchForm`
+  - ✨ **[Class 樣式]** `.searchbar`
+  - 🆔 **[ID 節點]** `#searchInput`
+  - ✨ **[Class 樣式]** `.layout`
+  - ✨ **[Class 樣式]** `.results-pane`
+  - ✨ **[Class 樣式]** `.pane-title`
+  - ✨ **[Class 樣式]** `.filter-panel`
+  - 🆔 **[ID 節點]** `#subfamily-filters`
+  - 🆔 **[ID 節點]** `#resultsList`
+  - ✨ **[Class 樣式]** `.results-list`
+  - 🆔 **[ID 節點]** `#detailPane`
+  - ✨ **[Class 樣式]** `.detail-pane`
+  - ✨ **[Class 樣式]** `.empty-state`
+  - ✨ **[Class 樣式]** `.footer-note`
+  - 🆔 **[ID 節點]** `#domainExplorerModal`
+  - ✨ **[Class 樣式]** `.domain-explorer-modal`
+  - ✨ **[Class 樣式]** `.domain-explorer-window`
+  - ✨ **[Class 樣式]** `.domain-explorer-header`
+  - ✨ **[Class 樣式]** `.icon-btn`
+  - ✨ **[Class 樣式]** `.domain-explorer-body`
+  - ✨ **[Class 樣式]** `.domain-explorer-left`
+  - 🆔 **[ID 節點]** `#domainExplorerTrack`
+  - ✨ **[Class 樣式]** `.domain-explorer-track`
+  - 🆔 **[ID 節點]** `#domainExplorerInfo`
+  - ✨ **[Class 樣式]** `.domain-explorer-info`
+  - ✨ **[Class 樣式]** `.domain-explorer-right`
+  - ✨ **[Class 樣式]** `.domain-explorer-pdb-header`
+  - 🆔 **[ID 節點]** `#domainExplorerPDB`
+  - ✨ **[Class 樣式]** `.domain-explorer-pdb`
+
+### 📄 檔案: `./templates/network.html`
+  - 🆔 **[ID 節點]** `#toolbar`
+  - 🆔 **[ID 節點]** `#editModeBtn`
+  - 🆔 **[ID 節點]** `#nodeLegend`
+  - ✨ **[Class 樣式]** `.legend-title`
+  - ✨ **[Class 樣式]** `.legend-items`
+  - ✨ **[Class 樣式]** `.legend-item`
+  - ✨ **[Class 樣式]** `.legend-shape`
+  - ✨ **[Class 樣式]** `.legend-e1`
+  - ✨ **[Class 樣式]** `.legend-text`
+  - ✨ **[Class 樣式]** `.legend-item`
+  - ✨ **[Class 樣式]** `.legend-shape`
+  - ✨ **[Class 樣式]** `.legend-e2`
+  - ✨ **[Class 樣式]** `.legend-text`
+  - ✨ **[Class 樣式]** `.legend-item`
+  - ✨ **[Class 樣式]** `.legend-shape`
+  - ✨ **[Class 樣式]** `.legend-e3`
+  - ✨ **[Class 樣式]** `.legend-text`
+  - ✨ **[Class 樣式]** `.legend-item`
+  - ✨ **[Class 樣式]** `.legend-shape`
+  - ✨ **[Class 樣式]** `.legend-substrate`
+  - ✨ **[Class 樣式]** `.legend-text`
+  - ✨ **[Class 樣式]** `.legend-item`
+  - ✨ **[Class 樣式]** `.legend-shape`
+  - ✨ **[Class 樣式]** `.legend-dub`
+  - ✨ **[Class 樣式]** `.legend-text`
+  - ✨ **[Class 樣式]** `.legend-item`
+  - ✨ **[Class 樣式]** `.legend-shape`
+  - ✨ **[Class 樣式]** `.legend-complex`
+  - ✨ **[Class 樣式]** `.legend-text`
+  - 🆔 **[ID 節點]** `#bigcy`
+
+### 📄 檔案: `./templates/cell_go_view.html`
+  - ✨ **[Class 樣式]** `.topbar`
+  - ✨ **[Class 樣式]** `.accession`
+  - ✨ **[Class 樣式]** `.hint`
+  - ✨ **[Class 樣式]** `.layout`
+  - 🆔 **[ID 節點]** `#cell-container`
+  - ✨ **[Class 樣式]** `.cell-panel`
+  - 🆔 **[ID 節點]** `#svg-loading`
+  - ✨ **[Class 樣式]** `.loading`
+  - ✨ **[Class 樣式]** `.go-panel`
+  - ✨ **[Class 樣式]** `.go-group`
+  - 🆔 **[ID 節點]** `#go-list-C`
+  - ✨ **[Class 樣式]** `.go-list`
+  - ✨ **[Class 樣式]** `.go-group`
+  - 🆔 **[ID 節點]** `#go-list-F`
+  - ✨ **[Class 樣式]** `.go-list`
+  - ✨ **[Class 樣式]** `.go-list--static`
+  - ✨ **[Class 樣式]** `.go-group`
+  - 🆔 **[ID 節點]** `#go-list-P`
+  - ✨ **[Class 樣式]** `.go-list`
+  - ✨ **[Class 樣式]** `.go-list--static`
+
+### 📄 檔案: `./templates/pdb.html`
+  - 🆔 **[ID 節點]** `#pdb-full-viewer`
+  - 🆔 **[ID 節點]** `#viewer-loading`
+  - 🆔 **[ID 節點]** `#viewer-error`
