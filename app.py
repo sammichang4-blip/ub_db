@@ -37,6 +37,7 @@ def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
 
 @app.teardown_appcontext
@@ -393,75 +394,164 @@ def get_enzyme_class(enzyme_class):
             ).fetchall()
 
     return jsonify([dict(r) for r in rows])
-
 @app.route("/api/search")
 def api_search():
-    """依 gene name / protein name / uniprot accession 模糊搜尋蛋白質；
-       若 proteins 表查無資料，依序查詢 protein_alias、gene_alias、identifier_table，
-       只要任一表查到資料就回傳（格式與原本 proteins 查詢結果相同）"""
+    """
+    模糊搜尋蛋白質：
+
+    搜尋來源：
+      1. proteins:
+         - gene_name
+         - protein_name
+         - uniprot_acc
+         - entry_name
+
+      2. protein_alias:
+         - alias_name
+
+      3. gene_alias:
+         - gene_alias
+
+    只要任一欄位符合，就找到對應 protein。
+
+    回傳：
+      - protein 基本資料
+      - 所有 protein_alias
+      - 所有 gene_alias
+
+    例如搜尋 BRCA1：
+      {
+        protein_id,
+        uniprot_acc,
+        gene_name,
+        protein_name,
+        organism,
+        protein_alias: [...],
+        gene_alias: [...]
+      }
+    """
+
     q = request.args.get("q", "").strip()
+
     if not q:
         return jsonify([])
+
     db = get_db()
     prefix = f"{q}%"
 
-    rows = db.execute(
-        """SELECT protein_id, uniprot_acc, gene_name, protein_name, organism
-           FROM proteins
-           WHERE gene_name LIKE ? COLLATE NOCASE
-             OR protein_name LIKE ? COLLATE NOCASE
-             OR uniprot_acc LIKE ? COLLATE NOCASE
-           ORDER BY gene_name""",
-        (prefix, prefix, prefix),
-    ).fetchall()
-
-    row = rows[0] if rows else None
-
-
-    if row:
-        return jsonify([dict(r) for r in rows])
-
-    # 查無資料，改查 protein_alias
+    # ============================================================
+    # 1. 同時搜尋 proteins + protein_alias + gene_alias
+    # ============================================================
 
     rows = db.execute(
-        """SELECT p.protein_id, p.uniprot_acc, p.gene_name, p.protein_name, p.organism
-           FROM protein_alias a
-           JOIN proteins p ON p.protein_id = a.protein_id
-           WHERE a.alias_name LIKE ? COLLATE NOCASE
-           ORDER BY p.gene_name""",
-        (prefix,),
+        """
+        SELECT DISTINCT
+            p.protein_id,
+            p.uniprot_acc,
+            p.gene_name,
+            p.protein_name,
+            p.organism,
+            p.entry_name
+
+        FROM proteins p
+
+        LEFT JOIN protein_alias pa
+            ON pa.protein_id = p.protein_id
+
+        LEFT JOIN gene_alias ga
+            ON ga.protein_id = p.protein_id
+
+        WHERE
+               p.gene_name LIKE ? COLLATE NOCASE
+            OR p.protein_name LIKE ? COLLATE NOCASE
+            OR p.uniprot_acc LIKE ? COLLATE NOCASE
+            OR p.entry_name LIKE ? COLLATE NOCASE
+            OR pa.alias_name LIKE ? COLLATE NOCASE
+            OR ga.gene_alias LIKE ? COLLATE NOCASE
+
+        ORDER BY p.gene_name
+        """,
+        (
+            prefix,
+            prefix,
+            prefix,
+            prefix,
+            prefix,
+            prefix,
+        ),
     ).fetchall()
 
-    if rows:
-        return jsonify([dict(r) for r in rows])
+    results = []
 
-    # 再查無資料，改查 gene_alias
-    rows = db.execute(
-        """SELECT p.protein_id, p.uniprot_acc, p.gene_name, p.protein_name, p.organism
-           FROM gene_alias a
-           JOIN proteins p ON p.protein_id = a.protein_id
-           WHERE a.gene_alias LIKE ? COLLATE NOCASE
-           ORDER BY p.gene_name""",
-        (prefix,),
-    ).fetchall()
-    if rows:
-        return jsonify([dict(r) for r in rows])
+    # ============================================================
+    # 2. 對每個找到的 protein，取得所有 alias
+    # ============================================================
 
-    # 最後查 identifier_table
-    rows = db.execute(
-        """SELECT p.protein_id, p.uniprot_acc, p.gene_name, p.protein_name, p.organism
-           FROM identifier_table i
-           JOIN proteins p ON p.protein_id = i.protein_id
-           WHERE i.identifier LIKE ? COLLATE NOCASE
-           ORDER BY p.gene_name""",
-        (prefix,),
-    ).fetchall()
-    return jsonify([dict(r) for r in rows])
+    for row in rows:
+
+        protein = dict(row)
+        protein_id = protein["protein_id"]
+
+        # --------------------------------------------------------
+        # protein_alias
+        # --------------------------------------------------------
+
+        protein_alias_rows = db.execute(
+            """
+            SELECT DISTINCT alias_name
+            FROM protein_alias
+            WHERE protein_id = ?
+              AND alias_name IS NOT NULL
+              AND TRIM(alias_name) != ''
+            ORDER BY alias_name
+            """,
+            (protein_id,),
+        ).fetchall()
+
+        protein["protein_alias"] = [
+            r["alias_name"]
+            for r in protein_alias_rows
+        ]
+
+        # --------------------------------------------------------
+        # gene_alias
+        # --------------------------------------------------------
+
+        gene_alias_rows = db.execute(
+            """
+            SELECT DISTINCT gene_alias
+            FROM gene_alias
+            WHERE protein_id = ?
+              AND gene_alias IS NOT NULL
+              AND TRIM(gene_alias) != ''
+            ORDER BY gene_alias
+            """,
+            (protein_id,),
+        ).fetchall()
+
+        protein["gene_alias"] = [
+            r["gene_alias"]
+            for r in gene_alias_rows
+        ]
+
+        results.append(protein)
+
+    return jsonify(results)
 
 @app.route("/api/protein/<protein_id>")
 def api_protein_detail(protein_id):
-    """回傳單一蛋白質完整資訊：
-    基本資料 / 結構 / domain / GO功能 / E1-E2-E3-substrate
+    """
+    回傳單一蛋白質完整資訊：
+
+    基本資料
+    alias
+    結構
+    predicted structures
+    domain
+    UniProt FT features
+    GO function
+    papers
+    E1-E2-E3-substrate / DUB relations
     """
 
     db = get_db()
@@ -470,19 +560,27 @@ def api_protein_detail(protein_id):
     # 1. 先直接查 canonical UniProt protein_id
     # ---------------------------------------------------------
     protein = db.execute(
-        "SELECT * FROM proteins WHERE protein_id = ?",
+        """
+        SELECT *
+        FROM proteins
+        WHERE protein_id = ?
+        """,
         (protein_id,)
     ).fetchone()
 
     # ---------------------------------------------------------
     # 2. 如果找不到，再查 identifier_table
-    #    例如：
-    #    舊 UniProt ID / RefSeq / Ensembl / GeneID / HGNC ...
     # ---------------------------------------------------------
     if protein is None:
+
+        input_id = protein_id
+
         identifier_row = db.execute(
             """
-            SELECT protein_id, db, identifier
+            SELECT
+                protein_id,
+                db,
+                identifier
             FROM identifier_table
             WHERE identifier = ?
             LIMIT 1
@@ -491,140 +589,666 @@ def api_protein_detail(protein_id):
         ).fetchone()
 
         if identifier_row is not None:
+
             protein_id = identifier_row["protein_id"]
 
             protein = db.execute(
-                "SELECT * FROM proteins WHERE protein_id = ?",
+                """
+                SELECT *
+                FROM proteins
+                WHERE protein_id = ?
+                """,
                 (protein_id,)
             ).fetchone()
 
-            # 如果 identifier_table 有紀錄，但對應 protein 已不存在
             if protein is None:
+
                 return jsonify({
                     "error": "identifier 找到，但對應的 protein 不存在",
-                    "input_id": protein_id,
+                    "input_id": input_id,
                     "identifier_db": identifier_row["db"],
                     "identifier": identifier_row["identifier"],
                     "protein_id": protein_id
                 }), 404
 
         else:
+
             return jsonify({
                 "error": "找不到此蛋白質",
                 "protein_id": protein_id
             }), 404
 
+    # ---------------------------------------------------------
+    # 3. Protein alias
+    # ---------------------------------------------------------
+    protein_aliases = db.execute(
+        """
+        SELECT DISTINCT
+            alias_name,
+            alias_type,
+            source
+        FROM protein_alias
+        WHERE protein_id = ?
+          AND alias_type NOT IN (
+              'AltName:EC',
+              'RecName:EC',
+              'Includes:RecName:EC'
+          )
+        ORDER BY alias_name
+        """,
+        (protein_id,)
+    ).fetchall()
 
+    # ---------------------------------------------------------
+    # 4. Gene alias
+    # ---------------------------------------------------------
+    gene_aliases = db.execute(
+        """
+        SELECT DISTINCT
+            gene_alias,
+            source
+        FROM gene_alias
+        WHERE protein_id = ?
+        ORDER BY gene_alias
+        """,
+        (protein_id,)
+    ).fetchall()
 
+    # ---------------------------------------------------------
+    # 5. 將 alias 放進 protein object
+    # ---------------------------------------------------------
+    protein_out = dict(protein)
 
+    protein_out["protein_alias"] = [
+        dict(r)
+        for r in protein_aliases
+    ]
+
+    protein_out["gene_alias"] = [
+        dict(r)
+        for r in gene_aliases
+    ]
+
+    # =========================================================
+    # 6. UniProt FT Features
+    # =========================================================
+    #
+    # protein_feature
+    #      │
+    #      ├── feature_note
+    #      ├── feature_evidence
+    #      └── feature_ligand
+    #
+    # API:
+    #
+    # features: [
+    #   {
+    #       feature_id,
+    #       feature_type,
+    #       start_pos,
+    #       end_pos,
+    #       location_raw,
+    #       uniprot_feature_id,
+    #       raw_feature,
+    #       source,
+    #       source_version,
+    #       notes: [],
+    #       evidence: [],
+    #       ligands: []
+    #   }
+    # ]
+    # =========================================================
+
+    feature_rows = db.execute(
+        """
+        SELECT
+            feature_id,
+            protein_id,
+            feature_type,
+            start_pos,
+            end_pos,
+            location_raw,
+            uniprot_feature_id,
+            raw_feature,
+            source,
+            source_version
+        FROM protein_feature
+        WHERE protein_id = ?
+        ORDER BY
+            CASE
+                WHEN start_pos IS NULL THEN 1
+                ELSE 0
+            END,
+            start_pos,
+            end_pos,
+            feature_type,
+            feature_id
+        """,
+        (protein_id,)
+    ).fetchall()
+
+    features_out = []
+
+    for feature_row in feature_rows:
+
+        feature = dict(feature_row)
+
+        feature_id = feature["feature_id"]
+
+        # -----------------------------------------------------
+        # Feature notes
+        # -----------------------------------------------------
+        note_rows = db.execute(
+            """
+            SELECT
+                note_id,
+                note_text
+            FROM feature_note
+            WHERE feature_id = ?
+            ORDER BY note_id
+            """,
+            (feature_id,)
+        ).fetchall()
+
+        feature["notes"] = [
+            dict(r)
+            for r in note_rows
+        ]
+
+        # -----------------------------------------------------
+        # Convenience field:
+        # first note
+        #
+        # 前端可以直接使用 feature.note_text
+        # 不需要每次 notes[0]
+        # -----------------------------------------------------
+        feature["note_text"] = (
+            feature["notes"][0]["note_text"]
+            if feature["notes"]
+            else None
+        )
+
+        # -----------------------------------------------------
+        # Feature evidence
+        # -----------------------------------------------------
+        evidence_rows = db.execute(
+            """
+            SELECT
+                feature_evidence_id,
+                evidence_code,
+                database_name,
+                accession,
+                raw_evidence
+            FROM feature_evidence
+            WHERE feature_id = ?
+            ORDER BY feature_evidence_id
+            """,
+            (feature_id,)
+        ).fetchall()
+
+        feature["evidence"] = [
+            dict(r)
+            for r in evidence_rows
+        ]
+
+        # -----------------------------------------------------
+        # Feature ligands
+        # -----------------------------------------------------
+        ligand_rows = db.execute(
+            """
+            SELECT
+                feature_ligand_id,
+                ligand_name,
+                ligand_id,
+                ligand_label,
+                ligand_note,
+                ligand_part,
+                ligand_part_id,
+                ligand_part_note
+            FROM feature_ligand
+            WHERE feature_id = ?
+            ORDER BY feature_ligand_id
+            """,
+            (feature_id,)
+        ).fetchall()
+
+        feature["ligands"] = [
+            dict(r)
+            for r in ligand_rows
+        ]
+
+        features_out.append(feature)
+
+    # =========================================================
+    # 6A. FT summary / category counts
+    # =========================================================
+
+    feature_type_counts = db.execute(
+        """
+        SELECT
+            feature_type,
+            COUNT(*) AS count
+        FROM protein_feature
+        WHERE protein_id = ?
+        GROUP BY feature_type
+        ORDER BY feature_type
+        """,
+        (protein_id,)
+    ).fetchall()
+
+    feature_type_counts_out = {
+        r["feature_type"]: r["count"]
+        for r in feature_type_counts
+    }
+
+    # ---------------------------------------------------------
+    # 6B. 5 大 FT categories
+    #
+    # 注意：
+    # DB 不需要儲存 category。
+    # 由 API 統一分類即可。
+    # ---------------------------------------------------------
+
+    feature_categories = {
+
+        "structural": [
+            "CHAIN",
+            "PEPTIDE",
+            "PROPEP",
+            "DOMAIN",
+            "REGION",
+            "REPEAT",
+            "COILED",
+            "HELIX",
+            "STRAND",
+            "TURN"
+        ],
+
+        "localization": [
+            "SIGNAL",
+            "TRANSIT",
+            "TRANSMEM",
+            "TOPO_DOM",
+            "INTRAMEM"
+        ],
+
+        "functional": [
+            "ACT_SITE",
+            "BINDING",
+            "SITE",
+            "DNA_BIND",
+            "ZN_FING",
+            "MOTIF"
+        ],
+
+        "modification": [
+            "MOD_RES",
+            "CARBOHYD",
+            "LIPID",
+            "DISULFID",
+            "CROSSLNK",
+            "NON_STD",
+            "NON_TER",
+            "INIT_MET"
+        ],
+
+        "variation": [
+            "VARIANT",
+            "VAR_SEQ",
+            "MUTAGEN",
+            "CONFLICT",
+            "COMPBIAS"
+        ]
+    }
+
+    feature_type_to_category = {}
+
+    for category, types in feature_categories.items():
+
+        for feature_type in types:
+            feature_type_to_category[feature_type] = category
+
+    # ---------------------------------------------------------
+    # 將 category 加到每一個 feature
+    # ---------------------------------------------------------
+
+    for feature in features_out:
+
+        feature_type = feature["feature_type"]
+
+        feature["category"] = (
+            feature_type_to_category.get(
+                feature_type,
+                "other"
+            )
+        )
+
+    # =========================================================
+    # 6C. Category counts
+    # =========================================================
+
+    feature_category_counts = {
+        category: 0
+        for category in feature_categories
+    }
+
+    feature_category_counts["other"] = 0
+
+    for feature in features_out:
+
+        category = feature["category"]
+
+        feature_category_counts[category] = (
+            feature_category_counts.get(category, 0) + 1
+        )
+
+    # ---------------------------------------------------------
+    # 7. Structures
+    # ---------------------------------------------------------
     structures = db.execute(
-        "SELECT * FROM structures WHERE protein_id = ? ORDER BY pdb_id", (protein_id,)
+        """
+        SELECT *
+        FROM structures
+        WHERE protein_id = ?
+        ORDER BY pdb_id
+        """,
+        (protein_id,)
     ).fetchall()
 
+    # ---------------------------------------------------------
+    # 8. Predicted structures
+    # ---------------------------------------------------------
     alphafold = db.execute(
-        "SELECT * FROM alphafold_models WHERE protein_id=? AND status='ok'", (protein_id,)
+        """
+        SELECT *
+        FROM alphafold_models
+        WHERE protein_id = ?
+          AND status = 'ok'
+        """,
+        (protein_id,)
     ).fetchone()
+
     alphafill = db.execute(
-        "SELECT * FROM alphafill_models WHERE protein_id=? AND status='ok'", (protein_id,)
+        """
+        SELECT *
+        FROM alphafill_models
+        WHERE protein_id = ?
+          AND status = 'ok'
+        """,
+        (protein_id,)
     ).fetchone()
+
     swiss_model = db.execute(
-        "SELECT * FROM swiss_models WHERE protein_id=? AND status='ok'", (protein_id,)
+        """
+        SELECT *
+        FROM swiss_models
+        WHERE protein_id = ?
+          AND status = 'ok'
+        """,
+        (protein_id,)
     ).fetchone()
 
+    # ---------------------------------------------------------
+    # 9. Domains
+    # ---------------------------------------------------------
     domains = db.execute(
-        "SELECT * FROM domains WHERE protein_id = ? ORDER BY source_db AND start_pos", (protein_id,)
+        """
+        SELECT *
+        FROM domains
+        WHERE protein_id = ?
+        ORDER BY source_db, start_pos
+        """,
+        (protein_id,)
     ).fetchall()
 
+    # ---------------------------------------------------------
+    # 10. GO functions
+    # ---------------------------------------------------------
     functions = db.execute(
-        "SELECT * FROM go_functions WHERE protein_id = ? ORDER BY aspect", (protein_id,)
+        """
+        SELECT *
+        FROM go_functions
+        WHERE protein_id = ?
+        ORDER BY aspect
+        """,
+        (protein_id,)
     ).fetchall()
 
-    # --- 新增：幫每一筆 GO function 補上對應的 SVG 胞器 id ---
     functions_out = []
+
     for r in functions:
+
         f = dict(r)
+
         f["sl_ids"] = map_go_term_to_sl(
             go_id=f.get("go_id"),
             term_name=f.get("go_term"),
         )
+
         functions_out.append(f)
 
-    papers = db.execute("""
-            SELECT pa.pmid, pa.title, pa.journal, pa.pub_date, pa.pub_year,
-                pp.relevance_score, pp.matched_term, pp.match_location
-            FROM paper_proteins pp
-            JOIN papers pa ON pa.pmid = pp.pmid
-            WHERE pp.protein_id = ? AND pp.relevance_score >= 3
-            ORDER BY pp.relevance_score DESC, pa.pub_date DESC
-        """, (protein_id,)).fetchall()
+    # ---------------------------------------------------------
+    # 11. Papers
+    # ---------------------------------------------------------
+    papers = db.execute(
+        """
+        SELECT
+            pa.pmid,
+            pa.title,
+            pa.journal,
+            pa.pub_date,
+            pa.pub_year,
+            pp.relevance_score,
+            pp.matched_term,
+            pp.match_location
+        FROM paper_proteins pp
+        JOIN papers pa
+            ON pa.pmid = pp.pmid
+        WHERE pp.protein_id = ?
+          AND pp.relevance_score >= 3
+        ORDER BY
+            pp.relevance_score DESC,
+            pa.pub_date DESC
+        """,
+        (protein_id,)
+    ).fetchall()
 
-    gene_name = protein["gene_name"] if protein else protein_id
+    # ---------------------------------------------------------
+    # 12. Ubiquitination / Deubiquitination relations
+    # ---------------------------------------------------------
+    gene_name = (
+        protein["gene_name"]
+        if protein
+        else protein_id
+    )
 
     as_substrate = db.execute(
         """
         SELECT
-            r.e1_id, r.e2_id, r.e3_id, r.substrate_id,
-            r.ub_type, r.modified_lysine, r.functional_outcome,
-            r.evidence, r.reference_pmid, r.source_db,r.dub_id
+            r.e1_id,
+            r.e2_id,
+            r.e3_id,
+            r.substrate_id,
+            r.ub_type,
+            r.modified_lysine,
+            r.functional_outcome,
+            r.evidence,
+            r.reference_pmid,
+            r.source_db,
+            r.dub_id
         FROM ub_relations r
-        WHERE (r.e1_id = ? OR r.e2_id = ? OR r.e3_id = ? OR r.substrate_id = ?) AND (functional_outcome ="Ubiquitination" OR functional_outcome ="Deubiquitination")
+        WHERE (
+               r.e1_id = ?
+            OR r.e2_id = ?
+            OR r.e3_id = ?
+            OR r.substrate_id = ?
+        )
+        AND (
+               r.functional_outcome = "Ubiquitination"
+            OR r.functional_outcome = "Deubiquitination"
+        )
         """,
-        (gene_name, gene_name, gene_name, gene_name)
+        (
+            gene_name,
+            gene_name,
+            gene_name,
+            gene_name
+        )
     ).fetchall()
 
-    # --- 決定 Mol* viewer 要載入哪個結構 ---
-    # 優先序：實驗結構 (PDB) > AlphaFold > AlphaFill > SWISS-MODEL
+    # ---------------------------------------------------------
+    # 13. 決定 Mol* viewer 要載入哪個結構
+    #
+    # 優先序：
+    # PDB > AlphaFold > AlphaFill > SWISS-MODEL
+    # ---------------------------------------------------------
     active_structure = None
 
     pdb_with_url = next(
-        (dict(r) for r in structures if r["pdb_url"]), None
+        (
+            dict(r)
+            for r in structures
+            if r["pdb_url"]
+        ),
+        None
     )
 
     if pdb_with_url:
+
         active_structure = {
             "source": "pdb",
             "id": pdb_with_url["pdb_id"],
             "url": pdb_with_url["pdb_url"],
             "format": "pdb",
         }
-    elif alphafold and (alphafold["pdb_url"] or alphafold["cif_url"]):
+
+    elif alphafold and (
+        alphafold["pdb_url"]
+        or alphafold["cif_url"]
+    ):
+
         active_structure = {
             "source": "alphafold",
             "id": alphafold["uniprot_id"],
-            "url": alphafold["pdb_url"] or alphafold["cif_url"],
-            "format": "pdb" if alphafold["pdb_url"] else "mmcif",
+            "url": (
+                alphafold["pdb_url"]
+                or alphafold["cif_url"]
+            ),
+            "format": (
+                "pdb"
+                if alphafold["pdb_url"]
+                else "mmcif"
+            ),
         }
+
     elif alphafill and alphafill["cif_url"]:
+
         active_structure = {
             "source": "alphafill",
             "id": alphafill["uniprot_id"],
             "url": alphafill["cif_url"],
             "format": "mmcif",
         }
+
     elif swiss_model and swiss_model["coordinates_url"]:
+
         active_structure = {
             "source": "swiss_model",
             "id": swiss_model["uniprot_id"],
             "url": swiss_model["coordinates_url"],
             "format": "pdb",
         }
-    # 都沒有的話 active_structure 保持 None，前端顯示「無可用結構」
+
+    # =========================================================
+    # 14. API response
+    # =========================================================
 
     return jsonify({
-        "protein": dict(protein),
-        "structures": [dict(r) for r in structures],
-        "predicted_structures": {
-            "alphafold": dict(alphafold) if alphafold else None,
-            "alphafill": dict(alphafill) if alphafill else None,
-            "swiss_model": dict(swiss_model) if swiss_model else None,
-        },
-        "active_structure": active_structure,
-        "domains": [dict(r) for r in domains],
-        "functions": functions_out,
-        "ub_relations": [dict(r) for r in as_substrate],
-        "papers": [dict(r) for r in papers],
-    })
 
+        # -----------------------------------------------------
+        # Protein
+        # -----------------------------------------------------
+        "protein": protein_out,
+
+        # -----------------------------------------------------
+        # Structures
+        # -----------------------------------------------------
+        "structures": [
+            dict(r)
+            for r in structures
+        ],
+
+        # -----------------------------------------------------
+        # Predicted structures
+        # -----------------------------------------------------
+        "predicted_structures": {
+
+            "alphafold": (
+                dict(alphafold)
+                if alphafold
+                else None
+            ),
+
+            "alphafill": (
+                dict(alphafill)
+                if alphafill
+                else None
+            ),
+
+            "swiss_model": (
+                dict(swiss_model)
+                if swiss_model
+                else None
+            ),
+        },
+
+        "active_structure": active_structure,
+
+        # -----------------------------------------------------
+        # Existing domains
+        # -----------------------------------------------------
+        "domains": [
+            dict(r)
+            for r in domains
+        ],
+
+        # -----------------------------------------------------
+        # UniProt FT
+        # -----------------------------------------------------
+        "features": features_out,
+
+        "feature_categories": feature_categories,
+
+        "feature_type_to_category":
+            feature_type_to_category,
+
+        "feature_type_counts":
+            feature_type_counts_out,
+
+        "feature_category_counts":
+            feature_category_counts,
+
+        # -----------------------------------------------------
+        # GO
+        # -----------------------------------------------------
+        "functions": functions_out,
+
+        # -----------------------------------------------------
+        # Ubiquitination / DUB
+        # -----------------------------------------------------
+        "ub_relations": [
+            dict(r)
+            for r in as_substrate
+        ],
+
+        # -----------------------------------------------------
+        # Papers
+        # -----------------------------------------------------
+        "papers": [
+            dict(r)
+            for r in papers
+        ],
+    })
 
 # =====================================================================
 # Cell GO Viewer：Animal_cells.svg 左側 + GO function 清單右側對照

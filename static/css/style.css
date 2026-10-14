@@ -108,67 +108,84 @@ body{
 
 
 .class-btn{
-
     border-radius:20px;
     padding:7px 16px;
-
     font-family:var(--mono);
-
     font-weight:600;
-
     cursor:pointer;
-
     border:1px solid var(--line);
-
     background:white;
-
     transition:.2s;
-
 }
 
 
 .class-btn:hover{
-
     transform:translateY(-2px);
-
 }
 
 
 
 /* biological color */
+.ubiquitin-btn{
+
+    color:#e81272;
+    border-color:#e81272;
+
+}
 
 .e1-btn{
-
     color:#2563eb;
     border-color:#2563eb;
-
 }
-
 
 .e2-btn{
-
     color:#15803d;
     border-color:#15803d;
-
 }
-
 
 .e3-btn{
-
     color:#b45309;
     border-color:#b45309;
-
 }
-
 
 .dub-btn{
-
     color:#b91c1c;
     border-color:#b91c1c;
-
 }
 
+.ubl-btn{
+    color:#a3b508;
+    border-color:#a3b508;
+}
 
+.e1-no-exp-btn  {
+    color:#2563eb;
+    border-color:#2563eb;
+}
+
+.e2-no-exp-btn  {
+    color:#15803d;
+    border-color:#15803d;
+}
+
+.e3-no-exp-btn  {
+    color:#b45309;
+    border-color:#b45309;
+}
+
+.dub-no-exp-btn  {
+    color:#b91c1c;
+    border-color:#b91c1c;
+}
+
+.ubl-no-exp-btn  {
+    color:#a3b508;
+    border-color:#a3b508;
+}
+
+.ubiquitin-btn:hover{
+    background:#f2edef;
+}
 
 .e1-btn:hover{
     background:#dbeafe;
@@ -186,6 +203,30 @@ body{
     background:#fee2e2;
 }
 
+.ubl-btn:hover{
+    background:#f2f2d8;
+}
+
+.e1-no-exp-btn:hover{
+    background:#d9fafe;
+}
+
+.e2-no-exp-btn:hover{
+    background:#d5ebed;
+}
+
+.e3-no-exp-btn:hover{
+    background:#fef3c7;
+}
+
+.dub-no-exp-btn:hover{
+    background:#fee2e2;
+}
+
+.ubl-no-exp-btn:hover{
+    background:#f2f2d8;
+}
+
 .searchbar {
   display: flex;
   gap: 10px;
@@ -196,10 +237,10 @@ body{
 
 .searchbar input{
 
+    border-radius:20px;
+    padding:7px 16px;
     background:white;
-
     color:var(--ink);
-
     border:1px solid #d6dee8;
 
 }
@@ -207,22 +248,22 @@ body{
 .searchbar input:focus{
 
     border-color:#3b82f6;
-
-    box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    box-shadow:0 0 0 3px rgba(19, 19, 19, 0.15);
 
 }
 
 .searchbar button{
 
+    border-radius:20px;
+    padding:7px 16px;
     background:#2563eb;
-
     color:white;
 
 }
 
 .searchbar button:hover{
 
-    background:#1d4ed8;
+    background:#58627d;
 
 }
 
@@ -1829,27 +1870,117 @@ a.pdb-link:hover { text-decoration: underline; }
     border-radius:4px;
 }
 
-.seq-ruler{
-    font-family:"Courier New", monospace;
-    white-space:pre;
-    color:#888;
-    font-size:14px;
-    letter-spacing:0;
+/* 每一條 60 aa 序列 */
+.seq-line-block {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    margin-bottom: 8px;
 }
 
-.ruler-num{
-    display:inline-block;
-    width:12ch;
-    text-align:right;
+/* 序號列與胺基酸列使用相同的分組 */
+.seq-ruler,
+.seq-line {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.55em;
+    white-space: nowrap;
 }
 
-.seq-line{
-    font-family:"Courier New", monospace;
-    white-space:pre;
-    letter-spacing:1px;
-    line-height:1.6;
-    font-size:14px;
+/* 每組固定 10 格，禁止垂直排列 */
+.seq-group {
+    display: grid;
+    grid-template-columns: repeat(10, 1.15em);
+    column-gap: 0;
+    flex: 0 0 auto;
+    width: 11.5em;
+    box-sizing: border-box;
 }
+
+/* 每個胺基酸固定一格 */
+.seq-residue-group .res {
+    display: block;
+    width: 1.15em;
+    min-width: 1.15em;
+    height: 1.7em;
+    line-height: 1.7em;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+}
+
+/* 每 10 個胺基酸的序號 */
+.seq-ruler-group .ruler-cell {
+    display: block;
+    width: 1.15em;
+    min-width: 1.15em;
+    height: 1.5em;
+    line-height: 1.5em;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+}
+
+/* 序號與胺基酸左側對齊 */
+.seq-ruler {
+    margin-bottom: 2px;
+}
+
+/* 避免外層容器把序列擠成直向 */
+.seq-wrap {
+    display: block;
+    overflow-x: auto;
+}
+
+.seq-line {
+    justify-content: flex-start;
+}
+
+/* ---------- 按鈕：未選取（淺色） ---------- */
+.feature-category-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+
+.feature-category-btn {
+    padding: 5px 14px;
+    border: 1px solid var(--cd);
+    border-radius: 6px;
+    background: var(--cl);
+    color: var(--cd);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.feature-category-btn:hover { filter: brightness(0.95); }
+
+/* ---------- 按鈕：選取（顏色變深），再點一次恢復 ---------- */
+.feature-category-btn.active {
+    background: var(--cd);
+    color: #fff;
+}
+
+/* ---------- 每個分類的顏色：淺色 / 深色 ---------- */
+[data-category="structural"]   { --cl:#dbeafe; --cd:#2563eb; }
+[data-category="localization"] { --cl:#dcfce7; --cd:#16a34a; }
+[data-category="functional"]   { --cl:#fee2e2; --cd:#dc2626; }
+[data-category="modification"] { --cl:#fef3c7; --cd:#d97706; }
+[data-category="variation"]    { --cl:#f3e8ff; --cd:#9333ea; }
+
+/* ---------- 序列上的標註（與按鈕同色系） ---------- */
+.res.cat-structural   { background:#bfdbfe; }
+.res.cat-localization { background:#bbf7d0; }
+.res.cat-functional   { background:#fecaca; }
+.res.cat-modification { background:#fde68a; }
+.res.cat-variation    { background:#e9d5ff; }
+
+.res[class*="cat-"] { border-radius:2px; }
+
+/* ---------- Feature 詳細清單的左側色條 ---------- */
+.feature-item { border-left:4px solid #ccc; padding:6px 10px; margin:6px 0; }
+.feature-item[data-category] { border-left-color: var(--cd); }
 
 @media (max-width: 760px) {
   .layout { grid-template-columns: 1fr; }

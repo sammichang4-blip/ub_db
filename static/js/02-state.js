@@ -8,7 +8,7 @@ let resultsList = null;
 let detailPane = null;
 let searchForm = null;
 let searchInput = null;
-
+let currentSearchKeyword = "";
 // ============================================================
 // Application state
 // ============================================================

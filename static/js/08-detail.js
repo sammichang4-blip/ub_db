@@ -9,6 +9,10 @@ function renderDetail(data) {
     window.currentProteinData = data;
     window.currentProteinLength = p.length;
     window.currentDomains = data.domains || [];
+    window.currentProtein = p;
+    window.currentProteinSequence = p.sequence || "";
+    window.currentProteinFeatures = data.features || [];
+    window.activeFeatureCategories = [];   // 換蛋白質時重置分類選取
 
     console.log("renderDetail:", data);
 
@@ -84,17 +88,46 @@ function renderDetail(data) {
             <div class="section-card protein-header">
                 <h2>
                     ${escapeHtml(p.protein_name)}
-                    <span style="color:var(--ink-dim); font-weight:400;">(${escapeHtml(p.gene_name)})</span>
+                    <span style="color:var(--ink-dim); font-weight:400;">
+                        (${escapeHtml(p.gene_name)})
+                        <button class="expand-btn" onclick="openExpandedView()" title="開新視窗放大檢視">🔍 放大檢視</button>
+                    </span>
                 </h2>
 
-                <div class="meta">
-                    UniProt: ${escapeHtml(p.uniprot_acc)} · ${escapeHtml(p.entry_name || "")} · ${escapeHtml(p.organism)} · ${escapeHtml(p.length)} aa
-                </div>
 
                 <div class="scroll-box papers">
+                    <div class="meta">
+
+                        <div>
+                            UniProt:
+                            ${escapeHtml(p.uniprot_acc)}
+                            · ${escapeHtml(p.entry_name || "")}
+                            · ${escapeHtml(p.organism)}
+                            · ${escapeHtml(p.length)} aa
+                        </div>
+                        <p>
+                        <b>Gene alias:</b>
+                        ${highlightSearch(
+                            (p.gene_alias || [])
+                                .map(a => a.gene_alias)
+                                .join(" ; "),
+                            currentSearchKeyword
+                        )}
+                        <p>
+                        <b>Protein alias:</b>
+                        ${highlightSearch(
+                            (p.protein_alias || [])
+                                .map(a => a.alias_name)
+                                .join(" ; "),
+                            currentSearchKeyword
+                        )}
+
+                    </div>
+
+                
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h5 style="margin-top:1em;">📄 相關論文（PubMed，近期）</h5>
-                        <button class="expand-btn" onclick="openExpandedView()" title="開新視窗放大檢視">🔍 放大檢視</button>
+                        
                     </div>
 
                     ${renderPapers(data.papers)}
@@ -109,30 +142,101 @@ function renderDetail(data) {
                 <h3>
                     ◈ 序列 Sequence
                     <button class="copy-btn" onclick="copySequence()">📋 Copy</button>
+                    <button class="copy-btn" style="margin-left:auto" onclick="openSequenceView()">🔍 放大</button>
                 </h3>
 
                 <div class="scroll-box">
                     <div class="seq-block">
-                        <div id="protein-sequence" class="seq-wrap" data-sequence="${escapeHtml(p.sequence || "")}">
-                            ${renderSequence(p.sequence || "")}
+
+                        <!-- =====================================================
+                            Feature Category
+                            ===================================================== -->
+                        <div class="feature-category-bar">
+
+                            <button
+                                type="button"
+                                class="feature-category-btn"
+                                data-category="structural"
+                                onclick="toggleFeatureCategory('structural')">
+                                Structure
+                            </button>
+
+                            <button
+                                type="button"
+                                class="feature-category-btn"
+                                data-category="localization"
+                                onclick="toggleFeatureCategory('localization')">
+                                Localization
+                            </button>
+
+                            <button
+                                type="button"
+                                class="feature-category-btn"
+                                data-category="functional"
+                                onclick="toggleFeatureCategory('functional')">
+                                Functional
+                            </button>
+
+                            <button
+                                type="button"
+                                class="feature-category-btn"
+                                data-category="modification"
+                                onclick="toggleFeatureCategory('modification')">
+                                Modification
+                            </button>
+
+                            <button
+                                type="button"
+                                class="feature-category-btn"
+                                data-category="variation"
+                                onclick="toggleFeatureCategory('variation')">
+                                Variation
+                            </button>
+
+
                         </div>
 
+                        <!-- =====================================================
+                            Sequence
+                            ===================================================== -->
+                        <div
+                            id="protein-sequence"
+                            class="seq-wrap"
+                            data-sequence="${escapeHtml(p.sequence || "")}"
+                        >
+                            ${renderSequence(p.sequence || "", window.currentProteinFeatures)}
+                        </div>
+
+                        <!-- =====================================================
+                            Feature Details
+                            ===================================================== -->
+                        <div
+                            id="feature-details"
+                            class="feature-details"
+                            style="display:none;"
+                        ></div>
+
+                        <!-- =====================================================
+                            Legend
+                            ===================================================== -->
                         <div class="ruler-legend">
+
                             <span>
                                 <span class="dot gold"></span>
-                                已知多泛素鏈接 Lysine 位點 (K${LYSINE_SITES.join(", K")})
+                                已知多泛素鏈接 Lysine 位點
+                                (K${LYSINE_SITES.join(", K")})
                             </span>
+
                             <span>
                                 <span class="dot rose"></span>
                                 C端 Gly-Gly（與受質共價鍵結位置）
                             </span>
+
                         </div>
+
                     </div>
                 </div>
             </div>
-
-
-
             <!-- GO functions -->
             <div class="section-card">
 

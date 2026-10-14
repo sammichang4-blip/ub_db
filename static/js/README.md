@@ -1,26 +1,31 @@
-# UKW 前端 JS 拆分說明
+# UKW 前端 JavaScript 維護指南
 
-原本單一的 `app.js` 已依功能拆成 10 個檔案。這些**不是** ES modules —
-因為 HTML 裡大量用 `onclick="loadProtein(...)"`、`onclick="changeLayout('dagre')"`
-這類內嵌呼叫，函式必須留在全域作用域才能被找到，所以維持原本的
-「多個 `<script>` 標籤、共用全域作用域」寫法，只是把邏輯依功能切開。
+前端腳本由 `templates/index.html` 以多個 `<script>` 標籤載入，並共用瀏覽器全域作用域；這些檔案不是 ES modules。HTML 中有內嵌事件處理器，且不同腳本會直接呼叫彼此的函式，因此載入順序屬於執行需求。
 
-## 檔案清單與職責
+## 檔案職責
 
-| 檔案 | 內容 |
+| 檔案 | 主要職責 |
 |---|---|
-| `01-constants.js` | `LYSINE_SITES` 常數 |
-| `02-state.js` | 所有全域狀態變數（DOM 參照、目前選取的蛋白質、Mol*/Cytoscape 實例等）|
-| `03-utils.js` | `cacheDOM`、`escapeHtml`、`showCopyMessage` 共用工具 |
-| `04-viewer.js` | Mol* 3D 結構檢視器：初始化、載入結構、放大視窗、預測結構 modal |
-| `05-search.js` | 搜尋框、搜尋結果列表、`loadProtein` / `loadProteinClass` |
-| `06-annotation-sections.js` | 結構表格、domain 架構圖、GO 功能標籤、E1-E2-E3-substrate 關係鏈渲染 |
-| `07-papers-sequence.js` | 功能描述、論文列表（含展開更多）、序列軌道、複製序列、放大論文檢視彈窗 |
-| `08-detail.js` | `renderDetail`：組出整個右側詳細面板，串接上面所有 renderer |
-| `09-network.js` | Cytoscape 交互關係網路：載入、展開節點、切換版面、匯出 PNG |
-| `10-main.js` | `DOMContentLoaded` 進入點，掛上搜尋表單事件 |
+| `01-constants.js` | 共用常數，例如 lysine 位點資料 |
+| `02-state.js` | 前端共享狀態與 DOM 參照 |
+| `03-utils.js` | 共用 DOM、字串與呈現工具 |
+| `04-viewer.js` | Mol* 結構檢視器與結構載入 |
+| `05-search.js` | 搜尋結果、蛋白質載入、酵素分類與篩選 |
+| `06-annotation-sections.js` | 結構、domain、GO 與泛素化關係區塊 |
+| `07-papers-sequence.js` | 功能描述、論文、序列與相關檢視器 |
+| `08-detail.js` | 組合並呈現蛋白質詳細資料面板 |
+| `09-network.js` | Cytoscape 交互作用網路 |
+| `10-main.js` | 搜尋表單等頁面初始化事件 |
+| `11-domain.js` | Domain Explorer 互動與呈現 |
+| `cell_go_viewer.js` | Cell GO 細胞定位檢視器 |
+| `network.js`, `network_1.js` | 網路頁面相關腳本；使用前請確認模板引用哪個版本 |
+| `cell_go_viewer1.js`, `cell_go_viewer2.js` | Cell GO 檢視器的其他版本；使用前請確認模板引用狀況 |
 
-## HTML 載入順序（必須照這個順序）
+`*.old.js` 為舊版檔案，不應新增至正式載入清單。
+
+## `index.html` 載入順序
+
+目前 `templates/index.html` 依以下順序載入主頁腳本：
 
 ```html
 <script src="/static/js/01-constants.js"></script>
@@ -33,22 +38,15 @@
 <script src="/static/js/08-detail.js"></script>
 <script src="/static/js/09-network.js"></script>
 <script src="/static/js/10-main.js"></script>
+<script src="/static/js/11-domain.js"></script>
 ```
 
-依賴關係大致是：`state`/`utils` 最先載入 → 各 renderer（04–07, 09）
-→ `08-detail.js`（會用到前面所有 renderer）→ `10-main.js`（最後掛
-DOMContentLoaded）。這個順序也符合表格中的檔名編號。
+修改載入順序前，先確認腳本間的全域變數與函式依賴。若新增 `<script>`，請同時確認模板路徑正確，並在瀏覽器開發者工具檢查載入錯誤與 console 例外。
 
-## 順手修正的一個既有 bug
+## 修改指引
 
-`openExpandedView()`（現在在 `07-papers-sequence.js`）原本用到變數
-`p`（例如 `p.protein_name`、`p.description`），但函式裡從未宣告
-`p`，只宣告了 `data`。這在瀏覽器裡會直接丟出
-`ReferenceError: p is not defined`，代表「🔍 放大檢視」這個按鈕原本
-是壞的。拆檔時補上了 `const p = currentProtein;`，讓它讀取目前載入
-的蛋白質資料，行為symmetry於彈窗標題／描述使用的其他地方。若這不是
-你要的修法（例如你原本想從 `data.protein` 取值），跟我說一聲，我再
-調整。
-
-其餘邏輯（HTML 結構、CSS class、API 路徑、Mol*/Cytoscape 設定）都
-逐行對照過，沒有做行為變更，只有重新排版讓每支檔案讀起來更緊湊。
+- 搜尋、清單篩選與蛋白質載入邏輯放在 `05-search.js`；詳細面板的組裝放在 `08-detail.js`。
+- 重用既有的共用狀態與工具，避免在多個檔案建立互相矛盾的全域狀態。
+- HTML 使用 `onclick` 呼叫的函式必須維持在全域可存取；若改用模組或事件委派，需同步調整模板中的事件綁定。
+- 修改 API 呼叫時，核對 Flask 路由及 JSON 欄位，並測試空結果、錯誤回應與正常資料。
+- 修改結構檢視器或網路圖時，確認 Mol*、Cytoscape.js 的載入順序及依賴資源仍可取得。

@@ -338,3 +338,186 @@ CREATE INDEX IF NOT EXISTS idx_component_accession ON complex_component(componen
 CREATE INDEX IF NOT EXISTS idx_hierarchy_parent ON complex_hierarchy(parent_complex_id);
 CREATE INDEX IF NOT EXISTS idx_pubmed_complex ON complex_pubmed(complex_id);
 
+-- ============================================================
+-- 1. protein_feature
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS protein_feature (
+    feature_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    protein_id TEXT NOT NULL,
+
+    feature_type TEXT NOT NULL,
+
+    start_pos INTEGER,
+    end_pos INTEGER,
+
+    location_raw TEXT,
+
+    uniprot_feature_id TEXT,
+
+    raw_feature TEXT,
+
+    source TEXT NOT NULL DEFAULT 'UniProt',
+    source_version TEXT,
+
+    FOREIGN KEY (protein_id)
+        REFERENCES proteins(protein_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CHECK (
+        start_pos IS NULL
+        OR start_pos >= 1
+    ),
+
+    CHECK (
+        end_pos IS NULL
+        OR end_pos >= start_pos
+    )
+);
+
+
+-- ============================================================
+-- 2. feature_note
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS feature_note (
+    note_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    feature_id INTEGER NOT NULL,
+
+    note_text TEXT NOT NULL,
+
+    FOREIGN KEY (feature_id)
+        REFERENCES protein_feature(feature_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- 3. feature_evidence
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS feature_evidence (
+    feature_evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    feature_id INTEGER NOT NULL,
+
+    evidence_code TEXT,
+
+    database_name TEXT,
+
+    accession TEXT,
+
+    raw_evidence TEXT,
+
+    FOREIGN KEY (feature_id)
+        REFERENCES protein_feature(feature_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- 4. feature_ligand
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS feature_ligand (
+    feature_ligand_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    feature_id INTEGER NOT NULL,
+
+    ligand_name TEXT,
+
+    ligand_id TEXT,
+
+    ligand_label TEXT,
+
+    ligand_note TEXT,
+
+    ligand_part TEXT,
+
+    ligand_part_id TEXT,
+
+    ligand_part_note TEXT,
+
+    FOREIGN KEY (feature_id)
+        REFERENCES protein_feature(feature_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+
+-- protein_feature
+CREATE INDEX IF NOT EXISTS idx_protein_feature_protein
+ON protein_feature(protein_id);
+
+CREATE INDEX IF NOT EXISTS idx_protein_feature_type
+ON protein_feature(feature_type);
+
+CREATE INDEX IF NOT EXISTS idx_protein_feature_protein_type
+ON protein_feature(protein_id, feature_type);
+
+CREATE INDEX IF NOT EXISTS idx_protein_feature_uniprot_id
+ON protein_feature(uniprot_feature_id);
+
+
+-- feature_note
+CREATE INDEX IF NOT EXISTS idx_feature_note_feature
+ON feature_note(feature_id);
+
+
+-- feature_evidence
+CREATE INDEX IF NOT EXISTS idx_feature_evidence_feature
+ON feature_evidence(feature_id);
+
+CREATE INDEX IF NOT EXISTS idx_feature_evidence_database_accession
+ON feature_evidence(database_name, accession);
+
+CREATE INDEX IF NOT EXISTS idx_feature_evidence_code
+ON feature_evidence(evidence_code);
+
+
+-- feature_ligand
+CREATE INDEX IF NOT EXISTS idx_feature_ligand_feature
+ON feature_ligand(feature_id);
+
+CREATE INDEX IF NOT EXISTS idx_feature_ligand_id
+ON feature_ligand(ligand_id);
+
+CREATE INDEX IF NOT EXISTS idx_feature_ligand_part_id
+ON feature_ligand(ligand_part_id);
+
+
+-- ============================================================
+-- UNIQUE INDEXES
+-- ============================================================
+
+-- A UniProt feature ID should be unique within a protein.
+CREATE UNIQUE INDEX IF NOT EXISTS
+idx_protein_feature_uniprot_id_unique
+ON protein_feature(protein_id, uniprot_feature_id)
+WHERE uniprot_feature_id IS NOT NULL;
+
+
+-- Prevent duplicated notes for the same feature.
+CREATE UNIQUE INDEX IF NOT EXISTS
+idx_feature_note_unique
+ON feature_note(feature_id, note_text);
+
+
+-- Prevent duplicated evidence for the same feature.
+CREATE UNIQUE INDEX IF NOT EXISTS
+idx_feature_evidence_unique
+ON feature_evidence(
+    feature_id,
+    evidence_code,
+    database_name,
+    accession
+);

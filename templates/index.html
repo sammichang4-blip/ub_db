@@ -8,6 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+<script>
+    window.MOLSTAR_JS  = "{{ url_for('static', filename='molstar/molstar.js', _external=False) }}";
+    window.MOLSTAR_CSS = "{{ url_for('static', filename='molstar/molstar.css') }}";
+</script>
 <script src="{{ url_for('static', filename='molstar/molstar.js') }}"></script>
 <script src="{{ url_for('static', filename='js/cytoscape/cytoscape.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/cytoscape/cytoscape-dagre.js') }}"></script>
@@ -56,20 +60,24 @@
       UBL
     </button>  
 
-    <button class="class-btn" onclick="loadProteinClassNoPDB('E1')">
+    <button class="class-btn e1-no-exp-btn" onclick="loadProteinClassNoPDB('E1')">
       E1 No Exp PDB
     </button>
 
-    <button class="class-btn" onclick="loadProteinClassNoPDB('E2')">
+    <button class="class-btn e2-no-exp-btn" onclick="loadProteinClassNoPDB('E2')">
       E2 No Exp PDB
     </button>
 
-    <button class="class-btn" onclick="loadProteinClassNoPDB('E3')">
+    <button class="class-btn e3-no-exp-btn" onclick="loadProteinClassNoPDB('E3')">
       E3 No Exp PDB
     </button>
 
-    <button class="class-btn" onclick="loadProteinClassNoPDB('DUB')">
+    <button class="class-btn dub-no-exp-btn" onclick="loadProteinClassNoPDB('DUB')">
       DUB No Exp PDB
+    </button>
+
+    <button class="class-btn ubl-no-exp-btn" onclick="loadProteinClassNoPDB('UBL')">
+      UBL No Exp PDB
     </button>
 
   </div>
@@ -110,6 +118,8 @@
 <script src="/static/js/05-search.js"></script>
 <script src="/static/js/06-annotation-sections.js"></script>
 <script src="/static/js/07-papers-sequence.js"></script>
+<script src="/static/js/07b-evidence.js"></script>
+<script src="/static/js/07c-sequence-popup.js"></script>
 <script src="/static/js/08-detail.js"></script>
 <script src="/static/js/09-network.js"></script>
 <script src="/static/js/10-main.js"></script>

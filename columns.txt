@@ -1,0 +1,171 @@
+UKW - UniProt FT Schema
+======================================================================
+
+Unique FT types and their qualifiers
+Qualifiers are listed only once per FT type.
+
+[ACT_SITE]
+  - /evidence
+  - /note
+
+[BINDING]
+  - /evidence
+  - /ligand
+  - /ligand_id
+  - /ligand_label
+  - /ligand_note
+  - /ligand_part
+  - /ligand_part_id
+  - /ligand_part_note
+  - /note
+
+[CARBOHYD]
+  - /evidence
+  - /id
+  - /note
+
+[CHAIN]
+  - /evidence
+  - /id
+  - /note
+
+[COILED]
+  - /evidence
+
+[COMPBIAS]
+  - /evidence
+  - /note
+
+[CONFLICT]
+  - /evidence
+  - /note
+
+[CROSSLNK]
+  - /evidence
+  - /note
+
+[DISULFID]
+  - /evidence
+  - /note
+
+[DNA_BIND]
+  - /evidence
+  - /note
+
+[DOMAIN]
+  - /evidence
+  - /note
+
+[HELIX]
+  - /evidence
+
+[INIT_MET]
+  - /evidence
+  - /note
+
+[INTRAMEM]
+  - /evidence
+  - /note
+
+[LIPID]
+  - /evidence
+  - /note
+
+[MOD_RES]
+  - /evidence
+  - /note
+
+[MOTIF]
+  - /evidence
+  - /note
+
+[MUTAGEN]
+  - /evidence
+  - /note
+
+[NON_STD]
+  - /evidence
+  - /note
+
+[NON_TER]
+  - /evidence
+
+[PEPTIDE]
+  - /evidence
+  - /id
+  - /note
+
+[PROPEP]
+  - /evidence
+  - /id
+  - /note
+
+[REGION]
+  - /evidence
+  - /note
+
+[REPEAT]
+  - /evidence
+  - /note
+
+[SIGNAL]
+  - /evidence
+  - /note
+
+[SITE]
+  - /evidence
+  - /note
+
+[STRAND]
+  - /evidence
+
+[TOPO_DOM]
+  - /evidence
+  - /note
+
+[TRANSIT]
+  - /evidence
+  - /note
+
+[TRANSMEM]
+  - /evidence
+  - /note
+
+[TURN]
+  - /evidence
+
+[VARIANT]
+  - /evidence
+  - /id
+  - /note
+
+[VAR_SEQ]
+  - /evidence
+  - /id
+  - /note
+
+[ZN_FING]
+  - /evidence
+  - /note
+
+======================================================================
+ALL UNIQUE QUALIFIERS
+======================================================================
+
+/evidence
+/id
+/ligand
+/ligand_id
+/ligand_label
+/ligand_note
+/ligand_part
+/ligand_part_id
+/ligand_part_note
+/note
+
+======================================================================
+SUMMARY
+======================================================================
+
+FT types: 34
+Unique qualifiers: 10
