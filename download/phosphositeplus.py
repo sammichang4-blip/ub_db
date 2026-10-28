@@ -4,7 +4,7 @@ from pathlib import Path
 from config import PSP_FILE
 import sys
 
-# 把專案根目錄加入 Python 搜尋路徑
+# Add the project root directory to the Python search path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 

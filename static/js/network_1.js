@@ -245,7 +245,7 @@ window.exportPNG = function () {
     console.log("exportPNG:", cy);
 
     if (!cy) {
-        alert("Network 尚未建立");
+        alert("The network has not been created yet.");
         return;
     }
 

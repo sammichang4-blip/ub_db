@@ -1,35 +1,42 @@
 #!/usr/bin/env python3
 """
-app.py - Ubiquitin 本地查詢資料庫 Web 介面
-執行方式：
+app.py - Ubiquitin local query database web interface
+Usage:
     pip install flask --break-system-packages
-    python seed_data.py      # 先建立/填入資料庫
-    python app.py            # 啟動伺服器，預設 http://127.0.0.1:5050
+    python seed_data.py      # Create/fill the database first
+    python app.py            # Start the server; default is http://127.0.0.1:5050
 """
 
 import sqlite3
 import os
+from urllib.parse import unquote
 from flask import Flask, jsonify, render_template, request, g , abort
 from flask import send_from_directory
-from urllib.parse import unquote
 import posixpath
 
-# --- 新增：Cell GO Viewer 用的 GO term -> SVG 胞器 id 對照表 ---
+# --- Added: Cell GO Viewer GO term -> SVG organelle ID mapping table ---
 from go_sl_mapping import annotate_go_terms, map_go_term_to_sl
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.normpath(os.path.join(BASE_DIR, "..", "data/db", "ubiquitin.db"))
 
-# 檔案系統路徑：send_from_directory 用來找實體 .pdb / .cif 檔案的地方。
-# 用 BASE_DIR 組成絕對路徑，這樣不管從哪個工作目錄啟動 Flask 都找得到。
+# File system path: send_from_directory locates the actual .pdb / .cif files.
+# Build an absolute path with BASE_DIR so Flask can find the files regardless of the working directory.
 PDB_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "pdb"))
 CIF_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "cif"))
+ALPHAFOLD_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "alphafold"))
+SWISS_MODEL_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "swiss_model"))
 
-# URL 路徑白名單：驗證 /structure-viewer?url=... 傳進來的值，
-# 對應的是路由 /data/pdb/<filename> 與 /data/cif/<filename>，
-# 跟 PDB_DIR 實際在磁碟上的位置無關，維持 URL 前綴、不要用 "../"
-ALLOWED_STRUCTURE_PREFIXES = ("/data/pdb/", "/data/cif/")
+# URL path allowlist: validates the value passed via /structure-viewer?url=...
+# corresponding to routes /data/pdb/<filename> and /data/cif/<filename>
+# independent of the actual disk location of PDB_DIR; keep the URL prefix and do not use "../"
+ALLOWED_STRUCTURE_PREFIXES = (
+    "/data/pdb/",
+    "/data/cif/",
+    "/data/alphafold/",
+    "/data/swiss_model/",
+)
 
 app = Flask(__name__)
 
@@ -51,8 +58,8 @@ def index():
     return render_template("index.html")
 
 def _is_safe_structure_url(url: str) -> bool:
-    """只允許站內、指向 PDB/CIF 靜態目錄的相對路徑，
-    擋掉外部網域、protocol-relative（//host/...）與路徑跳脫。"""
+    """Only allow same-site relative paths pointing to the PDB/CIF static directories;
+    reject external domains, protocol-relative URLs (//host/...), and path traversal."""
     if not url or "://" in url or url.startswith("//"):
         return False
     if not url.startswith(ALLOWED_STRUCTURE_PREFIXES):
@@ -69,15 +76,19 @@ def structure_viewer():
     if not _is_safe_structure_url(pdb_url):
         abort(400, description="Invalid or disallowed structure URL")
 
-    return render_template("pdb.html", pdb_url=pdb_url)
+    return render_template(
+        "pdb.html",
+        pdb_url=pdb_url,
+        structure_source=request.args.get("source", ""),
+    )
 
 
-# 保留舊路由給「只知道 PDB ID」的情境（例如直接分享連結），
-# 但要它自己組出正確路徑，而不是把裸 ID 當網址用
+# Keep the legacy route for the case where only the PDB ID is known (for example, a shared link),
+# so it can construct the correct path itself instead of treating the bare ID as a URL
 @app.route("/pdb/<pdbid>")
 def pdb_viewer(pdbid):
     pdb_url = f"/data/pdb/{pdbid}.pdb"
-    return render_template("pdb.html", pdb_url=pdb_url)
+    return render_template("pdb.html", pdb_url=pdb_url, structure_source="pdb")
 
 @app.route("/data/pdb/<filename>")
 def serve_pdb(filename):
@@ -95,6 +106,24 @@ def serve_cif(filename):
         CIF_DIR,
         filename,
         mimetype="chemical/x-mmcif"
+    )
+
+
+@app.route("/data/alphafold/<filename>")
+def serve_alphafold_structure(filename):
+    return send_from_directory(
+        ALPHAFOLD_DIR,
+        filename,
+        mimetype="chemical/x-pdb",
+    )
+
+
+@app.route("/data/swiss_model/<filename>")
+def serve_swiss_model_structure(filename):
+    return send_from_directory(
+        SWISS_MODEL_DIR,
+        filename,
+        mimetype="chemical/x-pdb",
     )
 
 @app.route("/network/<gene>")
@@ -138,8 +167,8 @@ def network(gene):
         if name not in nodes:
             nodes[name] = {
                 "id": name,
-                "type": node_type,      # 保留單一 type 欄位給前端用
-                "_roles": [node_type],  # 內部用 list（可序列化）記錄所有角色
+                "type": node_type,      # Keep a single type field for the frontend
+                "_roles": [node_type],  # Internal list (serializable) tracking all roles
             }
         elif node_type not in nodes[name]["_roles"]:
             nodes[name]["_roles"].append(node_type)
@@ -170,7 +199,7 @@ def network(gene):
         add_edge(e3, sub, "E3-substrate")
         add_edge(dub, sub, "DUB-substrate")
 
-    # 查詢每個 node 所屬 complex 數量
+    # Query how many complexes each node belongs to
     if nodes:
         placeholders = ",".join(["?"] * len(nodes))
         count_sql = f"""
@@ -185,7 +214,7 @@ def network(gene):
         for name, node in nodes.items():
             roles = node.pop("_roles")
             node["label"] = f"{name}\n({'/'.join(sorted(roles))})"
-            node["type"] = "/".join(sorted(roles))  # 若身兼多角色，type 也一併更新
+            node["type"] = "/".join(sorted(roles))  # If a node has multiple roles, update type as well
             node["complex_count"] = counts.get(name, 0)
 
     return jsonify({
@@ -202,7 +231,7 @@ def ubiquitin_interaction():
     interaction_type = request.args.get("interaction_type")
 
     if not protein_a or not protein_b or not interaction_type:
-        return jsonify({"error": "缺少 protein_a / protein_b / interaction_type"}), 400
+        return jsonify({"error": "Missing protein_a / protein_b / interaction_type"}), 400
 
     db = get_db()
     sql = """
@@ -397,9 +426,9 @@ def get_enzyme_class(enzyme_class):
 @app.route("/api/search")
 def api_search():
     """
-    模糊搜尋蛋白質：
+    Fuzzy protein search:
 
-    搜尋來源：
+    Search sources:
       1. proteins:
          - gene_name
          - protein_name
@@ -412,22 +441,18 @@ def api_search():
       3. gene_alias:
          - gene_alias
 
-    只要任一欄位符合，就找到對應 protein。
+    A match in any field finds the corresponding protein.
 
-    回傳：
-      - protein 基本資料
-      - 所有 protein_alias
-      - 所有 gene_alias
+    Returns:
+      - protein basic information
 
-    例如搜尋 BRCA1：
+    Example: searching BRCA1:
       {
         protein_id,
         uniprot_acc,
         gene_name,
         protein_name,
-        organism,
-        protein_alias: [...],
-        gene_alias: [...]
+        organism
       }
     """
 
@@ -439,13 +464,9 @@ def api_search():
     db = get_db()
     prefix = f"{q}%"
 
-    # ============================================================
-    # 1. 同時搜尋 proteins + protein_alias + gene_alias
-    # ============================================================
-
     rows = db.execute(
         """
-        SELECT DISTINCT
+        SELECT
             p.protein_id,
             p.uniprot_acc,
             p.gene_name,
@@ -455,19 +476,23 @@ def api_search():
 
         FROM proteins p
 
-        LEFT JOIN protein_alias pa
-            ON pa.protein_id = p.protein_id
-
-        LEFT JOIN gene_alias ga
-            ON ga.protein_id = p.protein_id
-
         WHERE
                p.gene_name LIKE ? COLLATE NOCASE
             OR p.protein_name LIKE ? COLLATE NOCASE
             OR p.uniprot_acc LIKE ? COLLATE NOCASE
             OR p.entry_name LIKE ? COLLATE NOCASE
-            OR pa.alias_name LIKE ? COLLATE NOCASE
-            OR ga.gene_alias LIKE ? COLLATE NOCASE
+            OR EXISTS (
+                SELECT 1
+                FROM protein_alias pa
+                WHERE pa.protein_id = p.protein_id
+                  AND pa.alias_name LIKE ? COLLATE NOCASE
+            )
+            OR EXISTS (
+                SELECT 1
+                FROM gene_alias ga
+                WHERE ga.protein_id = p.protein_id
+                  AND ga.gene_alias LIKE ? COLLATE NOCASE
+            )
 
         ORDER BY p.gene_name
         """,
@@ -481,71 +506,16 @@ def api_search():
         ),
     ).fetchall()
 
-    results = []
-
-    # ============================================================
-    # 2. 對每個找到的 protein，取得所有 alias
-    # ============================================================
-
-    for row in rows:
-
-        protein = dict(row)
-        protein_id = protein["protein_id"]
-
-        # --------------------------------------------------------
-        # protein_alias
-        # --------------------------------------------------------
-
-        protein_alias_rows = db.execute(
-            """
-            SELECT DISTINCT alias_name
-            FROM protein_alias
-            WHERE protein_id = ?
-              AND alias_name IS NOT NULL
-              AND TRIM(alias_name) != ''
-            ORDER BY alias_name
-            """,
-            (protein_id,),
-        ).fetchall()
-
-        protein["protein_alias"] = [
-            r["alias_name"]
-            for r in protein_alias_rows
-        ]
-
-        # --------------------------------------------------------
-        # gene_alias
-        # --------------------------------------------------------
-
-        gene_alias_rows = db.execute(
-            """
-            SELECT DISTINCT gene_alias
-            FROM gene_alias
-            WHERE protein_id = ?
-              AND gene_alias IS NOT NULL
-              AND TRIM(gene_alias) != ''
-            ORDER BY gene_alias
-            """,
-            (protein_id,),
-        ).fetchall()
-
-        protein["gene_alias"] = [
-            r["gene_alias"]
-            for r in gene_alias_rows
-        ]
-
-        results.append(protein)
-
-    return jsonify(results)
+    return jsonify([dict(row) for row in rows])
 
 @app.route("/api/protein/<protein_id>")
 def api_protein_detail(protein_id):
     """
-    回傳單一蛋白質完整資訊：
+    Return complete information for a single protein:
 
-    基本資料
+    Basic information
     alias
-    結構
+    Structure
     predicted structures
     domain
     UniProt FT features
@@ -557,7 +527,7 @@ def api_protein_detail(protein_id):
     db = get_db()
 
     # ---------------------------------------------------------
-    # 1. 先直接查 canonical UniProt protein_id
+    # 1. First check the canonical UniProt protein_id directly
     # ---------------------------------------------------------
     protein = db.execute(
         """
@@ -569,7 +539,7 @@ def api_protein_detail(protein_id):
     ).fetchone()
 
     # ---------------------------------------------------------
-    # 2. 如果找不到，再查 identifier_table
+    # 2. If not found, check identifier_table
     # ---------------------------------------------------------
     if protein is None:
 
@@ -604,7 +574,7 @@ def api_protein_detail(protein_id):
             if protein is None:
 
                 return jsonify({
-                    "error": "identifier 找到，但對應的 protein 不存在",
+                    "error": "identifier found, but the corresponding protein does not exist",
                     "input_id": input_id,
                     "identifier_db": identifier_row["db"],
                     "identifier": identifier_row["identifier"],
@@ -614,7 +584,7 @@ def api_protein_detail(protein_id):
         else:
 
             return jsonify({
-                "error": "找不到此蛋白質",
+                "error": "Protein not found",
                 "protein_id": protein_id
             }), 404
 
@@ -655,7 +625,7 @@ def api_protein_detail(protein_id):
     ).fetchall()
 
     # ---------------------------------------------------------
-    # 5. 將 alias 放進 protein object
+    # 5. Add aliases into the protein object
     # ---------------------------------------------------------
     protein_out = dict(protein)
 
@@ -759,8 +729,8 @@ def api_protein_detail(protein_id):
         # Convenience field:
         # first note
         #
-        # 前端可以直接使用 feature.note_text
-        # 不需要每次 notes[0]
+        # The frontend can directly use feature.note_text
+        # No need to access notes[0] each time
         # -----------------------------------------------------
         feature["note_text"] = (
             feature["notes"][0]["note_text"]
@@ -842,11 +812,11 @@ def api_protein_detail(protein_id):
     }
 
     # ---------------------------------------------------------
-    # 6B. 5 大 FT categories
+    # 6B. 5 FT categories
     #
-    # 注意：
-    # DB 不需要儲存 category。
-    # 由 API 統一分類即可。
+    # Note:
+    # The DB does not need to store category.
+    # The API can classify them uniformly.
     # ---------------------------------------------------------
 
     feature_categories = {
@@ -909,7 +879,7 @@ def api_protein_detail(protein_id):
             feature_type_to_category[feature_type] = category
 
     # ---------------------------------------------------------
-    # 將 category 加到每一個 feature
+    # Add category to each feature
     # ---------------------------------------------------------
 
     for feature in features_out:
@@ -1097,9 +1067,9 @@ def api_protein_detail(protein_id):
     ).fetchall()
 
     # ---------------------------------------------------------
-    # 13. 決定 Mol* viewer 要載入哪個結構
+    # 13. Decide which structure the Mol* viewer should load
     #
-    # 優先序：
+    # Priority:
     # PDB > AlphaFold > AlphaFill > SWISS-MODEL
     # ---------------------------------------------------------
     active_structure = None
@@ -1251,14 +1221,13 @@ def api_protein_detail(protein_id):
     })
 
 # =====================================================================
-# Cell GO Viewer：Animal_cells.svg 左側 + GO function 清單右側對照
+# Cell GO Viewer: Animal_cells.svg on the left + GO function list on the right
 # =====================================================================
 
 def _normalize_go_aspect(raw_aspect):
-    """go_functions.aspect 可能存 'C'/'F'/'P'，也可能存
-    'cellular_component' / 'molecular_function' / 'biological_process'
-    這種完整字串，統一轉成單一字母。（注意：不能只看開頭字母，
-    'molecular_function' 開頭是 'm' 不是 'f'，要用關鍵字判斷。）"""
+    """go_functions.aspect may contain 'C'/'F'/'P', or full strings such as
+    'cellular_component' / 'molecular_function' / 'biological_process'; normalize them to a single letter.
+    (Note: do not rely only on the first letter because 'molecular_function' starts with 'm' rather than 'f'; use keyword matching.)"""
     raw = (raw_aspect or "").strip().lower()
     if raw in ("c", "cc") or "cellular" in raw:
         return "C"
@@ -1270,10 +1239,9 @@ def _normalize_go_aspect(raw_aspect):
 
 
 def _normalize_go_row(row):
-    """把 go_functions 表的一列轉成 cell_go_viewer 前端要吃的固定格式。
-    這裡用「常見欄位名稱都試一遍」的方式，避免要跟 seed_data.py 的實際
-    欄位名稱綁死；如果你的 go_functions 表欄位跟這裡猜的都不一樣，
-    把下面 term_name / go_id_val 那兩行改成你實際的欄位名即可。"""
+    """Convert one row from the go_functions table into the fixed format expected by the cell_go_viewer frontend.
+    This tries common field names to avoid being tightly coupled to the actual column names in seed_data.py;
+    if your go_functions columns differ from the guesses here, update the term_name / go_id_val lines below to match the real column names."""
     d = dict(row)
     go_id_val = d.get("go_id") or d.get("go_term_id") or d.get("goid")
     term_name = (
@@ -1296,13 +1264,13 @@ def _normalize_go_row(row):
 
 @app.route("/protein/<protein_id>/cell-view")
 def protein_cell_view(protein_id):
-    """左側 Animal_cells.svg + 右側 GO function 清單的頁面。"""
+    """Page with Animal_cells.svg on the left and the GO function list on the right."""
     db = get_db()
     protein = db.execute(
         "SELECT * FROM proteins WHERE protein_id = ?", (protein_id,)
     ).fetchone()
     if protein is None:
-        abort(404, description="找不到此蛋白質")
+        abort(404, description="Protein not found")
 
     protein = dict(protein)
     label = protein.get("gene_name") or protein.get("protein_name") or protein_id
@@ -1316,15 +1284,15 @@ def protein_cell_view(protein_id):
 
 @app.route("/api/protein/<protein_id>/cell-go")
 def api_protein_cell_go(protein_id):
-    """給 cell_go_viewer.js 打的 API：回傳這顆蛋白質的 GO function，
-    並且已經用 go_sl_mapping 對照好對應的 SVG 胞器 id (sl_ids)。"""
+    """API for cell_go_viewer.js: returns the GO functions for this protein,
+    already mapped to the corresponding SVG organelle IDs (sl_ids) via go_sl_mapping."""
     db = get_db()
 
     protein = db.execute(
         "SELECT * FROM proteins WHERE protein_id = ?", (protein_id,)
     ).fetchone()
     if protein is None:
-        return jsonify({"error": "找不到此蛋白質"}), 404
+        return jsonify({"error": "Protein not found"}), 404
 
     rows = db.execute(
         "SELECT * FROM go_functions WHERE protein_id = ? ORDER BY aspect",
@@ -1332,7 +1300,7 @@ def api_protein_cell_go(protein_id):
     ).fetchall()
 
     go_terms = [_normalize_go_row(r) for r in rows]
-    go_terms = annotate_go_terms(go_terms)  # 補上每個 term 的 sl_ids
+    go_terms = annotate_go_terms(go_terms)  # Add the sl_ids for each term
 
     protein = dict(protein)
     return jsonify(
@@ -1345,8 +1313,7 @@ def api_protein_cell_go(protein_id):
         }
     )
 
-
 if __name__ == "__main__":
     if not os.path.exists(DB_PATH):
-        print("找不到資料庫，請先執行： python seed_data.py")
+        print("Database not found; please run: python seed_data.py")
     app.run(host="127.0.0.1", port=5050, debug=True)

@@ -30,6 +30,7 @@
     <script
         src="{{ url_for('static', filename='molstar/molstar.js') }}"
     ></script>
+    <script src="{{ url_for('static', filename='js/molstar-controls.js') }}"></script>
 
 
     <style>
@@ -56,12 +57,115 @@
 
             position: absolute;
 
-            inset: 0;
+            inset: 48px 0 0;
 
             width: 100%;
 
-            height: 100%;
+        }
 
+        #viewer-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 48px;
+            padding: 6px 10px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid #d0d5dd;
+            font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+        }
+
+        #viewer-toolbar[hidden] {
+            display: none;
+        }
+
+        #viewer-toolbar button {
+            padding: 6px 10px;
+            border: 1px solid #c7cdd4;
+            border-radius: 5px;
+            background: #fff;
+            color: #344054;
+            cursor: pointer;
+        }
+
+        #viewer-toolbar button:hover:not(:disabled) {
+            background: #f2f4f7;
+        }
+
+        #viewer-toolbar button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        #viewer-control-status {
+            margin-left: auto;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        #plddt-legend {
+            position: fixed;
+            top: 54px;
+            left: 10px;
+            z-index: 1100;
+            width: min(340px, calc(100vw - 32px));
+            padding: 9px 12px;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.96);
+            color: #344054;
+            font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+        }
+
+        #plddt-legend[hidden] {
+            display: none;
+        }
+
+        .plddt-legend-gradient {
+            height: 10px;
+            margin: 6px 0 3px;
+            border: 1px solid rgba(52, 64, 84, 0.2);
+            border-radius: 5px;
+            background: linear-gradient(90deg, #bf2222 0%, #fff 50%, #3361e1 100%);
+        }
+
+        .plddt-legend-ticks,
+        .plddt-legend-ranges {
+            position: relative;
+        }
+
+        .plddt-legend-ticks {
+            height: 16px;
+        }
+
+        .plddt-legend-ticks span {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .plddt-legend-ticks span:first-child {
+            transform: none;
+        }
+
+        .plddt-legend-ticks span:last-child {
+            transform: translateX(-100%);
+        }
+
+        .plddt-legend-ranges {
+            margin-top: 5px;
+            color: #667085;
+            font-size: 10px;
+        }
+
+        #pdb-full-viewer:fullscreen {
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
         }
 
 
@@ -144,13 +248,32 @@
 
     <div id="pdb-full-viewer"></div>
 
+    <div id="viewer-toolbar" aria-label="Structure viewer controls">
+        <button type="button" data-viewer-action="reset" disabled>Reset view</button>
+        <button type="button" data-viewer-action="cartoon" disabled>Cartoon</button>
+        <button type="button" data-viewer-action="surface" disabled>Surface</button>
+        <button type="button" data-viewer-action="confidence" disabled>pLDDT confidence</button>
+        <button type="button" data-viewer-action="fullscreen" disabled>Fullscreen</button>
+        <span id="viewer-control-status" role="status" aria-live="polite"></span>
+    </div>
+    <aside id="plddt-legend" aria-label="AlphaFold pLDDT color ranges" hidden>
+        <strong>pLDDT confidence score (0–100)</strong>
+        <div class="plddt-legend-gradient" role="img" aria-label="Low scores are red and transition through white to blue at high scores"></div>
+        <div class="plddt-legend-ticks" aria-hidden="true">
+            <span style="left: 0%">0</span><span style="left: 50%">50</span><span style="left: 70%">70</span><span style="left: 90%">90</span><span style="left: 100%">100</span>
+        </div>
+        <div class="plddt-legend-ranges">
+            &lt;50 Very low · 50–70 Low · 70–90 Confident · ≥90 Very high
+        </div>
+    </aside>
 
-    <div id="viewer-loading">
+
+    <div id="viewer-loading" role="status" aria-live="polite">
         Loading structure...
     </div>
 
 
-    <div id="viewer-error"></div>
+    <div id="viewer-error" role="alert"></div>
 
 
 <script>
@@ -166,6 +289,7 @@
     */
 
     const PDB_URL = {{ pdb_url | tojson }};
+    const STRUCTURE_SOURCE = {{ structure_source | tojson }};
 
 
     console.log(
@@ -236,8 +360,6 @@
             loading.style.display = "none";
 
         }
-
-
         const error =
             document.getElementById(
                 "viewer-error"
@@ -247,11 +369,15 @@
 
             error.style.display = "block";
 
-            error.innerHTML =
-                "❌ " +
-                escapeHtml(message);
+            error.textContent = "❌ " + message;
 
         }
+        document.getElementById("pdb-full-viewer")?.setAttribute("aria-busy", "false");
+
+        document.querySelectorAll("#viewer-toolbar [data-viewer-action]").forEach(button => {
+            button.disabled = true;
+        });
+        notifyStructureViewerState("error", message);
 
     }
 
@@ -274,7 +400,33 @@
             loading.style.display = "none";
 
         }
+        document.getElementById("pdb-full-viewer")?.setAttribute("aria-busy", "false");
 
+    }
+
+    function setViewerLoading(message) {
+        const loading = document.getElementById("viewer-loading");
+        const error = document.getElementById("viewer-error");
+        if (loading) {
+            loading.textContent = message;
+            loading.style.display = "block";
+        }
+        document.getElementById("pdb-full-viewer")?.setAttribute("aria-busy", "true");
+        if (error) error.style.display = "none";
+        document.querySelectorAll("#viewer-toolbar [data-viewer-action]").forEach(button => {
+            button.disabled = true;
+        });
+        notifyStructureViewerState("loading", message);
+    }
+
+    function notifyStructureViewerState(state, message = "") {
+        if (window.parent !== window) {
+            window.parent.postMessage({
+                type: "structure-viewer-state",
+                state,
+                message
+            }, window.location.origin);
+        }
     }
 
 
@@ -330,6 +482,7 @@
 
     async function initFullPDBViewer() {
 
+        setViewerLoading("Initializing the Mol* viewer…");
         try {
 
             console.log(
@@ -343,7 +496,7 @@
             ) {
 
                 throw new Error(
-                    "Mol* library 尚未載入"
+                    "Mol* library has not loaded."
                 );
 
             }
@@ -357,7 +510,7 @@
             if (!PDB_URL) {
 
                 throw new Error(
-                    "沒有指定 PDB URL"
+                    "No PDB URL was specified."
                 );
 
             }
@@ -372,7 +525,7 @@
             if (!container) {
 
                 throw new Error(
-                    "找不到 pdb-full-viewer"
+                    "Could not find pdb-full-viewer."
                 );
 
             }
@@ -422,15 +575,21 @@
             );
 
 
-            const probe =
-                await fetch(PDB_URL);
+            setViewerLoading("Downloading structure file…");
+            let probe;
+            try {
+                probe = await fetch(PDB_URL);
+            } catch (error) {
+                throw new Error(`Could not connect to or read the structure file: ${error.message || error}`);
+            }
 
 
             if (!probe.ok) {
 
-                throw new Error(
-                    `HTTP ${probe.status} for ${PDB_URL}`
-                );
+                if (probe.status === 404 || probe.status === 410) {
+                    throw new Error(`Structure file not found (HTTP ${probe.status}): ${PDB_URL}`);
+                }
+                throw new Error(`Structure file request failed (HTTP ${probe.status}): ${PDB_URL}`);
 
             }
 
@@ -454,7 +613,7 @@
                 );
 
                 throw new Error(
-                    "伺服器回傳的內容不是有效的結構檔（可能是路徑錯誤，請查看主控台）"
+                    `Invalid file format: the response is not a valid ${format === "mmcif" ? "mmCIF" : "PDB"} structure file.`
                 );
 
             }
@@ -524,8 +683,10 @@
             );
 
 
-            const data =
-                await viewer
+            setViewerLoading("Parsing the structure and creating the 3D view…");
+            let data;
+            try {
+                data = await viewer
                     .plugin
                     .builders
                     .data
@@ -536,6 +697,9 @@
                         isBinary: false
 
                     });
+            } catch (error) {
+                throw new Error(`Mol* failed to download structure data: ${error.message || error}`);
+            }
 
 
             console.log(
@@ -550,18 +714,16 @@
             =============================================
             */
 
-            const trajectory =
-                await viewer
+            let trajectory;
+            try {
+                trajectory = await viewer
                     .plugin
                     .builders
                     .structure
-                    .parseTrajectory(
-
-                        data,
-
-                        format
-
-                    );
+                    .parseTrajectory(data, format);
+            } catch (error) {
+                throw new Error(`Mol* could not parse this structure file: ${error.message || error}`);
+            }
 
 
             console.log(
@@ -576,19 +738,19 @@
             =============================================
             */
 
-            await viewer
-                .plugin
-                .builders
-                .structure
-                .hierarchy
-                .applyPreset(
+            try {
+                await viewer
+                    .plugin
+                    .builders
+                    .structure
+                    .hierarchy
+                    .applyPreset(trajectory, "default");
+            } catch (error) {
+                throw new Error(`Mol* failed to create the structure view: ${error.message || error}`);
+            }
 
-                    trajectory,
-
-                    "default"
-
-                );
-
+            window.pdbViewer = viewer;
+            setupViewerControls(viewer);
 
             console.log(
                 "Structure loaded successfully"
@@ -596,6 +758,7 @@
 
 
             hideLoading();
+            notifyStructureViewerState("ready");
 
 
         }
@@ -626,6 +789,51 @@
 
         }
 
+    }
+
+    function setupViewerControls(viewer) {
+        const toolbar = document.getElementById("viewer-toolbar");
+        const status = document.getElementById("viewer-control-status");
+        const confidenceButton = toolbar.querySelector('[data-viewer-action="confidence"]');
+        const embedded = window.parent !== window;
+        toolbar.hidden = embedded;
+        document.getElementById("plddt-legend").hidden = STRUCTURE_SOURCE !== "alphafold"
+            || embedded;
+        toolbar.querySelectorAll("[data-viewer-action]").forEach(button => {
+            button.disabled = false;
+        });
+        confidenceButton.disabled = STRUCTURE_SOURCE !== "alphafold";
+        confidenceButton.title = STRUCTURE_SOURCE === "alphafold"
+            ? "Color by the per-residue pLDDT scores in the AlphaFold PDB B-factor field."
+            : "pLDDT confidence coloring is not available for this structure source.";
+
+        toolbar.addEventListener("click", async event => {
+            const button = event.target.closest("[data-viewer-action]");
+            if (!button || button.disabled) return;
+
+            const actions = {
+                reset: () => window.molstarControls.resetCamera(viewer),
+                cartoon: () => window.molstarControls.setCartoon(viewer),
+                surface: () => window.molstarControls.setSurface(viewer),
+                confidence: () => window.molstarControls.setConfidence(viewer),
+                fullscreen: () => window.molstarControls.toggleFullscreen(document.documentElement)
+            };
+
+            button.disabled = true;
+            status.textContent = button.dataset.viewerAction === "reset"
+                || button.dataset.viewerAction === "fullscreen"
+                ? ""
+                : "Updating representation…";
+            try {
+                await actions[button.dataset.viewerAction]();
+                status.textContent = "";
+            } catch (error) {
+                console.error("Mol* viewer control failed:", error);
+                status.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
     }
 
 

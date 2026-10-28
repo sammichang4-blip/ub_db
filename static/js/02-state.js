@@ -26,9 +26,9 @@ let pdbViewer = null;      // Main-page Mol* viewer instance
 let currentPdbId = null;   // e.g. "1ABC"
 let currentPdbUrl = null;  // e.g. "/data/pdb/1ABC.pdb"
 
-// Domain Explorer 開啟時，會把 #pdb-viewer 這個 DOM 節點
-// 從主畫面搬到 Explorer modal 裡；這兩個變數記錄「原本在哪」，
-// 讓 closeDomainExplorer() 關閉時能把它搬回去
+// When Domain Explorer opens, it moves the #pdb-viewer DOM node
+// from the main page into the Explorer modal. These variables record its original location
+// so closeDomainExplorer() can move it back when the modal closes.
 
 
 // ============================================================

@@ -1,11 +1,11 @@
 // ============================================================
 // UKW - Ubiquitin Knowledge Warehouse
-// 07b. Evidence（UniProt feature 的證據）
-//   ECO 代碼說明 + PubMed / UniProtKB / PDB / PROSITE-ProRule 連結
-//   例：evidence = "ECO:0007744|PubMed:23186163"
+// 07b. Evidence for UniProt features.
+//   ECO code descriptions + links to PubMed / UniProtKB / PDB / PROSITE-ProRule.
+//   Example: evidence = "ECO:0007744|PubMed:23186163".
 //
-// 對外函式：evidenceHtml(feature, {full, cap})、parseEvidence、ecoLabel
-// 依賴：escapeHtml
+// Public functions: evidenceHtml(feature, {full, cap}), parseEvidence, ecoLabel.
+// Dependency: escapeHtml.
 // ============================================================
 const ECO_LABELS = {
     "ECO:0000269": "experimental evidence used in manual assertion",
@@ -25,9 +25,9 @@ const ECO_LABELS = {
     "ECO:0007669": "computational evidence used in automatic assertion"
 };
 
-const ecoCache = {};            // 不在內建表中的 ECO 代碼，向 QuickGO 查詢後快取
+const ecoCache = {};            // Cache ECO codes not in the built-in table after querying QuickGO.
 const ecoPending = new Set();
-const ecoListeners = new Set(); // 查到新名稱後，通知畫面重繪
+const ecoListeners = new Set(); // Notify the view to redraw when a new label is found.
 
 function ecoLabel(code) {
     code = String(code || "").trim().toUpperCase();
@@ -46,12 +46,12 @@ function ecoLabel(code) {
                     ecoListeners.forEach(fn => { try { fn(); } catch (e) { /* ignore */ } });
                 }
             })
-            .catch(() => { /* 查不到就只顯示代碼 */ });
+            .catch(() => { /* Show only the code if lookup fails. */ });
     }
     return "";
 }
 
-// 把一個 feature 的 evidence 整理成 [{eco, db, acc}]
+// Normalize a feature's evidence into [{eco, db, acc}].
 function parseEvidence(ft) {
     const rows = Array.isArray(ft && ft.evidence) ? ft.evidence : [];
     const out = [];
@@ -77,7 +77,7 @@ function parseEvidence(ft) {
             return;
         }
 
-        // 例："ECO:0007744|PubMed:23186163"（可能以逗號串接多筆）
+        // Example: "ECO:0007744|PubMed:23186163" (multiple entries may be comma-separated).
         raw.split(",").forEach(chunk => {
             const parts = chunk.split("|").map(x => x.trim()).filter(Boolean);
             const eco = parts.find(x => /^ECO:\d+/i.test(x)) || r.evidence_code || "";
@@ -115,7 +115,7 @@ function evidenceLink(db, acc) {
     return label;
 }
 
-// opts.full：顯示 ECO 完整說明（每筆一行）；opts.cap：最多顯示幾筆
+// opts.full: show the full ECO description (one entry per line); opts.cap: maximum number of entries to show.
 function evidenceHtml(ft, opts = {}) {
     const ev = parseEvidence(ft);
     if (!ev.length) return "";
@@ -138,7 +138,7 @@ function evidenceHtml(ft, opts = {}) {
         return parts.join(" · ");
     });
 
-    if (ev.length > shown.length) items.push(`…另有 ${ev.length - shown.length} 筆`);
+    if (ev.length > shown.length) items.push(`…and ${ev.length - shown.length} more`);
 
-    return `<div class="ukw-evd" style="font-size:.85em;color:#555;margin-top:2px">證據：${items.join(opts.full ? "<br>" : "；")}</div>`;
+    return `<div class="ukw-evd" style="font-size:.85em;color:#555;margin-top:2px">Evidence: ${items.join(opts.full ? "<br>" : "; ")}</div>`;
 }

@@ -1,38 +1,43 @@
 // ============================================================
 // UKW - Ubiquitin Knowledge Warehouse
-// 07c. 放大視窗：左＝序列；右上＝Mol*；右下＝feature 清單
+// 07c. Expanded view: sequence on the left; Mol* at upper right; feature list at lower right.
 //
-// openSequenceView() 內部分區（由上而下）：
-//   取得資料 / 資源網址 / 分類細項（篩選與排序）/ 寫入視窗（HTML + CSS）
-//   3D 覆蓋範圍 / SIFTS（UniProt ↔ PDB 編號）/ Mol* 選取與聚焦 / 水分子
-//   序列與清單重繪 / 選取（單段、多段）
-//   泛素化位點（Ub/UBL）/ Lys 表面可及性（SASA）
-//   3D → 序列、位置資訊、鄰近配體 / motif 搜尋 / 距離量測 / 證據說明
-//   分類按鈕與細項下拉 / 字體大小 / 可拖曳分隔線
-//   載入 Mol* / 結構選單與切換（主頁面換 PDB 時自動更新）
+// Sections inside openSequenceView() (top to bottom):
+//   Fetch data / resource URLs / feature subcategories (filtering and sorting) / write window (HTML + CSS)
+//   3D coverage / SIFTS (UniProt ↔ PDB numbering) / Mol* selection and focus / water molecules
+//   Redraw sequence and list / select (single or multiple ranges)
+//   Ubiquitination sites (Ub/UBL) / Lys surface accessibility (SASA)
+//   3D → sequence, position details, nearby ligands / motif search / distance measurement / evidence details
+//   Category buttons and subcategory dropdown / font size / draggable divider
+//   Load Mol* / structure menu and switching (automatically updates when the main page changes PDB)
 //
-// 依賴：escapeHtml、renderSequence（07-papers-sequence.js）、
+// Dependencies: escapeHtml, renderSequence (07-papers-sequence.js),
 //       evidenceHtml / ecoListeners（07b-evidence.js）、
-//       window.MOLSTAR_JS / MOLSTAR_CSS、state.js 的 currentPdbUrl / currentPdbId
-// 測試：見 tests/README.md
+//       window.MOLSTAR_JS / MOLSTAR_CSS, currentPdbUrl / currentPdbId from state.js.
+// Tests: see tests/README.md.
 // ============================================================
 
 // ============================================================
 // Sequence + Mol* popup
-//   左：序列　右上：Mol*　右下：feature 清單
-//   點序列胺基酸或清單項目 → 在 Mol* 選取並聚焦（UniProt→PDB 用 SIFTS 換算）
+//   Left: sequence; upper right: Mol*; lower right: feature list
+//   Click a sequence residue or list item → select and focus in Mol* (SIFTS maps UniProt to PDB numbering)
 // ============================================================
-async function openSequenceView() {
-
-    // 必須在使用者點擊後同步開窗，否則會被瀏覽器擋掉
-    const win = window.open("", "_blank", "width=1400,height=850,scrollbars=yes,resizable=yes");
-    if (!win) {
-        alert("瀏覽器封鎖了彈出視窗，請允許彈出視窗後再試一次。");
+async function openSequenceView(targetWindow = null) {
+    if (!targetWindow) {
+        window.openProteinTabView("sequence");
         return;
     }
-    win.document.write(`<!DOCTYPE html><html><body style="font-family:sans-serif;padding:2em;color:#888">載入中…</body></html>`);
 
-    // ---------------- 取得資料 ----------------
+    // Open synchronously after the user clicks; otherwise the browser may block the pop-up.
+    const embedded = Boolean(targetWindow);
+    const win = targetWindow || window.open("", "_blank", "width=1400,height=850,scrollbars=yes,resizable=yes");
+    if (!win) {
+        alert("The browser blocked the pop-up. Allow pop-ups and try again.");
+        return;
+    }
+    win.document.write(`<!DOCTYPE html><html><body style="font-family:sans-serif;padding:2em;color:#888">Loading…</body></html>`);
+
+    // ---------------- Fetch data ----------------
     let data = window.currentProteinData || window.currentData || null;
 
     if (!data || !data.protein) {
@@ -41,8 +46,8 @@ async function openSequenceView() {
         const pid = cur && (cur.protein_id || cur.uniprot_acc);
 
         if (!pid) {
-            win.close();
-            alert("尚未載入蛋白質資料，請先選擇一個蛋白質。");
+            if (!embedded) win.close();
+            alert("Protein data has not been loaded. Select a protein first.");
             return;
         }
 
@@ -57,8 +62,8 @@ async function openSequenceView() {
             window.currentProteinSequence = pp.sequence || "";
             window.currentProteinFeatures = data.features || [];
         } catch (e) {
-            console.error("[UKW] 重新載入蛋白質資料失敗：", e);
-            win.close();
+            console.error("[UKW] Failed to reload protein data:", e);
+            if (!embedded) win.close();
             return;
         }
     }
@@ -68,9 +73,14 @@ async function openSequenceView() {
     const features = (Array.isArray(window.currentProteinFeatures) && window.currentProteinFeatures.length)
         ? window.currentProteinFeatures
         : (data.features || []);
-    // ---- 結構來源：優先使用主頁面目前選到的 PDB（state.js: currentPdbId / currentPdbUrl） ----
+    // ---- Structure source: prefer the PDB currently selected on the main page (state.js: currentPdbId / currentPdbUrl) ----
     function guessFormat(url) {
         return /\.(cif|mmcif|bcif)(\?|$)/i.test(url || "") ? "mmcif" : "pdb";
+    }
+
+    function localModelUrl(source) {
+        const route = source === "alphafold" ? "alphafold" : "swiss_model";
+        return `/data/${route}/${encodeURIComponent(p.protein_id)}.pdb`;
     }
 
     function structureFromMain() {
@@ -79,12 +89,21 @@ async function openSequenceView() {
         if (!url) return null;
 
         const act = data.active_structure;
-        if (act && act.url === url) return act;
+        if (act && act.url === url) {
+            return ["alphafold", "swiss_model"].includes(act.source)
+                ? { ...act, url: localModelUrl(act.source) }
+                : act;
+        }
 
         const rec = (data.structures || []).find(r =>
             r.pdb_url === url || (id && String(r.pdb_id).toUpperCase() === String(id).toUpperCase()));
         if (rec) {
             return { source: "pdb", id: rec.pdb_id, url: rec.pdb_url || url, format: guessFormat(rec.pdb_url || url) };
+        }
+
+        const source = window.currentStructureSource;
+        if (["alphafold", "swiss_model"].includes(source)) {
+            return { source, id, url: localModelUrl(source), format: "pdb" };
         }
 
         return {
@@ -94,21 +113,36 @@ async function openSequenceView() {
     }
 
     let structure = structureFromMain() || data.active_structure || null;   // {source, id, url, format}
+    if (structure && ["alphafold", "swiss_model"].includes(structure.source)) {
+        structure = { ...structure, url: localModelUrl(structure.source) };
+    }
 
     if (!seq) {
-        console.error("[UKW] 沒有 sequence 可顯示");
-        win.close();
+        console.error("[UKW] No sequence is available to display.");
+        if (embedded) {
+            win.document.body.textContent = "No sequence is available for the current protein.";
+        } else {
+            win.close();
+        }
         return;
     }
 
-    // ---------------- 資源網址 ----------------
+    // ---------------- Resource URLs ----------------
     const MOLSTAR_JS_URL = new URL(window.MOLSTAR_JS || "/static/molstar/molstar.js", location.origin).href;
     const MOLSTAR_CSS_URL = new URL(window.MOLSTAR_CSS || "/static/molstar/molstar.css", location.origin).href;
 
-    // 沿用主頁面 CSS（序列、按鈕、分類顏色一致）
-    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    // Reuse the main-page CSS (same sequence, button, and category colors).
+    const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'));
+    const styles = stylesheets
         .map(n => n.tagName === "LINK" ? `<link rel="stylesheet" href="${n.href}">` : n.outerHTML)
         .join("\n");
+    const hasSequenceStyles = stylesheets.some(node =>
+        node.tagName === "LINK"
+        && new URL(node.href, document.baseURI).pathname.endsWith("/css/style.css")
+    );
+    const sequenceStyles = hasSequenceStyles
+        ? ""
+        : `<link rel="stylesheet" href="${window.SEQUENCE_STYLE_URL || new URL("/static/css/style.css", location.origin).href}">`;
 
     const categories = [
         ["structural", "Structure"],
@@ -121,12 +155,12 @@ async function openSequenceView() {
     let active = [...(window.activeFeatureCategories || [])];
     let pick = null;   // {start, end}
 
-    // ---------------- 分類細項（feature type）：篩選與排序 ----------------
-    const typeSel = {};   // {category: Set(feature_type)}；空集合 = 該分類全部細項
+    // ---------------- Feature subcategories (feature type): filtering and sorting ----------------
+    const typeSel = {};   // {category: Set(feature_type)}; an empty set means all subcategories in that category.
     categories.forEach(([k]) => { typeSel[k] = new Set(); });
 
     const catDef = data.feature_categories || window.FEATURE_CATEGORIES || {};
-    const typeOrder = {};   // 排序依據：分類順序 → 分類內細項順序
+    const typeOrder = {};   // Sort by category order, then subcategory order within each category.
     (function () {
         let n = 0;
         categories.forEach(([k]) => {
@@ -142,7 +176,7 @@ async function openSequenceView() {
         return Number.isFinite(st) && st >= 1;
     });
 
-    // 每個細項（feature type）一個固定顏色；排除黃色系，避免與「選取」的黃色混淆
+    // Assign a fixed color to each feature type; avoid yellow so it is not confused with the selection color.
     const TYPE_PALETTE = ["#60a5fa", "#34d399", "#f472b6", "#a78bfa", "#fb923c", "#2dd4bf", "#f87171",
         "#38bdf8", "#e879f9", "#4ade80", "#fb7185", "#818cf8", "#22d3ee", "#c084fc", "#f9a8d4",
         "#86efac", "#93c5fd", "#fdba74", "#5eead4", "#d8b4fe"];
@@ -152,7 +186,7 @@ async function openSequenceView() {
     const typeColor = {};
     presentTypes.forEach((t, i) => { typeColor[t] = TYPE_PALETTE[i % TYPE_PALETTE.length]; });
 
-    // 範圍大的細項（如 CHAIN）排在前面、樣式先寫，細項（HELIX 等）後寫而蓋過它
+    // Put broad feature types (such as CHAIN) first; write their styles before narrower types (such as HELIX), which override them.
     function injectTypeColors() {
         const st = doc.createElement("style");
         st.id = "type-colors";
@@ -179,7 +213,7 @@ async function openSequenceView() {
             || Number(a.end_pos || a.start_pos) - Number(b.end_pos || b.start_pos));
     }
 
-    // ---------------- 寫入視窗 ----------------
+    // ---------------- Write to the window ----------------
     win.document.open();
     win.document.write(`<!DOCTYPE html>
 <html lang="zh-Hant">
@@ -187,6 +221,7 @@ async function openSequenceView() {
 <meta charset="UTF-8">
 <title>${escapeHtml(p.protein_name || "")} (${escapeHtml(p.gene_name || "")}) - Sequence + 3D</title>
 ${styles}
+${sequenceStyles}
 <link rel="stylesheet" href="${MOLSTAR_CSS_URL}">
 <style>
     html, body { height:100%; margin:0; background:#fff; color:#222;
@@ -208,11 +243,11 @@ ${styles}
     #seq-box { overflow-x:auto; font-size:var(--seq-size,15px); }
     #seq-box .res { font-size:inherit; cursor:pointer; }
     #seq-box .res.picked { background:#facc15 !important; outline:2px solid #111; border-radius:2px; opacity:1 !important; }
-    /* 3D 結構覆蓋：有結構的殘基加藍色底線，沒有的變淡 */
+    /* 3D structure coverage: underline residues present in the structure in blue; dim those absent. */
     #seq-box .res.has-3d { border-bottom:3px solid #2563eb; }
     #seq-box .res.no-3d { opacity:.4; }
     .list-item.no-3d-item { opacity:.5; }
-    .list-item.no-3d-item .list-head span::after { content:" · 無 3D"; color:#999; font-size:.85em; }
+    .list-item.no-3d-item .list-head span::after { content:" · no 3D"; color:#999; font-size:.85em; }
     #cov-info { color:#555; font-size:.85em; margin:2px 0 6px; }
     #cov-info .cov-bar { display:inline-block; width:22px; border-bottom:3px solid #2563eb; vertical-align:middle; margin-right:4px; }
 
@@ -251,7 +286,7 @@ ${styles}
     .type-pick { margin-left:auto; }
     .type-pick:hover, .opt-pick:hover { background:#facc15; border-color:#111; }
 
-    /* 泛素化位點 */
+    /* Ubiquitination sites */
     .ub-wrap { position:relative; display:inline-flex; margin-left:6px; }
     .ub-btn, .ub-caret { padding:5px 12px; border:1px solid #374151; background:#f3f4f6; color:#374151; cursor:pointer; }
     .ub-btn { border-radius:6px 0 0 6px; }
@@ -317,36 +352,36 @@ ${styles}
             <span style="font-weight:400;color:#888;">(${escapeHtml(p.gene_name || "")})</span></h1>
         <div style="color:#888;">UniProt: ${escapeHtml(p.uniprot_acc || "")} · ${escapeHtml(p.length || seq.length)} aa</div>
         <div class="toolbar">
-            <label style="display:flex;align-items:center;gap:6px;">字體大小
+            <label style="display:flex;align-items:center;gap:6px;">Font size
                 <input type="range" id="seq-size" min="10" max="32" value="15">
                 <span id="seq-size-val">15px</span>
             </label>
             <label style="display:flex;align-items:center;gap:4px;">
-                <input type="checkbox" id="auto-zoom"> 自動聚焦
+                <input type="checkbox" id="auto-zoom"> Auto-focus
             </label>
-            <label style="display:flex;align-items:center;gap:4px;" title="選取殘基時，一併顯示 4.5 Å 內的配體 / 離子（例如 BINDING 位點的配體）">
-                <input type="checkbox" id="show-lig" checked> 顯示鄰近配體
+            <label style="display:flex;align-items:center;gap:4px;" title="When selecting a residue, also show ligands / ions within 4.5 Å (for example, a ligand at a BINDING site)">
+                <input type="checkbox" id="show-lig" checked> Show nearby ligands
             </label>
-            <label style="display:flex;align-items:center;gap:4px;" title="清單中顯示 ECO 證據的完整說明（位置資訊面板一律顯示）">
-                <input type="checkbox" id="show-evd"> 顯示證據說明
+            <label style="display:flex;align-items:center;gap:4px;" title="Show full ECO evidence descriptions in the list (always shown in the position details panel)">
+                <input type="checkbox" id="show-evd"> Show evidence details
             </label>
-            <button type="button" class="copy-btn" id="btn-clear">清除選取</button>
-            <button type="button" class="copy-btn" id="btn-measure" title="依序點兩個殘基，顯示距離">📏 測距</button>
+            <button type="button" class="copy-btn" id="btn-clear">Clear selection</button>
+            <button type="button" class="copy-btn" id="btn-measure" title="Click two residues in sequence to measure the distance">📏 Measure distance</button>
             <button type="button" class="copy-btn" id="btn-copy">📋 Copy</button>
         </div>
         <div class="motif-row">
-            <input type="text" id="motif-input" placeholder="Motif（正規表示式），例：K..K 或 N[^P][ST]" spellcheck="false">
-            <select id="motif-preset" title="常用 motif 範例">
-                <option value="">範例…</option>
+            <input type="text" id="motif-input" placeholder="Motif (regular expression), e.g. K..K or N[^P][ST]" spellcheck="false">
+            <select id="motif-preset" title="Common motif examples">
+                <option value="">Examples…</option>
                 <option value="[VILMFAP]K.[DE]">SUMO ψKxE</option>
-                <option value="N[^P][ST]">N-糖基化 N-X-S/T</option>
+                <option value="N[^P][ST]">N-glycosylation N-X-S/T</option>
                 <option value="K..K">K..K</option>
                 <option value="KEN">KEN box</option>
                 <option value="R..L....N">D-box</option>
-                <option value="[RK][RK].[ST]">PKA 位點</option>
+                <option value="[RK][RK].[ST]">PKA site</option>
             </select>
-            <button type="button" class="copy-btn" id="motif-go">搜尋</button>
-            <button type="button" class="copy-btn" id="motif-clear">清除</button>
+            <button type="button" class="copy-btn" id="motif-go">Search</button>
+            <button type="button" class="copy-btn" id="motif-clear">Clear</button>
             <span id="motif-status"></span>
         </div>
         <div id="pick-info"></div>
@@ -358,8 +393,8 @@ ${styles}
 
     <div id="right">
         <div id="mol">
-            <div id="pdb-picker"><select id="pdb-select" title="切換結構"></select></div>
-            <div id="mol-msg">${structure ? "載入 3D 結構中…" : "此蛋白質沒有可用的 3D 結構"}</div>
+            <div id="pdb-picker"><select id="pdb-select" title="Switch structure"></select></div>
+            <div id="mol-msg">${structure ? "Loading 3D structure…" : "No 3D structure is available for this protein."}</div>
             <div id="mol-host"></div>
         </div>
         <div id="split-h" class="splitter"></div>
@@ -368,19 +403,19 @@ ${styles}
                 <div class="feature-category-bar">
                     ${categories.map(([k, l]) => `
                         <span class="cat-wrap" data-category="${k}">
-                            <button type="button" class="feature-category-btn" data-category="${k}">${l}</button><button type="button" class="cat-caret" title="篩選細項">▾</button>
+                            <button type="button" class="feature-category-btn" data-category="${k}">${l}</button><button type="button" class="cat-caret" title="Filter subcategories">▾</button>
                             <div class="cat-panel" id="panel-${k}"></div>
                         </span>`).join("")}
                     <span class="ub-wrap" id="ub-wrap">
-                        <button type="button" class="ub-btn" id="ub-toggle" title="標示泛素／類泛素（SUMO、NEDD8、ISG15…）修飾位點">Ub/UBL 位點</button><button type="button" class="ub-caret" id="ub-caret" title="依鏈型篩選">▾</button>
+                        <button type="button" class="ub-btn" id="ub-toggle" title="Mark ubiquitin / ubiquitin-like (SUMO, NEDD8, ISG15…) modification sites">Ub/UBL sites</button><button type="button" class="ub-caret" id="ub-caret" title="Filter by linkage type">▾</button>
                         <div class="ub-panel" id="ub-panel"></div>
                     </span>
                     <span class="ub-wrap" id="sasa-wrap">
-                        <button type="button" class="ub-btn" id="sasa-toggle" title="3D 結構上每個 Lys 的表面可及性（SASA），並與 Ub/UBL 位點交叉比對">Lys 可及性</button><button type="button" class="ub-caret" id="sasa-caret" title="一鍵選取">▾</button>
+                        <button type="button" class="ub-btn" id="sasa-toggle" title="Surface accessibility (SASA) of each Lys in the 3D structure, cross-referenced with Ub/UBL sites">Lys accessibility</button><button type="button" class="ub-caret" id="sasa-caret" title="Select all">▾</button>
                         <div class="ub-panel" id="sasa-panel"></div>
                     </span>
                 </div>
-                <div class="cat-hint">▾ 展開可篩選細項（未勾選＝顯示該分類全部）；清單依細項分組排序</div>
+                <div class="cat-hint">▾ Expand to filter subcategories (none selected = show all in the category); the list is grouped and sorted by subcategory</div>
             </div>
             <div id="pos-info" style="display:none"></div>
             <div id="measure-info" style="display:none"></div>
@@ -399,14 +434,13 @@ ${styles}
     const msg = doc.getElementById("mol-msg");
 
     let viewer = null;
-    let loadToken = 0;         // 切換結構時用來丟棄過期的非同步結果
-    let siftsMap = null;       // UniProt → PDB 對應表（只有 PDB 結構需要）
+    let loadToken = 0;         // Discard stale asynchronous results when switching structures.
+    let siftsMap = null;       // UniProt → PDB mapping (needed only for PDB structures).
     let infoBase = "";
 
-    // ---------------- 3D 覆蓋範圍（序列上標示可點選的部分） ----------------
-    let coverage = null;   // Uint8Array，index = UniProt 位置，1 = 有 3D 結構
-
-    // 取得載入結構中「真的有原子」的殘基集合："chain:auth_seq_id"
+    // ---------------- 3D coverage (mark clickable positions on the sequence) ----------------
+    let coverage = null;   // Uint8Array; index = UniProt position; 1 = present in the 3D structure.
+    // Get the set of residues with actual atoms in the loaded structure: "chain:auth_seq_id".
     function getObservedResidues() {
         try {
             const mol = getStructureData();
@@ -423,13 +457,13 @@ ${styles}
                 for (let i = 0; i < els.length; i++) {
                     loc.unit = unit;
                     loc.element = els[i];
-                    if (isWaterAt(SP, loc)) continue;   // 水分子不參與選取與覆蓋計算
+                    if (isWaterAt(SP, loc)) continue;   // Water molecules are excluded from selection and coverage calculations.
                     set.add(SP.chain.auth_asym_id(loc) + ":" + SP.residue.auth_seq_id(loc));
                 }
             }
             return set;
         } catch (e) {
-            console.warn("[UKW] 無法讀取結構殘基，改用 SIFTS 範圍：", e);
+            console.warn("[UKW] Could not read structure residues; falling back to SIFTS ranges:", e);
             return null;
         }
     }
@@ -439,7 +473,7 @@ ${styles}
         if (!structure) return;
 
         if (structure.source !== "pdb") {
-            coverage.fill(1);   // AlphaFold 等預測模型涵蓋全長
+            coverage.fill(1);   // Predicted models such as AlphaFold cover the full sequence.
             return;
         }
 
@@ -456,13 +490,13 @@ ${styles}
     }
 
     function hasCoverage(s, e) {
-        if (!coverage) return true;   // 尚未載入對應表前不要變淡
+        if (!coverage) return true;   // Do not dim anything until the mapping has loaded.
         for (let i = s; i <= e; i++) if (coverage[i]) return true;
         return false;
     }
 
     function applyCoverageClass() {
-        if (!coverage || !structure || structure.source !== "pdb") return;   // 全長覆蓋就不用標示
+        if (!coverage || !structure || structure.source !== "pdb") return;   // No need to mark full-length coverage.
         seqBox.querySelectorAll(".res").forEach(el => {
             const ok = coverage[Number(el.dataset.position)] === 1;
             el.classList.toggle("has-3d", ok);
@@ -477,7 +511,7 @@ ${styles}
         if (!structure) { box.textContent = ""; return; }
 
         if (structure.source !== "pdb") {
-            box.textContent = `3D：${structure.source} 預測結構（涵蓋全長）`;
+            box.textContent = `3D: ${structure.source} predicted structure (full-length coverage)`;
             return;
         }
 
@@ -490,13 +524,13 @@ ${styles}
 
         const total = ranges.reduce((n, r) => n + (r[1] - r[0] + 1), 0);
         if (!ranges.length) {
-            let why = "無對應範圍";
+            let why = "No mapped range";
             if (siftsStatus.reason.startsWith("fetch-failed")) {
-                why = "SIFTS 查詢失敗（" + siftsStatus.reason.slice(13) + "）";
+                why = "SIFTS lookup failed (" + siftsStatus.reason.slice(13) + ")";
             } else if (siftsStatus.reason === "acc-mismatch") {
-                why = `SIFTS 中此 PDB 對應的是 ${siftsStatus.keys.join(", ")}，與目前蛋白質（${p.uniprot_acc || p.protein_id || "?"}）不符`;
+                why = `SIFTS maps this PDB to ${siftsStatus.keys.join(", ")}, which does not match the current protein (${p.uniprot_acc || p.protein_id || "?"})`;
             } else if (siftsStatus.reason === "no-uniprot") {
-                why = "SIFTS 沒有此 PDB 的 UniProt 對應資料";
+                why = "SIFTS has no UniProt mapping for this PDB";
             }
             box.innerHTML = `PDB ${escapeHtml(String(structure.id || ""))}：${escapeHtml(why)}`;
             return;
@@ -504,7 +538,7 @@ ${styles}
 
         const text = ranges.map(r => r[0] === r[1] ? r[0] : `${r[0]}–${r[1]}`).join("、");
 
-        box.innerHTML = `<span class="cov-bar"></span>PDB ${escapeHtml(String(structure.id || ""))} 覆蓋：${escapeHtml(text)}（${total} / ${seq.length} aa）`;
+        box.innerHTML = `<span class="cov-bar"></span>PDB ${escapeHtml(String(structure.id || ""))} coverage: ${escapeHtml(text)} (${total} / ${seq.length} aa)`;
     }
 
     function setInfo(base, note = "") {
@@ -512,7 +546,7 @@ ${styles}
         info.textContent = base + note;
     }
 
-    // ---------------- SIFTS：UniProt 位置 → PDB chain / auth_seq_id ----------------
+    // ---------------- SIFTS: UniProt position → PDB chain / auth_seq_id ----------------
     let siftsStatus = { ok: false, reason: "", keys: [], used: "" };
 
     async function loadSifts(st = structure) {
@@ -536,7 +570,7 @@ ${styles}
             const candsBase = cands.map(x => x.split("-")[0]);
             const hit = keys.find(k => cands.includes(k.toUpperCase()) || candsBase.includes(k.toUpperCase()));
 
-            console.log("[UKW] SIFTS 回傳的 UniProt：", keys, "；目前蛋白質：", cands);
+            console.log("[UKW] UniProt entries returned by SIFTS:", keys, "; current protein:", cands);
 
             siftsStatus = { ok: !!hit, reason: "", keys, used: hit || "" };
 
@@ -546,7 +580,7 @@ ${styles}
                 return;
             }
 
-            // 未解出的端點 author_residue_number 為 null，用另一端與區段長度推算
+            // If an endpoint's author_residue_number is null, infer it from the other endpoint and the segment length.
             siftsMap = (uni[hit].mappings || []).map(m => {
                 const span = m.unp_end - m.unp_start;
                 let a = m.start?.author_residue_number;
@@ -562,18 +596,18 @@ ${styles}
                 return { chain: m.chain_id, unpStart: m.unp_start, unpEnd: m.unp_end, authStart: a, authEnd: b };
             }).filter(m => m.authStart != null);
 
-            console.log("[UKW] SIFTS 對應表：", siftsMap);
+            console.log("[UKW] SIFTS mapping:", siftsMap);
         } catch (e) {
             if (myToken !== loadToken) return;
-            console.error("[UKW] SIFTS 取得失敗：", e);
+            console.error("[UKW] Failed to retrieve SIFTS:", e);
             siftsMap = [];
             siftsStatus = { ok: false, reason: "fetch-failed:" + (e.message || e), keys: [], used: "" };
         }
     }
 
-    // UniProt 區間 → 規則 [{chain, useAuth, a, b}]
+    // UniProt ranges → rules [{chain, useAuth, a, b}].
     function buildRules(start, end) {
-        // 非 PDB（AlphaFold 等）：編號與 UniProt 一致，用 label_seq_id
+        // Non-PDB structures (such as AlphaFold): numbering matches UniProt; use label_seq_id.
         if (!structure || structure.source !== "pdb") {
             return [{ chain: null, useAuth: false, a: start, b: end }];
         }
@@ -598,12 +632,12 @@ ${styles}
         return rules;
     }
 
-    // ---------------- Mol*：選取與聚焦 ----------------
+    // ---------------- Mol*: selection and focus ----------------
     function getStructureData() {
         return viewer?.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data || null;
     }
 
-    // 自己走訪原子，依 chain 與殘基編號組出 Loci（不依賴 structureInteractivity / MolScript）
+    // Traverse atoms and build Loci from chain and residue numbers (without relying on structureInteractivity / MolScript).
     function buildLoci(mol, rules) {
         const S = win.molstar.lib.structure;
         const SE = S.StructureElement;
@@ -619,7 +653,7 @@ ${styles}
             for (let i = 0; i < els.length; i++) {
                 loc.unit = unit;
                 loc.element = els[i];
-                if (isWaterAt(SP, loc)) continue;   // 水分子不參與選取與覆蓋計算
+                if (isWaterAt(SP, loc)) continue;   // Water molecules are excluded from selection and coverage calculations.
 
                 const chain = SP.chain.auth_asym_id(loc);
                 const num = SP.residue.auth_seq_id(loc);
@@ -641,7 +675,7 @@ ${styles}
         return parts.length ? SE.Loci(mol, parts) : null;
     }
 
-    // 一次選取多段（UniProt 區間）：序列與 3D 同步
+    // Select multiple UniProt ranges at once, synchronizing the sequence and 3D view.
     function showRangesInMolstar(ranges) {
         if (!viewer) return;
 
@@ -654,25 +688,25 @@ ${styles}
             plugin.managers.structure.selection.clear();
 
             const rules = ranges.flatMap(([a, b]) => buildRules(a, b));
-            console.log(`[UKW] UniProt ${ranges.length} 段 → rules`, rules);
+            console.log(`[UKW] ${ranges.length} UniProt ranges → rules`, rules);
 
             if (!rules.length) {
-                setInfo(infoBase, "（此位置不在 3D 結構範圍內）");
+                setInfo(infoBase, "(This position is outside the 3D structure range.)");
                 return;
             }
 
             const loci = buildLoci(mol, rules);
 
             if (!loci) {
-                console.warn("[UKW] 在結構中找不到符合的原子", rules);
-                setInfo(infoBase, "（此位置不在 3D 結構範圍內）");
+                console.warn("[UKW] No matching atoms found in the structure", rules);
+                setInfo(infoBase, "(This position is outside the 3D structure range.)");
                 return;
             }
 
             const size = win.molstar.lib.structure.StructureElement.Loci.size(loci);
-            console.log(`[UKW] 選到 ${size} / ${mol.elementCount} atoms`);
+            console.log(`[UKW] Selected ${size} / ${mol.elementCount} atoms`);
 
-            // 一併顯示鄰近配體（如 BINDING 位點的配體、金屬離子）
+            // Also show nearby ligands (such as ligands at BINDING sites) and metal ions.
             let finalLoci = loci;
             let ligText = "";
             if (doc.getElementById("show-lig")?.checked) {
@@ -680,25 +714,25 @@ ${styles}
                     const lg = nearbyLigands(mol, rules, 4.5);
                     if (lg) {
                         finalLoci = win.molstar.lib.structure.StructureElement.Loci.union(loci, lg.loci);
-                        ligText = `；配體：${lg.comps.join(", ")}`;
+                        ligText = `; Ligands: ${lg.comps.join(", ")}`;
                     }
-                } catch (e) { console.warn("[UKW] 鄰近配體搜尋失敗：", e); }
+                } catch (e) { console.warn("[UKW] Failed to search for nearby ligands:", e); }
             }
 
             setInfo(infoBase, `（3D：${size} atoms${ligText}）`);
 
             plugin.managers.structure.selection.fromLoci("set", finalLoci);
-            try { plugin.managers.structure.focus.setFromLoci(finalLoci); } catch (e) { /* 舊版略過 */ }
-            // 預設不移動相機；勾選「自動聚焦」才會拉近
+            try { plugin.managers.structure.focus.setFromLoci(finalLoci); } catch (e) { /* Skip on older versions. */ }
+            // Do not move the camera by default; zoom in only when Auto-focus is enabled.
             if (doc.getElementById("auto-zoom")?.checked) {
                 plugin.managers.camera.focusLoci(finalLoci);
             }
         } catch (err) {
-            console.error("[UKW] Mol* 標註失敗：", err);
+            console.error("[UKW] Mol* annotation failed:", err);
         }
     }
 
-    // ---------------- 水分子 ----------------
+    // ---------------- Water molecules ----------------
     const WATER_NAMES = new Set(["HOH", "WAT", "H2O", "DOD", "TIP", "TIP3", "SOL"]);
 
     function isWaterAt(SP, loc) {
@@ -710,12 +744,12 @@ ${styles}
         }
     }
 
-    // 載入 PDB 後移除水分子的 component（不顯示、也不佔用選取）
+    // Remove water components after loading a PDB (do not display or include in selections).
     async function removeWater() {
         try {
             const plugin = viewer.plugin;
             const h = plugin.managers.structure.hierarchy;
-            await new Promise(r => setTimeout(r, 0));   // 等 hierarchy 同步
+            await new Promise(r => setTimeout(r, 0));   // Wait for the hierarchy to synchronize.
 
             const waters = [];
             h.current.structures.forEach(st => {
@@ -728,17 +762,17 @@ ${styles}
 
             if (waters.length) {
                 await h.remove(waters);
-                console.log(`[UKW] 已移除水分子 component：${waters.length} 個`);
+                console.log(`[UKW] Removed ${waters.length} water components.`);
             }
         } catch (e) {
-            console.warn("[UKW] 移除水分子失敗：", e);
+            console.warn("[UKW] Failed to remove water molecules:", e);
         }
     }
 
-    // 3D 外觀：底圖淡灰，選取用鮮豔對比色（改色號即可）
-    const COLOR_BASE      = 0xB8C0CC;   // 底圖：淡灰藍
-    const COLOR_SELECT    = 0xFACC15;   // 選取：黃（與左邊序列同色）
-    const COLOR_HIGHLIGHT = 0xFF3D9A;   // 滑鼠移過：桃紅
+    // 3D appearance: pale gray base with a bright contrasting selection color (edit the color codes as needed).
+    const COLOR_BASE      = 0xB8C0CC;   // Base: pale blue-gray.
+    const COLOR_SELECT    = 0xFACC15;   // Selection: yellow (matches the sequence on the left).
+    const COLOR_HIGHLIGHT = 0xFF3D9A;   // Hover: hot pink.
 
     function applyViewerStyle() {
         if (!viewer) return;
@@ -753,17 +787,17 @@ ${styles}
                     highlightStrength: 0.5
                 }
             });
-        } catch (e) { console.warn("[UKW] 設定選取色失敗：", e); }
+        } catch (e) { console.warn("[UKW] Failed to set selection color:", e); }
 
         try {
             const st = plugin.managers.structure.hierarchy.current.structures[0];
             if (st) {
                 plugin.managers.structure.component.updateRepresentationsTheme(
-                    st.components.filter(c => !/ligand|ion|branched/i.test(String(c.key || ""))),   // 配體與離子保留元素色
+                    st.components.filter(c => !/ligand|ion|branched/i.test(String(c.key || ""))),   // Keep element colors for ligands and ions.
                     { color: "uniform", colorParams: { value: COLOR_BASE } }
                 );
             }
-        } catch (e) { console.warn("[UKW] 設定底圖顏色失敗：", e); }
+        } catch (e) { console.warn("[UKW] Failed to set base color:", e); }
     }
 
     function clearMolstar() {
@@ -774,7 +808,7 @@ ${styles}
         } catch (e) { /* ignore */ }
     }
 
-    // ---------------- 左：序列 ----------------
+    // ---------------- Left: sequence ----------------
     function applyPickClass() {
         seqBox.querySelectorAll(".res.picked").forEach(el => el.classList.remove("picked"));
         listBox.querySelectorAll(".list-item.picked").forEach(el => el.classList.remove("picked"));
@@ -805,13 +839,13 @@ ${styles}
         applyPickClass();
     }
 
-    // ---------------- 右下：feature 清單 ----------------
+    // ---------------- Lower right: feature list ----------------
     function redrawList() {
-        // 沒有選任何分類時顯示全部；依細項分組、細項內依位置排序
+        // Show all when no categories are selected; group by subcategory and sort each group by position.
         const list = sortFeatures(visibleFeatures());
 
         if (!list.length) {
-            listBox.innerHTML = buildMotifListHtml() + buildSasaListHtml() + buildUbListHtml() + `<div style="color:#888;padding:8px">沒有符合的 UniProt Feature。</div>`;
+            listBox.innerHTML = buildMotifListHtml() + buildSasaListHtml() + buildUbListHtml() + `<div style="color:#888;padding:8px">No matching UniProt features.</div>`;
             applyPickClass();
             return;
         }
@@ -832,7 +866,7 @@ ${styles}
                 const tc = typeColor[ft.feature_type] || "#ccc";
                 html += `<div class="type-head" data-category="${cat}" style="border-bottom-color:${tc}">
                     <i class="sw" style="background:${tc}"></i>${escapeHtml(ft.feature_type || "")} <span>(${counts[ft.feature_type]})</span>
-                    <button type="button" class="type-pick" data-pick-type="${escapeHtml(ft.feature_type || "")}" title="選取此細項全部位置（序列＋3D）">◎ 選取全部</button>
+                    <button type="button" class="type-pick" data-pick-type="${escapeHtml(ft.feature_type || "")}" title="Select all positions in this subcategory (sequence + 3D)">◎ Select all</button>
                 </div>`;
             }
 
@@ -843,7 +877,7 @@ ${styles}
                         <span>${st === en ? st : st + "–" + en}</span>
                     </div>
                     ${ft.note_text ? `<div class="list-note">${escapeHtml(ft.note_text)}</div>` : ""}
-                    ${ligNames(ft).length ? `<div class="list-note">配體：${escapeHtml(ligNames(ft).join("、"))}</div>` : ""}
+                    ${ligNames(ft).length ? `<div class="list-note">Ligands: ${escapeHtml(ligNames(ft).join(", "))}</div>` : ""}
                     ${evidenceHtml(ft, { full: showEvidenceFull, cap: showEvidenceFull ? 99 : 2 })}
                 </div>`;
         });
@@ -852,12 +886,12 @@ ${styles}
         applyPickClass();
     }
 
-    // ---------------- 選取（序列與清單共用） ----------------
+    // ---------------- Selection (shared by sequence and list) ----------------
     function rangesKey(ranges) {
         return ranges.map(r => r[0] + "-" + r[1]).join(",");
     }
 
-    // ranges: [[start, end], ...]（UniProt 位置）。單段或多段共用
+    // ranges: [[start, end], ...] (UniProt positions); shared by single- and multi-range selections.
     function setPickRanges(ranges, opts = {}) {
         const { scroll = true, label = "" } = opts;
 
@@ -870,10 +904,10 @@ ${styles}
 
         if (ranges.length === 1 && !label) {
             setInfo(start === end
-                ? `選取：${seq[start - 1] || ""}${start}`
-                : `選取：${start}–${end}（${end - start + 1} aa）`);
+                ? `Selected: ${seq[start - 1] || ""}${start}`
+                : `Selected: ${start}–${end} (${end - start + 1} aa)`);
         } else {
-            setInfo(`選取：${label || "多段"}（${ranges.length} 段，共 ${posSet.size} aa）`);
+            setInfo(`Selected: ${label || "multiple ranges"} (${ranges.length} ranges, ${posSet.size} aa total)`);
         }
 
         applyPickClass();
@@ -899,7 +933,7 @@ ${styles}
         renderPosInfo();
     }
 
-    // 整理成不重複、依位置排序的區段
+    // Normalize into unique ranges sorted by position.
     function uniqueRanges(list) {
         const seen = new Set();
         return list
@@ -914,7 +948,7 @@ ${styles}
         else setPickRanges(ranges, { scroll: true, label });
     }
 
-    // 一鍵選取某個細項（feature type）的所有位置：序列 + 3D
+    // Select all positions for a feature type at once: sequence + 3D.
     function selectType(type) {
         const list = validFeatures.filter(ft => ft.feature_type === type);
         if (!list.length) return;
@@ -927,10 +961,10 @@ ${styles}
             if (changed) refreshAll();
         }
 
-        togglePickRanges(uniqueRanges(list), `${type} 全部`);
+        togglePickRanges(uniqueRanges(list), `All ${type}`);
     }
 
-    // 一鍵選取某分類目前顯示的所有細項（有勾選細項時只含勾選的）
+    // Select all currently displayed positions in a category (only checked subcategories, if any).
     function selectCategory(k) {
         const list = validFeatures.filter(ft =>
             window.FEATURE_TYPE_TO_CATEGORY[ft.feature_type] === k
@@ -940,10 +974,10 @@ ${styles}
         if (!active.includes(k)) { active.push(k); refreshAll(); }
 
         const name = (categories.find(c => c[0] === k) || [k, k])[1];
-        togglePickRanges(uniqueRanges(list), `${name} 全部`);
+        togglePickRanges(uniqueRanges(list), `All ${name}`);
     }
 
-    // 點序列上的胺基酸
+    // Click a residue in the sequence.
     seqBox.addEventListener("click", e => {
         const r = e.target.closest(".res");
         if (!r) return;
@@ -959,7 +993,7 @@ ${styles}
         }
     });
 
-    // 點清單項目
+    // Click a list item.
     listBox.addEventListener("click", e => {
         const item = e.target.closest(".list-item");
         if (!item) return;
@@ -976,7 +1010,7 @@ ${styles}
         }
     });
 
-    // 一鍵選取按鈕（清單標題與下拉面板的 ◎）
+    // Select-all button (◎ in the list header and dropdown panel).
     doc.addEventListener("click", e => {
         const b = e.target.closest ? e.target.closest("[data-pick-type]") : null;
         if (!b) return;
@@ -986,7 +1020,7 @@ ${styles}
     });
 
     // ============================================================
-    // 泛素化位點（ub_relations：本蛋白質為受質時的 modified_lysine，依鏈型分色）
+    // Ubiquitination sites (ub_relations: modified_lysine when this protein is the substrate; color-coded by linkage type).
     // ============================================================
     const UB_KEYS  = ["K48", "K63", "K11", "K29", "K27", "K33", "K6", "M1", "Mono", "Other"];
     const UBL_KEYS = ["SUMO1", "SUMO2", "SUMO3", "SUMO", "NEDD8", "ISG15", "UFM1", "URM1", "FAT10", "ATG12", "UBL"];
@@ -999,24 +1033,24 @@ ${styles}
         FAT10: "#b91c1c", ATG12: "#a16207", UBL: "#78716c"
     };
     const UB_NAME = {
-        K48: "K48 鏈", K63: "K63 鏈", K11: "K11 鏈", K29: "K29 鏈", K27: "K27 鏈", K33: "K33 鏈",
-        K6: "K6 鏈", M1: "M1 線性鏈", Mono: "單泛素化", Other: "其他／未標示",
-        SUMO1: "SUMO1", SUMO2: "SUMO2", SUMO3: "SUMO3", SUMO: "SUMO（未分型）",
+        K48: "K48 linkage", K63: "K63 linkage", K11: "K11 linkage", K29: "K29 linkage", K27: "K27 linkage", K33: "K33 linkage",
+        K6: "K6 linkage", M1: "M1 linear linkage", Mono: "Monoubiquitination", Other: "Other / unspecified",
+        SUMO1: "SUMO1", SUMO2: "SUMO2", SUMO3: "SUMO3", SUMO: "SUMO (unspecified)",
         NEDD8: "NEDD8", ISG15: "ISG15", UFM1: "UFM1", URM1: "URM1", FAT10: "FAT10", ATG12: "ATG12",
-        UBL: "其他類泛素"
+        UBL: "Other ubiquitin-like modifier"
     };
 
     function isUBL(key) { return UBL_KEYS.includes(key); }
     function ubGroupLabel(key) { return isUBL(key) ? UB_NAME[key] : "Ub · " + UB_NAME[key]; }
 
-    // 從 UniProt CROSSLNK 註解辨識修飾物：「interchain with G-Cter in XXX」
+    // Identify the modifier from the UniProt CROSSLNK annotation: "interchain with G-Cter in XXX".
     function ublFromNote(note) {
         const m = /\bin (ubiquitin|SUMO[123]?|NEDD8|ISG15|UFM1|URM1|FAT10|ATG12)\b/i.exec(note);
         if (m) {
             const x = m[1].toUpperCase();
             return x === "UBIQUITIN" ? "ubiquitin" : x;
         }
-        if (/interchain with G-Cter in [A-Za-z0-9\-]+/i.test(note)) return "UBL";   // 其他 G-Cter 類泛素（如 Pup）
+        if (/interchain with G-Cter in [A-Za-z0-9\-]+/i.test(note)) return "UBL";   // Other ubiquitin-like modifiers with G-Cter (e.g. Pup).
         return null;
     }
 
@@ -1044,7 +1078,7 @@ ${styles}
 
     function relText(r) {
         if (r.__uniprot) return "UniProt CROSSLNK：" + r.note;
-        const parts = [String(r.functional_outcome || "").toLowerCase().startsWith("deub") ? "去泛素化" : "泛素化"];
+        const parts = [String(r.functional_outcome || "").toLowerCase().startsWith("deub") ? "Deubiquitination" : "Ubiquitination"];
         if (r.e1_id) parts.push("E1: " + r.e1_id);
         if (r.e2_id) parts.push("E2: " + r.e2_id);
         if (r.e3_id) parts.push("E3: " + r.e3_id);
@@ -1059,7 +1093,7 @@ ${styles}
         const map = new Map();
 
         rels.forEach(r => {
-            if (!r || !ids.includes(String(r.substrate_id || "").toUpperCase())) return;   // 只取「本蛋白質是受質」的紀錄
+            if (!r || !ids.includes(String(r.substrate_id || "").toUpperCase())) return;   // Keep only records where this protein is the substrate.
 
             const text = String(r.modified_lysine || "");
             const positions = [];
@@ -1085,7 +1119,7 @@ ${styles}
         });
 
         // ---- UniProt CROSSLNK（Modification）：「interchain with G-Cter in ubiquitin / SUMO / NEDD8 …」 ----
-        // 本蛋白質若含泛素序列（如 UBB / UBC / UBA52 / RPS27A），用重複單元內的位置判斷鏈型（K6、K11…）
+        // If this protein contains ubiquitin sequences (e.g. UBB / UBC / UBA52 / RPS27A), infer linkage type (K6, K11, etc.) from the position within each repeat.
         const ubiRepeats = [];
         {
             const key = "MQIFVKTLTGKT";
@@ -1110,7 +1144,7 @@ ${styles}
 
             let link = "Other";
             if (mod !== "ubiquitin") {
-                link = mod;                       // SUMO / NEDD8 / ISG15 … 直接以修飾物為類別
+                link = mod;                       // For SUMO / NEDD8 / ISG15, use the modifier itself as the category.
             } else if (/Met-Gly/i.test(note)) {
                 link = "M1";
             } else {
@@ -1130,18 +1164,18 @@ ${styles}
 
         const list = [...map.values()].sort((a, b) => a.pos - b.pos);
         list.forEach(site => {
-            // 已有明確鏈型時，去掉「其他」
+            // Remove "Other" when a specific linkage type is already known.
             if (site.linkages.length > 1) site.linkages = site.linkages.filter(l => l !== "Other");
             site.linkages = ubSortLinks(site.linkages);
             site.primary = site.linkages[0];
-            // 該位置不是 Lys（UniProt CROSSLNK 可能是 Cys/Ser/Thr/Met，不警告）
+            // This position is not Lys (UniProt CROSSLNK may refer to Cys/Ser/Thr/Met; do not warn).
             site.warn = !site.fromUniprot && site.aa !== "K" && !(site.linkages.includes("M1") && site.aa === "M");
         });
         return list;
     })();
 
     let ubActive = false;
-    const ubSel = new Set();   // 空集合 = 全部鏈型
+    const ubSel = new Set();   // Empty set = all linkage types.
 
     function visibleUbSites() {
         if (!ubActive) return [];
@@ -1164,7 +1198,7 @@ ${styles}
         if (!ubActive) return "";
 
         const sites = visibleUbSites();
-        if (!sites.length) return `<div class="ub-empty">此蛋白質沒有符合的泛素化位點記錄。</div>`;
+        if (!sites.length) return `<div class="ub-empty">No matching ubiquitination site records for this protein.</div>`;
 
         let html = "";
 
@@ -1175,7 +1209,7 @@ ${styles}
             const color = UB_COLOR[link];
             html += `<div class="type-head ub-head" style="border-bottom-color:${color}">
                 <i class="sw" style="background:${color}"></i>${escapeHtml(ubGroupLabel(link))} <span>(${group.length})</span>
-                <button type="button" class="type-pick" data-pick-ub="${link}" title="選取此類別全部位點（序列＋3D）">◎ 選取全部</button>
+                <button type="button" class="type-pick" data-pick-ub="${link}" title="Select all sites in this category (sequence + 3D)">◎ Select all</button>
             </div>`;
 
             group.forEach(st => {
@@ -1183,7 +1217,7 @@ ${styles}
                     const pm = pmidLinks(r.reference_pmid);
                     return `${escapeHtml(relText(r))}${r.source_db ? " · " + escapeHtml(String(r.source_db)) : ""}${pm ? " · " + pm : ""}${r.__uniprot && r.ft ? evidenceHtml(r.ft, { full: false }) : ""}`;
                 });
-                if (st.rels.length > 4) lines.push(`…共 ${st.rels.length} 筆`);
+                if (st.rels.length > 4) lines.push(`…${st.rels.length} records total`);
 
                 html += `
                 <div class="list-item ub-item${hasCoverage(st.pos, st.pos) ? "" : " no-3d-item"}" data-start="${st.pos}" data-end="${st.pos}" style="border-left-color:${color}">
@@ -1205,15 +1239,15 @@ ${styles}
                     <input type="checkbox" data-link="${l}">
                     <i class="sw" style="background:${UB_COLOR[l]}"></i>
                     <span>${escapeHtml(UB_NAME[l])}</span><em>${counts[l]}</em>
-                    <button type="button" class="opt-pick" data-pick-ub="${l}" title="選取「${escapeHtml(UB_NAME[l])}」全部位點（序列＋3D）">◎</button>
+                    <button type="button" class="opt-pick" data-pick-ub="${l}" title="Select all sites for “${escapeHtml(UB_NAME[l])}” (sequence + 3D)">◎</button>
                 </label>`;
 
         const ub = UB_KEYS.filter(l => counts[l]);
         const ubl = UBL_KEYS.filter(l => counts[l]);
 
         let html = "";
-        if (ub.length) html += `<div class="ub-group">泛素（Ubiquitin）</div>` + ub.map(row).join("");
-        if (ubl.length) html += `<div class="ub-group">類泛素（UBL）</div>` + ubl.map(row).join("");
+        if (ub.length) html += `<div class="ub-group">Ubiquitin</div>` + ub.map(row).join("");
+        if (ubl.length) html += `<div class="ub-group">Ubiquitin-like modifiers (UBL)</div>` + ubl.map(row).join("");
         return html;
     }
 
@@ -1223,9 +1257,9 @@ ${styles}
         if (!panel || !btn) return;
 
         if (!ubSites.length) {
-            panel.innerHTML = `<div class="cat-empty">此蛋白質沒有已記錄的泛素化位點</div>`;
+            panel.innerHTML = `<div class="cat-empty">No recorded ubiquitination sites for this protein.</div>`;
             btn.disabled = true;
-            btn.textContent = "Ub/UBL 位點 (0)";
+            btn.textContent = "Ub/UBL sites (0)";
             return;
         }
 
@@ -1234,13 +1268,13 @@ ${styles}
 
         panel.innerHTML = `
             <div class="ub-panel-tools">
-                <a data-ub-act="pickall" title="選取全部泛素化位點（序列＋3D）">◎ 選取全部位點</a>
-                <a data-ub-act="none">清除篩選</a>
+                <a data-ub-act="pickall" title="Select all ubiquitination sites (sequence + 3D)">◎ Select all sites</a>
+                <a data-ub-act="none">Clear filter</a>
             </div>
             ${ubOptionRows(counts)}
-            <div class="cat-note">未勾選＝顯示全部；實線框＝泛素、點線框＝類泛素；虛線 ⚠＝該位置不是 Lys，請核對；來源含 UniProt CROSSLNK</div>`;
+            <div class="cat-note">None selected = show all; solid border = ubiquitin; dotted border = ubiquitin-like modifier; dashed ⚠ = position is not Lys, please verify; sources include UniProt CROSSLNK</div>`;
 
-        btn.textContent = `Ub/UBL 位點 (${ubSites.length})`;
+        btn.textContent = `Ub/UBL sites (${ubSites.length})`;
     }
 
     function updateUbUI() {
@@ -1250,7 +1284,7 @@ ${styles}
 
         wrap.classList.toggle("active", ubActive);
         const n = ubActive ? visibleUbSites().length : ubSites.length;
-        btn.textContent = `Ub/UBL 位點 (${n})`;
+        btn.textContent = `Ub/UBL sites (${n})`;
 
         doc.querySelectorAll("#ub-panel input[data-link]").forEach(cb => {
             cb.checked = ubSel.has(cb.dataset.link);
@@ -1264,17 +1298,17 @@ ${styles}
         if (!ubActive) { ubActive = true; refreshAll(); }
 
         const ranges = list.map(st => [st.pos, st.pos]);
-        togglePickRanges(ranges, link ? `${UB_NAME[link]} 位點` : "泛素／類泛素位點全部");
+        togglePickRanges(ranges, link ? `${UB_NAME[link]} sites` : "All ubiquitin / ubiquitin-like modifier sites");
     }
 
-    // 開關
+    // Toggle.
     doc.getElementById("ub-toggle").addEventListener("click", () => {
         ubActive = !ubActive;
         if (!ubActive) ubSel.clear();
         refreshAll();
     });
 
-    // 下拉
+    // Dropdown.
     doc.getElementById("ub-caret").addEventListener("click", e => {
         e.stopPropagation();
         const wrap = doc.getElementById("ub-wrap");
@@ -1290,7 +1324,7 @@ ${styles}
         }
     });
 
-    // 勾選鏈型：自動啟用
+    // Selecting a linkage type enables the feature automatically.
     doc.addEventListener("change", e => {
         const cb = e.target.closest ? e.target.closest(".ub-opt input[data-link]") : null;
         if (!cb) return;
@@ -1299,7 +1333,7 @@ ${styles}
         refreshAll();
     });
 
-    // ◎ 一鍵選取、面板工具
+    // ◎ Select all and panel tools.
     doc.addEventListener("click", e => {
         if (!e.target.closest) return;
 
@@ -1319,20 +1353,20 @@ ${styles}
     });
 
     // ============================================================
-    // Lys 表面可及性（SASA, Shrake-Rupley）與 Ub/UBL 位點交叉比對
-    //   - 以載入的 3D 結構計算（排除水與氫；其他鏈與配體視為遮蔽物）
-    //   - 同時算「整個複合體」與「只有同一條鏈」兩種，差異大 = 位於介面
-    //   - 相對可及性 = SASA / 該胺基酸理論最大值（Tien 2013）
+    // Lys surface accessibility (SASA, Shrake–Rupley), cross-referenced with Ub/UBL sites.
+    //   - Calculated from the loaded 3D structure (exclude water and hydrogen; other chains and ligands act as occluders).
+    //   - Calculate both the full complex and the individual chain; a large difference indicates an interface position.
+    //   - Relative accessibility = SASA / theoretical maximum for the amino acid (Tien 2013).
     // ============================================================
     const MAX_ASA = { ALA:129, ARG:274, ASN:195, ASP:193, CYS:167, GLU:223, GLN:225, GLY:104, HIS:224, ILE:197,
         LEU:201, LYS:236, MET:224, PHE:240, PRO:159, SER:155, THR:172, TRP:285, TYR:263, VAL:174 };
     const SASA_EXPOSED = 0.25, SASA_PARTIAL = 0.10;
-    const PLDDT_MIN = 70;   // AlphaFold：低於此值視為低信心
-    const SASA_NAME = { exp: "暴露", part: "部分暴露", bur: "埋藏" };
+    const PLDDT_MIN = 70;   // AlphaFold: values below this threshold are considered low confidence.
+    const SASA_NAME = { exp: "Exposed", part: "Partially exposed", bur: "Buried" };
     const SASA_COLOR = { exp: "#16a34a", part: "#d97706", bur: "#64748b" };
 
     let sasaActive = false;
-    let sasaData = null;      // Map: UniProt 位置 → {pos, aa, rel, relChain, cls, interface, chains:[...]}
+    let sasaData = null;      // Map: UniProt position → {pos, aa, rel, relChain, cls, interface, chains:[...]}.
     let sasaStatus = "";      // "" | computing | done | none | error
     const ubByPos = new Map(ubSites.map(st => [st.pos, st]));
 
@@ -1348,7 +1382,7 @@ ${styles}
         const SP = S.StructureProperties;
         const loc = SE.Location.create(mol);
         const isPdb = structure.source === "pdb";
-        // AlphaFold（與沿用其 B-factor 的 AlphaFill）的 B-factor 欄位就是每個殘基的 pLDDT
+        // For AlphaFold (and AlphaFill, which reuses its B-factor), the B-factor field stores each residue's pLDDT.
         const usePlddt = structure.source === "alphafold" || structure.source === "alphafill";
         const ubPosSet = new Set(ubSites.map(x => x.pos));
 
@@ -1410,7 +1444,7 @@ ${styles}
         const n = xs.length;
         if (!n) return new Map();
 
-        // 球面上均勻分布的點
+        // Points distributed uniformly on a sphere.
         const pts = [];
         const ga = Math.PI * (3 - Math.sqrt(5));
         for (let i = 0; i < NPTS; i++) {
@@ -1419,7 +1453,7 @@ ${styles}
             pts.push([Math.cos(ga * i) * r, y, Math.sin(ga * i) * r]);
         }
 
-        // 空間格網
+        // Spatial grid.
         const grid = new Map();
         const cellKey = (ix, iy, iz) => ((ix + 512) << 20) | ((iy + 512) << 10) | (iz + 512);
         for (let i = 0; i < n; i++) {
@@ -1471,7 +1505,7 @@ ${styles}
             rec.absChain += area * accCh;
         }
 
-        // 依 UniProt 位置彙整（多條鏈取最大值＝只要有一條鏈暴露就算暴露）
+        // Aggregate by UniProt position (take the maximum across chains; exposed in any chain counts as exposed).
         const out = new Map();
         residues.forEach(rec => {
             const maxAsa = MAX_ASA[rec.comp] || MAX_ASA.LYS;
@@ -1506,9 +1540,9 @@ ${styles}
             try {
                 sasaData = computeSasa();
                 sasaStatus = (sasaData && sasaData.size) ? "done" : "none";
-                if (sasaData) console.log(`[UKW] SASA：${sasaData.size} 個殘基`, sasaData);
+                if (sasaData)                 console.log(`[UKW] SASA: ${sasaData.size} residues`, sasaData);
             } catch (e) {
-                console.error("[UKW] SASA 計算失敗：", e);
+                console.error("[UKW] SASA calculation failed:", e);
                 sasaData = null;
                 sasaStatus = "error";
             }
@@ -1519,7 +1553,7 @@ ${styles}
         }, 30);
     }
 
-    // 分組：全部 Lys / 暴露 / 埋藏 / 已知位點的暴露與埋藏 / 候選 / 介面
+    // Groups: all Lys / exposed / buried / exposed and buried known sites / candidates / interface.
     function sasaGroups() {
         const g = { exp: [], bur: [], ubExp: [], ubBur: [], cand: [], iface: [] };
         if (!sasaData) return g;
@@ -1529,7 +1563,7 @@ ${styles}
             if (d.aa === "K") {
                 if (d.cls === "exp") g.exp.push(d);
                 if (d.cls === "bur") g.bur.push(d);
-                if (d.cls === "exp" && !ub && !d.lowConf) g.cand.push(d);   // 低信心（pLDDT）不列入候選
+                if (d.cls === "exp" && !ub && !d.lowConf) g.cand.push(d);   // Exclude low-confidence (pLDDT) sites from candidates.
                 if (d.interface) g.iface.push(d);
             }
             if (ub) {
@@ -1543,19 +1577,19 @@ ${styles}
     }
 
     const SASA_GROUP_NAME = {
-        exp: "全部暴露的 Lys",
-        bur: "全部埋藏的 Lys",
-        ubExp: "暴露的已知 Ub/UBL 位點",
-        ubBur: "埋藏的已知位點（⚠ 值得核對）",
-        cand: "暴露但無記錄的 Lys（候選）",
-        iface: "因複合體而被遮蔽的 Lys（介面）"
+        exp: "All exposed Lys",
+        bur: "All buried Lys",
+        ubExp: "Known exposed Ub/UBL sites",
+        ubBur: "Known buried sites (⚠ worth verifying)",
+        cand: "Exposed Lys with no record (candidate)",
+        iface: "Lys occluded by the complex (interface)"
     };
 
     function sasaBadge(pos) {
         if (!sasaData) return "";
         const d = sasaData.get(pos);
         if (!d) return "";
-        return ` · <b style="color:${SASA_COLOR[d.cls]}">${SASA_NAME[d.cls]} ${pct(d.rel)}%${d.lowConf ? "（低信心）" : ""}</b>`;
+        return ` · <b style="color:${SASA_COLOR[d.cls]}">${SASA_NAME[d.cls]} ${pct(d.rel)}%${d.lowConf ? " (low confidence)" : ""}</b>`;
     }
 
     function applySasaClass() {
@@ -1572,10 +1606,10 @@ ${styles}
         const ub = ubByPos.get(d.pos);
         const note = [
             `SASA ${Math.round(d.best.abs)} Å²（chain ${escapeHtml(String(d.best.chain))}）`,
-            `單鏈 ${pct(d.relChain)}%`,
-            d.plddt != null ? `pLDDT ${Math.round(d.plddt)}${d.lowConf ? "（低信心）" : ""}` : "",
-            d.interface ? "複合體介面遮蔽" : "",
-            ub ? "已知：" + escapeHtml(ub.linkages.map(l => UB_NAME[l]).join(" / ")) : ""
+            `Single chain ${pct(d.relChain)}%`,
+            d.plddt != null ? `pLDDT ${Math.round(d.plddt)}${d.lowConf ? " (low confidence)" : ""}` : "",
+            d.interface ? "Occluded at complex interface" : "",
+            ub ? "Known: " + escapeHtml(ub.linkages.map(l => UB_NAME[l]).join(" / ")) : ""
         ].filter(Boolean).join(" · ");
 
         return `
@@ -1590,9 +1624,9 @@ ${styles}
 
     function buildSasaListHtml() {
         if (!sasaActive) return "";
-        if (sasaStatus === "computing" || !sasaStatus) return `<div class="ub-empty">Lys 可及性計算中…（需先載入 3D 結構）</div>`;
-        if (sasaStatus === "error") return `<div class="ub-empty">Lys 可及性計算失敗，請看 Console。</div>`;
-        if (!sasaData || !sasaData.size) return `<div class="ub-empty">此結構沒有可對應到 UniProt 位置的 Lys，無法計算可及性。</div>`;
+        if (sasaStatus === "computing" || !sasaStatus) return `<div class="ub-empty">Calculating Lys accessibility… (load a 3D structure first)</div>`;
+        if (sasaStatus === "error") return `<div class="ub-empty">Failed to calculate Lys accessibility. See the console.</div>`;
+        if (!sasaData || !sasaData.size) return `<div class="ub-empty">No Lys residues in this structure could be mapped to UniProt positions; accessibility cannot be calculated.</div>`;
 
         const g = sasaGroups();
         const lys = [...sasaData.values()].filter(d => d.aa === "K");
@@ -1601,14 +1635,14 @@ ${styles}
         const lowLys = lys.filter(d => d.lowConf).length;
 
         let html = `<div class="sasa-sum">
-            Lys 在此結構內：<b>${lys.length}</b> 個（
-            <span style="color:${SASA_COLOR.exp}">暴露 ${cnt("exp")}</span>、
-            <span style="color:${SASA_COLOR.part}">部分 ${cnt("part")}</span>、
-            <span style="color:${SASA_COLOR.bur}">埋藏 ${cnt("bur")}</span>）<br>
-            已知 Ub/UBL 位點（共 ${ubSites.length}）中，位於此結構內：<b>${ubInStruct}</b> 個；
-            暴露 ${g.ubExp.length}、埋藏 ${g.ubBur.length}<br>
-            ${lowLys ? `低信心（pLDDT &lt; ${PLDDT_MIN}）的 Lys：${lowLys} 個（可及性不可靠，不列入候選）<br>` : ""}
-            <span style="color:#888">暴露 ≥ ${pct(SASA_EXPOSED)}%、部分 ${pct(SASA_PARTIAL)}–${pct(SASA_EXPOSED)}%、埋藏 &lt; ${pct(SASA_PARTIAL)}%（相對最大可及面積）</span>
+            Lys residues in this structure: <b>${lys.length}</b> (
+            <span style="color:${SASA_COLOR.exp}">exposed ${cnt("exp")}</span>,
+            <span style="color:${SASA_COLOR.part}">partially exposed ${cnt("part")}</span>,
+            <span style="color:${SASA_COLOR.bur}">buried ${cnt("bur")}</span>)<br>
+            Of ${ubSites.length} known Ub/UBL sites, <b>${ubInStruct}</b> are in this structure;
+            ${g.ubExp.length} exposed, ${g.ubBur.length} buried<br>
+            ${lowLys ? `Low-confidence Lys (pLDDT &lt; ${PLDDT_MIN}): ${lowLys} (accessibility is unreliable; excluded from candidates)<br>` : ""}
+            <span style="color:#888">Exposed ≥ ${pct(SASA_EXPOSED)}%, partially exposed ${pct(SASA_PARTIAL)}–${pct(SASA_EXPOSED)}%, buried &lt; ${pct(SASA_PARTIAL)}% (relative to maximum accessible surface area)</span>
         </div>`;
 
         const section = (key, title, color, list, cap) => {
@@ -1616,13 +1650,13 @@ ${styles}
             const shown = cap ? list.slice(0, cap) : list;
             return `<div class="type-head" style="border-bottom-color:${color}">
                     <i class="sw" style="background:${color}"></i>${escapeHtml(title)} <span>(${list.length})</span>
-                    <button type="button" class="type-pick" data-pick-sasa="${key}" title="選取全部（序列＋3D）">◎ 選取全部</button>
+                    <button type="button" class="type-pick" data-pick-sasa="${key}" title="Select all (sequence + 3D)">◎ Select all</button>
                 </div>` + shown.map(sasaItemHtml).join("")
-                + (cap && list.length > cap ? `<div class="ub-empty">…另有 ${list.length - cap} 個，請用 ◎ 選取全部</div>` : "");
+                + (cap && list.length > cap ? `<div class="ub-empty">…${list.length - cap} more; use ◎ Select all</div>` : "");
         };
 
         const knownAll = ubSites.map(st => sasaData.get(st.pos)).filter(Boolean).sort((a, b) => a.pos - b.pos);
-        html += section("known", "已知 Ub/UBL 位點的可及性", "#374151", knownAll, 0);
+        html += section("known", "Accessibility of known Ub/UBL sites", "#374151", knownAll, 0);
         html += section("cand", SASA_GROUP_NAME.cand, SASA_COLOR.exp, g.cand, 30);
         return html;
     }
@@ -1632,11 +1666,11 @@ ${styles}
         if (!panel) return;
 
         if (sasaStatus === "computing" || !sasaStatus) {
-            panel.innerHTML = `<div class="cat-empty">${structure ? "計算中…請等 3D 結構載入完成" : "沒有 3D 結構"}</div>`;
+            panel.innerHTML = `<div class="cat-empty">${structure ? "Calculating… wait for the 3D structure to finish loading." : "No 3D structure."}</div>`;
             return;
         }
         if (!sasaData || !sasaData.size) {
-            panel.innerHTML = `<div class="cat-empty">此結構沒有可對應的 Lys</div>`;
+            panel.innerHTML = `<div class="cat-empty">No Lys residues can be mapped in this structure.</div>`;
             return;
         }
 
@@ -1646,13 +1680,13 @@ ${styles}
             <div class="ub-opt" data-pick-sasa="${k}">
                 <i class="sw" style="background:${color[k]}"></i>
                 <span>${escapeHtml(SASA_GROUP_NAME[k])}</span><em>${g[k].length}</em>
-                <button type="button" class="opt-pick" data-pick-sasa="${k}" title="選取（序列＋3D）">◎</button>
+                <button type="button" class="opt-pick" data-pick-sasa="${k}" title="Select (sequence + 3D)">◎</button>
             </div>`;
 
         panel.innerHTML = `
-            <div class="cat-note">序列上方色條：<b style="color:${SASA_COLOR.exp}">綠＝暴露</b>、<b style="color:${SASA_COLOR.part}">橘＝部分</b>、<b style="color:${SASA_COLOR.bur}">灰＝埋藏</b></div>
+            <div class="cat-note">Color bars above sequence: <b style="color:${SASA_COLOR.exp}">green = exposed</b>, <b style="color:${SASA_COLOR.part}">orange = partially exposed</b>, <b style="color:${SASA_COLOR.bur}">gray = buried</b></div>
             ${["exp", "bur", "ubExp", "ubBur", "cand", "iface"].map(row).join("")}
-            <div class="cat-note">「介面」＝單鏈時暴露、但在複合體中被其他鏈遮蔽。</div>`;
+            <div class="cat-note">“Interface” = exposed in the individual chain but occluded by another chain in the complex.</div>`;
     }
 
     function updateSasaUI() {
@@ -1661,8 +1695,8 @@ ${styles}
         if (!wrap || !btn) return;
 
         wrap.classList.toggle("active", sasaActive);
-        btn.textContent = sasaStatus === "computing" ? "Lys 可及性 …"
-            : (sasaStatus === "done" && sasaData ? `Lys 可及性 (${[...sasaData.values()].filter(d => d.aa === "K").length})` : "Lys 可及性");
+        btn.textContent = sasaStatus === "computing" ? "Lys accessibility …"
+            : (sasaStatus === "done" && sasaData ? `Lys accessibility (${[...sasaData.values()].filter(d => d.aa === "K").length})` : "Lys accessibility");
         buildSasaPanel();
     }
 
@@ -1675,7 +1709,7 @@ ${styles}
         if (!list.length) return;
 
         if (!sasaActive) { sasaActive = true; refreshAll(); }
-        togglePickRanges(list.map(d => [d.pos, d.pos]), key === "known" ? "已知 Ub/UBL 位點" : SASA_GROUP_NAME[key]);
+        togglePickRanges(list.map(d => [d.pos, d.pos]), key === "known" ? "Known Ub/UBL sites" : SASA_GROUP_NAME[key]);
     }
 
     doc.getElementById("sasa-toggle").addEventListener("click", () => {
@@ -1707,9 +1741,9 @@ ${styles}
     });
 
     // ============================================================
-    // 3D → 序列、位置資訊面板、鄰近配體
+    // 3D → sequence, position details panel, nearby ligands.
     // ============================================================
-    // 結構殘基 → UniProt 位置
+    // Structure residue → UniProt position.
     function uniprotPosFor(chain, auth, label) {
         if (!structure) return null;
         if (structure.source !== "pdb") return label > 0 ? label : null;
@@ -1728,7 +1762,7 @@ ${styles}
             const SE = S.StructureElement;
             const SP = S.StructureProperties;
             if (!SE.Loci.is(loci)) return;
-            if (ev.button !== undefined && !(ev.button & 1)) return;   // 只處理左鍵
+            if (ev.button !== undefined && !(ev.button & 1)) return;   // Handle only the left mouse button.
 
             const l = SE.Loci.getFirstLocation(loci);
             if (!l) return;
@@ -1740,13 +1774,13 @@ ${styles}
             try { nonPoly = SP.entity.type(l) === "non-polymer"; } catch (e) { /* ignore */ }
 
             if (nonPoly) {
-                setInfo(`3D 點選：配體 ${comp}（chain ${SP.chain.auth_asym_id(l)}）`);
+                setInfo(`3D selection: ligand ${comp} (chain ${SP.chain.auth_asym_id(l)})`);
                 return;
             }
 
             const pos = uniprotPosFor(SP.chain.auth_asym_id(l), SP.residue.auth_seq_id(l), SP.residue.label_seq_id(l));
             if (!pos) {
-                setInfo(`3D 點選：${comp} ${SP.residue.auth_seq_id(l)}（不在 UniProt 序列對應內）`);
+                setInfo(`3D selection: ${comp} ${SP.residue.auth_seq_id(l)} (not mapped to the UniProt sequence)`);
                 return;
             }
 
@@ -1755,7 +1789,7 @@ ${styles}
             if (pick && pick.key === rangesKey([[pos, pos]])) clearPick();
             else setPickRanges([[pos, pos]], { scroll: true });
         } catch (e) {
-            console.warn("[UKW] 3D 點選處理失敗：", e);
+            console.warn("[UKW] Failed to handle 3D selection:", e);
         }
     }
 
@@ -1763,7 +1797,7 @@ ${styles}
         return [...new Set((ft.ligands || []).map(x => x.ligand_name || x.ligand_label).filter(Boolean))];
     }
 
-    // 單一殘基被選取時，列出覆蓋該位置的 UniProt feature、Ub/UBL 位點與可及性
+    // When a single residue is selected, list UniProt features, Ub/UBL sites, and accessibility covering that position.
     function renderPosInfo() {
         const box = doc.getElementById("pos-info");
         if (!box) return;
@@ -1791,18 +1825,18 @@ ${styles}
                 return `<div class="pos-feat" style="border-left-color:${typeColor[ft.feature_type] || "#ccc"}">
                     <strong>${escapeHtml(ft.feature_type || "")}</strong> ${st === en ? st : st + "–" + en}
                     ${ft.note_text ? `<span class="muted">${escapeHtml(ft.note_text)}</span>` : ""}
-                    ${lig.length ? `<div class="muted">配體：${escapeHtml(lig.join("、"))}</div>` : ""}
+                    ${lig.length ? `<div class="muted">Ligands: ${escapeHtml(lig.join(", "))}</div>` : ""}
                     ${evidenceHtml(ft, { full: true })}
                 </div>`;
             }).join("")
-            : `<div class="pos-sub">沒有 UniProt feature 覆蓋此位置</div>`;
+            : `<div class="pos-sub">No UniProt feature covers this position.</div>`;
 
         box.innerHTML = `
             <div class="pos-head">
                 <b>${escapeHtml(aa)}${pos}</b>${ubTag}${sasaBadge(pos)}
-                <span class="pos-x" data-pos-close title="關閉">✕</span>
+                <span class="pos-x" data-pos-close title="Close">✕</span>
             </div>
-            <div class="pos-sub">覆蓋此位置的 UniProt Feature（${feats.length}）</div>
+            <div class="pos-sub">UniProt features covering this position (${feats.length})</div>
             ${featHtml}`;
         box.style.display = "block";
     }
@@ -1811,7 +1845,7 @@ ${styles}
         if (e.target.closest && e.target.closest("[data-pos-close]")) clearPick();
     });
 
-    // 搜尋選取殘基周圍 cutoff Å 內的配體 / 離子（非聚合物實體，不含水）
+    // Find ligands / ions within cutoff Å of selected residues (non-polymer entities; exclude water).
     function nearbyLigands(mol, rules, cutoff) {
         const S = win.molstar.lib.structure;
         const SE = S.StructureElement;
@@ -1893,13 +1927,13 @@ ${styles}
         return { loci: SE.Loci(mol, parts), comps: [...comps] };
     }
 
-    // 切換「顯示鄰近配體」時，立即套用到目前選取
+    // Apply immediately to the current selection when "Show nearby ligands" is toggled.
     doc.getElementById("show-lig").addEventListener("change", () => {
         if (pick) showRangesInMolstar(pick.ranges);
     });
 
     // ============================================================
-    // 序列 motif 搜尋（正規表示式；可重疊比對）
+    // Sequence motif search (regular expressions; overlapping matches are allowed).
     // ============================================================
     let motifHits = [];       // [{start, end, text}]（1-based）
     let motifPattern = "";
@@ -1919,9 +1953,9 @@ ${styles}
         if (pat) {
             let re = null;
             try {
-                re = new RegExp("(?=(" + pat + "))", "gi");   // lookahead：連續重疊的位置也找得到
+                re = new RegExp("(?=(" + pat + "))", "gi");   // Lookahead also finds overlapping matches.
             } catch (e) {
-                motifError = "規則無效：" + e.message;
+                motifError = "Invalid pattern: " + e.message;
             }
 
             if (re) {
@@ -1935,7 +1969,7 @@ ${styles}
             }
         }
 
-        setMotifStatus(motifError || (pat ? `${motifHits.length} 個符合` : ""));
+        setMotifStatus(motifError || (pat ? `${motifHits.length} matches` : ""));
         redrawSequence();
         redrawList();
     }
@@ -1958,12 +1992,12 @@ ${styles}
         if (motifError) return `<div class="ub-empty">${escapeHtml(motifError)}</div>`;
 
         const color = "#c026d3";
-        if (!motifHits.length) return `<div class="ub-empty">Motif <code>${escapeHtml(motifPattern)}</code>：沒有符合的位置。</div>`;
+        if (!motifHits.length) return `<div class="ub-empty">Motif <code>${escapeHtml(motifPattern)}</code>: no matching positions.</div>`;
 
         const CAP = 100;
         let html = `<div class="type-head" style="border-bottom-color:${color}">
             <i class="sw" style="background:${color}"></i>Motif <code>${escapeHtml(motifPattern)}</code> <span>(${motifHits.length})</span>
-            <button type="button" class="type-pick" data-pick-motif title="選取全部符合的位置（序列＋3D）">◎ 選取全部</button>
+            <button type="button" class="type-pick" data-pick-motif title="Select all matching positions (sequence + 3D)">◎ Select all</button>
         </div>`;
 
         motifHits.slice(0, CAP).forEach(h => {
@@ -1976,11 +2010,11 @@ ${styles}
                     <strong style="font-family:monospace">${escapeHtml(h.text)}</strong>
                     <span>${h.start === h.end ? h.start : h.start + "–" + h.end}</span>
                 </div>
-                ${known.length ? `<div class="list-note">含已知 Ub/UBL 位點：${escapeHtml(known.join("、"))}</div>` : ""}
+                ${known.length ? `<div class="list-note">Includes known Ub/UBL sites: ${escapeHtml(known.join(", "))}</div>` : ""}
             </div>`;
         });
 
-        if (motifHits.length > CAP) html += `<div class="ub-empty">…另有 ${motifHits.length - CAP} 個，請用 ◎ 選取全部</div>`;
+        if (motifHits.length > CAP) html += `<div class="ub-empty">…${motifHits.length - CAP} more; use ◎ Select all</div>`;
         return html;
     }
 
@@ -2005,14 +2039,14 @@ ${styles}
     });
 
     // ============================================================
-    // 距離量測：測距模式下依序點兩個殘基（序列、清單單一殘基或 3D）
+    // Distance measurement: in measurement mode, click two residues in sequence (sequence, single-residue list item, or 3D view).
     // ============================================================
     let measureMode = false;
     let measureSel = [];
-    let measureKind = "ca";      // 3D 上畫哪條線：ca / min
+    let measureKind = "ca";      // Which line to draw in 3D: ca / min.
     let lastMeasure = null;
 
-    // 取得某 UniProt 位置在結構中的重原子（含座標與原子名稱）
+    // Get the heavy atoms for a UniProt position in the structure (including coordinates and atom names).
     function residueAtoms(mol, pos) {
         const rules = buildRules(pos, pos);
         if (!rules.length) return [];
@@ -2063,14 +2097,14 @@ ${styles}
 
     function measurePair(a, b) {
         const mol = getStructureData();
-        if (!mol) return { error: "3D 結構尚未載入" };
+        if (!mol) return { error: "The 3D structure has not loaded." };
 
         const A = residueAtoms(mol, a);
         const B = residueAtoms(mol, b);
         const nameA = `${seq[a - 1] || "?"}${a}`, nameB = `${seq[b - 1] || "?"}${b}`;
 
-        if (!A.length) return { error: `${nameA} 不在 3D 結構範圍內` };
-        if (!B.length) return { error: `${nameB} 不在 3D 結構範圍內` };
+        if (!A.length) return { error: `${nameA} is outside the 3D structure range.` };
+        if (!B.length) return { error: `${nameB} is outside the 3D structure range.` };
 
         const group = atoms => {
             const m = new Map();
@@ -2089,10 +2123,10 @@ ${styles}
             if (min && (!best || min.d < best.min.d)) best = { min, ga, gb, cross };
         };
 
-        // 優先比較同一條鏈內；若兩個殘基不在同一條鏈才比跨鏈
+        // Prefer comparisons within the same chain; compare across chains only if the residues are in different chains.
         gA.forEach((ga, uid) => { if (gB.has(uid)) tryPair(ga, gB.get(uid), false); });
         if (!best) gA.forEach(ga => gB.forEach(gb => tryPair(ga, gb, true)));
-        if (!best) return { error: "找不到可量測的原子" };
+        if (!best) return { error: "No measurable atoms were found." };
 
         const pa = best.ga.find(x => x.name === "CA");
         const pb = best.gb.find(x => x.name === "CA");
@@ -2110,7 +2144,7 @@ ${styles}
         try {
             const m = viewer && viewer.plugin.managers.structure.measurement;
             if (m && typeof m.clear === "function") m.clear();
-        } catch (e) { console.warn("[UKW] 清除測距線失敗：", e); }
+        } catch (e) { console.warn("[UKW] Failed to clear distance lines:", e); }
     }
 
     function drawMeasureLine() {
@@ -2126,7 +2160,7 @@ ${styles}
             const lociB = SE.Loci(mol, [{ unit: pair.b.unit, indices: Int32Array.of(pair.b.i) }]);
             viewer.plugin.managers.structure.measurement.addDistance(lociA, lociB);
         } catch (e) {
-            console.warn("[UKW] 3D 距離線繪製失敗：", e);
+            console.warn("[UKW] Failed to draw 3D distance line:", e);
         }
     }
 
@@ -2142,21 +2176,21 @@ ${styles}
         } else if (lastMeasure) {
             const m = lastMeasure;
             body = `
-                <b>${escapeHtml(m.nameA)} ↔ ${escapeHtml(m.nameB)}</b>${m.cross ? "（跨鏈）" : ""}<br>
+                <b>${escapeHtml(m.nameA)} ↔ ${escapeHtml(m.nameB)}</b>${m.cross ? " (across chains)" : ""}<br>
                 ${m.ca ? `Cα–Cα：<span class="m-val">${m.ca.d.toFixed(2)} Å</span><br>` : ""}
-                最近原子：<span class="m-val">${m.min.d.toFixed(2)} Å</span>
+                Nearest atoms: <span class="m-val">${m.min.d.toFixed(2)} Å</span>
                 （${escapeHtml(m.nameA)} ${escapeHtml(m.min.a.name)} ↔ ${escapeHtml(m.nameB)} ${escapeHtml(m.min.b.name)}）
-                ${m.instances > 1 ? `<br><span style="color:#888">結構含 ${m.instances} 條鏈，已取最近的一組</span>` : ""}
+                ${m.instances > 1 ? `<br><span style="color:#888">The structure contains ${m.instances} chains; the nearest pair is shown.</span>` : ""}
                 <br>
-                <label><input type="radio" name="mkind" value="ca" ${measureKind === "ca" ? "checked" : ""}> 3D 畫 Cα 線</label>
-                <label><input type="radio" name="mkind" value="min" ${measureKind === "min" ? "checked" : ""}> 畫最近原子線</label>`;
+                <label><input type="radio" name="mkind" value="ca" ${measureKind === "ca" ? "checked" : ""}> Draw Cα line in 3D</label>
+                <label><input type="radio" name="mkind" value="min" ${measureKind === "min" ? "checked" : ""}> Draw nearest-atom line</label>`;
         } else if (measureSel.length === 1) {
-            body = `已選 <b>${escapeHtml((seq[measureSel[0] - 1] || "?") + measureSel[0])}</b>，請再點另一個殘基。`;
+            body = `Selected <b>${escapeHtml((seq[measureSel[0] - 1] || "?") + measureSel[0])}</b>; click another residue.`;
         } else {
-            body = "測距模式：依序點兩個殘基（序列、清單中的單一殘基或 3D 皆可）。";
+            body = "Measurement mode: click two residues in sequence (in the sequence, a single-residue list item, or the 3D view).";
         }
 
-        box.innerHTML = `${body}<div><a data-measure-clear>清除</a><a data-measure-exit>離開測距</a></div>`;
+        box.innerHTML = `${body}<div><a data-measure-clear>Clear</a><a data-measure-exit>Exit measurement</a></div>`;
         box.style.display = "block";
     }
 
@@ -2186,7 +2220,7 @@ ${styles}
         }
 
         const [a, b] = measureSel;
-        setPickRanges([[a, a], [b, b]], { scroll: false, label: `測距 ${seq[a - 1] || "?"}${a} ↔ ${seq[b - 1] || "?"}${b}` });
+        setPickRanges([[a, a], [b, b]], { scroll: false, label: `Distance: ${seq[a - 1] || "?"}${a} ↔ ${seq[b - 1] || "?"}${b}` });
         lastMeasure = measurePair(a, b);
         drawMeasureLine();
         renderMeasure();
@@ -2213,7 +2247,7 @@ ${styles}
         }
     });
 
-    // ---------------- 證據說明（ECO）顯示 ----------------
+    // ---------------- Evidence details (ECO) ----------------
     let showEvidenceFull = false;
 
     doc.getElementById("show-evd").addEventListener("change", e => {
@@ -2221,7 +2255,7 @@ ${styles}
         redrawList();
     });
 
-    // 查到新的 ECO 名稱時重繪（視窗關閉後自動取消訂閱）
+    // Redraw when a new ECO label is found (automatically unsubscribe when the window closes).
     const onEcoLoaded = () => {
         if (win.closed) { ecoListeners.delete(onEcoLoaded); return; }
         redrawList();
@@ -2229,7 +2263,7 @@ ${styles}
     };
     ecoListeners.add(onEcoLoaded);
 
-    // ---------------- 分類按鈕 + 細項下拉 ----------------
+    // ---------------- Category buttons + subcategory dropdown ----------------
     function buildPanels() {
         categories.forEach(([k]) => {
             const panel = doc.getElementById("panel-" + k);
@@ -2245,20 +2279,20 @@ ${styles}
             const types = Object.keys(counts).sort((a, b) => (typeOrder[a] ?? 999) - (typeOrder[b] ?? 999));
 
             if (!types.length) {
-                panel.innerHTML = `<div class="cat-empty">此蛋白質沒有此分類的 feature</div>`;
+                panel.innerHTML = `<div class="cat-empty">This protein has no features in this category.</div>`;
                 return;
             }
 
             panel.innerHTML = `
-                <div class="cat-panel-tools"><a data-act="all">全選</a><a data-act="none">清除</a><a data-act="pick" title="選取此分類全部位置（序列＋3D）">◎ 選取此分類</a></div>
+                <div class="cat-panel-tools"><a data-act="all">Select all</a><a data-act="none">Clear</a><a data-act="pick" title="Select all positions in this category (sequence + 3D)">◎ Select category</a></div>
                 ${types.map(t => `
                     <label class="cat-opt">
                         <input type="checkbox" data-type="${escapeHtml(t)}">
                         <i class="sw" style="background:${typeColor[t] || "#ccc"}"></i>
                         <span>${escapeHtml(t)}</span><em>${counts[t]}</em>
-                        <button type="button" class="opt-pick" data-pick-type="${escapeHtml(t)}" title="選取「${escapeHtml(t)}」全部位置（序列＋3D）">◎</button>
+                        <button type="button" class="opt-pick" data-pick-type="${escapeHtml(t)}" title="Select all positions for “${escapeHtml(t)}” (sequence + 3D)">◎</button>
                     </label>`).join("")}
-                <div class="cat-note">未勾選＝顯示全部細項</div>`;
+                <div class="cat-note">None selected = show all subcategories.</div>`;
         });
     }
 
@@ -2287,7 +2321,7 @@ ${styles}
         doc.querySelectorAll(".cat-wrap.open, .ub-wrap.open").forEach(w => w.classList.remove("open"));
     }
 
-    // 分類按鈕：開關分類；關閉時一併清掉該分類的細項選取
+    // Category buttons: toggle a category; when turned off, also clear its selected subcategories.
     doc.querySelectorAll(".feature-category-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             const c = btn.dataset.category;
@@ -2297,7 +2331,7 @@ ${styles}
         });
     });
 
-    // 下拉箭頭：展開 / 收合細項面板
+    // Dropdown arrow: expand / collapse the subcategory panel.
     doc.querySelectorAll(".cat-caret").forEach(caret => {
         caret.addEventListener("click", e => {
             e.stopPropagation();
@@ -2319,7 +2353,7 @@ ${styles}
         if (!e.target.closest(".cat-wrap, .ub-wrap")) closePanels();
     });
 
-    // 勾選細項：自動啟用所屬分類
+    // Selecting a subcategory automatically enables its category.
     doc.addEventListener("change", e => {
         const cb = e.target.closest ? e.target.closest(".cat-opt input[data-type]") : null;
         if (!cb) return;
@@ -2330,7 +2364,7 @@ ${styles}
         refreshAll();
     });
 
-    // 全選 / 清除
+    // Select all / clear.
     doc.addEventListener("click", e => {
         const act = e.target.closest ? e.target.closest(".cat-panel-tools a") : null;
         if (!act) return;
@@ -2362,13 +2396,13 @@ ${styles}
         }
     });
 
-    // ---------------- 字體大小 ----------------
+    // ---------------- Font size ----------------
     doc.getElementById("seq-size").addEventListener("input", function () {
         seqBox.style.setProperty("--seq-size", this.value + "px");
         doc.getElementById("seq-size-val").textContent = this.value + "px";
     });
 
-    // ---------------- 可拖曳分隔線 ----------------
+    // ---------------- Draggable divider ----------------
     function resizeMolstar() {
         try { viewer?.plugin.handleResize(); } catch (e) { /* ignore */ }
         win.dispatchEvent(new win.Event("resize"));
@@ -2414,20 +2448,20 @@ ${styles}
     makeSplitter(doc.getElementById("split-v"), "v");
     makeSplitter(doc.getElementById("split-h"), "h");
 
-    // ---------------- 初始畫面 ----------------
+    // ---------------- Initial view ----------------
     injectTypeColors();
     buildPanels();
     buildUbPanel();
     refreshAll();
 
-    // ---------------- 載入 Mol* ----------------
+    // ---------------- Load Mol* ----------------
     function loadScript(src) {
         return new Promise((resolve, reject) => {
             if (win.molstar && win.molstar.Viewer) { resolve(); return; }
             const sc = doc.createElement("script");
             sc.src = src;
             sc.onload = resolve;
-            sc.onerror = () => reject(new Error("載入失敗：" + src));
+            sc.onerror = () => reject(new Error("Failed to load: " + src));
             doc.head.appendChild(sc);
         });
     }
@@ -2452,10 +2486,10 @@ ${styles}
                 viewportShowAnimation: false
             });
 
-            // 3D → 序列：點 3D 上的殘基，序列捲動並標示
+            // 3D → sequence: clicking a residue in 3D scrolls to and marks it in the sequence.
             try {
                 viewer.plugin.behaviors.interaction.click.subscribe(ev => onMolClick(ev));
-            } catch (e) { console.warn("[UKW] 無法訂閱 3D 點選事件：", e); }
+            } catch (e) { console.warn("[UKW] Could not subscribe to 3D selection events:", e); }
 
             return viewer;
         })();
@@ -2464,7 +2498,7 @@ ${styles}
         return viewerPromise;
     }
 
-    // ---------------- 結構選單（PDB / 預測模型） ----------------
+    // ---------------- Structure menu (PDB / predicted models) ----------------
     const pdbSelect = doc.getElementById("pdb-select");
     let structureOptions = [];
 
@@ -2482,17 +2516,22 @@ ${styles}
         const ps = data.predicted_structures || {};
 
         if (ps.alphafold) {
-            const u = ps.alphafold.pdb_url || ps.alphafold.cif_url;
+            const u = ps.alphafold.local_pdb_path
+                ? localModelUrl("alphafold")
+                : (ps.alphafold.pdb_url || ps.alphafold.cif_url);
             if (u) opts.push({
                 label: "AlphaFold",
-                st: { source: "alphafold", id: ps.alphafold.uniprot_id, url: u, format: ps.alphafold.pdb_url ? "pdb" : "mmcif" }
+                st: { source: "alphafold", id: ps.alphafold.uniprot_id, url: u, format: guessFormat(u) }
             });
         }
         if (ps.alphafill && ps.alphafill.cif_url) {
             opts.push({ label: "AlphaFill", st: { source: "alphafill", id: ps.alphafill.uniprot_id, url: ps.alphafill.cif_url, format: "mmcif" } });
         }
         if (ps.swiss_model && ps.swiss_model.coordinates_url) {
-            opts.push({ label: "SWISS-MODEL", st: { source: "swiss_model", id: ps.swiss_model.uniprot_id, url: ps.swiss_model.coordinates_url, format: "pdb" } });
+            const u = ps.swiss_model.local_pdb_path
+                ? localModelUrl("swiss_model")
+                : ps.swiss_model.coordinates_url;
+            opts.push({ label: "SWISS-MODEL", st: { source: "swiss_model", id: ps.swiss_model.uniprot_id, url: u, format: "pdb" } });
         }
 
         structureOptions = opts;
@@ -2500,10 +2539,10 @@ ${styles}
 
     function syncSelect() {
         if (!structure) {
-            pdbSelect.innerHTML = structureOptions.length ? "" : `<option>無結構</option>`;
+            pdbSelect.innerHTML = structureOptions.length ? "" : `<option>No structure</option>`;
         }
 
-        // 目前結構不在清單中就補上（例如主頁面選到清單外的檔案）
+        // Add the current structure if it is not in the list (for example, if the main page selected a file outside the list).
         if (structure && !structureOptions.some(o => o.st.url === structure.url)) {
             structureOptions.unshift({
                 label: `${structure.source === "pdb" ? "PDB " : ""}${structure.id || "structure"}`,
@@ -2520,7 +2559,7 @@ ${styles}
         }
     }
 
-    // 切換（或首次載入）結構：重置對應表與覆蓋範圍，重新載入後再套用目前選取
+    // When switching or first loading a structure, reset mappings and coverage, then reapply the current selection after loading.
     async function switchStructure(st) {
         const token = ++loadToken;
 
@@ -2543,12 +2582,12 @@ ${styles}
         if (!structure || !structure.url) {
             try { viewer?.plugin.managers.structure.focus.clear(); await viewer?.plugin.clear(); } catch (e) { /* ignore */ }
             msg.style.display = "flex";
-            msg.textContent = "此蛋白質沒有可用的 3D 結構";
+            msg.textContent = "No 3D structure is available for this protein.";
             return;
         }
 
         msg.style.display = "flex";
-        msg.textContent = "載入 3D 結構中…";
+        msg.textContent = "Loading 3D structure…";
 
         try {
             await ensureViewer();
@@ -2558,7 +2597,9 @@ ${styles}
             await viewer.plugin.clear();
             if (token !== loadToken) return;
 
-            const url = new URL(structure.url, location.origin).href;
+            const url = structure.source === "swiss_model"
+                ? new URL(localModelUrl("swiss_model"), location.origin).href
+                : new URL(structure.url, location.origin).href;
             const isBinary = /\.bcif(\?|$)/i.test(url);
             const format = isBinary ? "mmcif" : (structure.format || guessFormat(url));
 
@@ -2584,19 +2625,19 @@ ${styles}
             if (pick) showRangesInMolstar(pick.ranges);
         } catch (err) {
             if (token !== loadToken) return;
-            console.error("[UKW] Mol* 載入失敗：", err, "\nstructure:", structure);
+            console.error("[UKW] Mol* failed to load:", err, "\nstructure:", structure);
             msg.style.display = "flex";
-            msg.textContent = "3D 結構載入失敗：" + (err.message || err);
+            msg.textContent = "Failed to load 3D structure: " + (err.message || err);
         }
     }
 
-    // 視窗內手動切換
+    // Switch manually in the window.
     pdbSelect.addEventListener("change", () => {
         const o = structureOptions[Number(pdbSelect.value)];
         if (o) switchStructure(o.st);
     });
 
-    // 主頁面點選新的 PDB（currentPdbUrl 變動）→ 自動更新視窗內的結構
+    // When a new PDB is selected on the main page (currentPdbUrl changes), automatically update the structure in this window.
     let lastMainUrl = (typeof currentPdbUrl !== "undefined" && currentPdbUrl) || null;
 
     const mainWatcher = setInterval(() => {

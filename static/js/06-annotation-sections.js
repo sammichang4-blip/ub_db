@@ -7,7 +7,7 @@
 
 function renderStructures(structures) {
     if (!Array.isArray(structures) || structures.length === 0) {
-        return `<p style="color:var(--ink-dim)">目前資料庫中無結構資料。</p>`;
+        return `<p style="color:var(--ink-dim)">No structure data is available in the database.</p>`;
     }
 
     const rows = structures.map(s => {
@@ -43,11 +43,11 @@ function renderStructures(structures) {
             <thead>
                 <tr>
                     <th>PDB ID</th>
-                    <th>方法</th>
-                    <th>解析度 Å</th>
-                    <th>鏈</th>
-                    <th>標題</th>
-                    <th>下載</th>
+                    <th>Method</th>
+                    <th>Resolution (Å)</th>
+                    <th>Chain</th>
+                    <th>Title</th>
+                    <th>Download</th>
                 </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -73,7 +73,7 @@ function renderPredictedStructures(predicted) {
                 <td>
                     ${af.pdb_url
                         ? `<a class="pdb-link" href="${escapeHtml(af.pdb_url)}"
-                                onclick="setCurrentPDB('AlphaFold', '${escapeHtml(af.pdb_url)}'); showPDBStructure('${escapeHtml(af.pdb_url)}'); return false;">檢視</a>`
+                                onclick="setCurrentPDB('AlphaFold', '${escapeHtml(af.pdb_url)}'); showPDBStructure('${escapeHtml(af.pdb_url)}'); return false;">View</a>`
                         : "—"}
                 </td>
                 <td>version ${escapeHtml(af.model_version || "")}</td>
@@ -134,7 +134,7 @@ function renderPredictedStructures(predicted) {
                 <td>
                     ${sm.coordinates_url
                         ? `<a class="pdb-link" href="${escapeHtml(sm.coordinates_url)}"
-                                onclick="setCurrentPDB('SWISS-MODEL', '${escapeHtml(sm.coordinates_url)}'); showPDBStructure('${escapeHtml(sm.coordinates_url)}'); return false;">檢視</a>`
+                                onclick="setCurrentPDB('SWISS-MODEL', '${escapeHtml(sm.coordinates_url)}'); showPDBStructure('${escapeHtml(sm.coordinates_url)}'); return false;">View</a>`
                         : "—"}
                 </td>
                 <td>${escapeHtml(sm.template || "")}</td>
@@ -149,18 +149,18 @@ function renderPredictedStructures(predicted) {
     }
 
     if (rows.length === 0) {
-        return `<p style="color:var(--ink-dim)">目前資料庫中無預測結構資料。</p>`;
+        return `<p style="color:var(--ink-dim)">No predicted structure data is available in the database.</p>`;
     }
 
     return `
         <table>
             <thead>
                 <tr>
-                    <th>來源</th>
-                    <th>模型資訊</th>
-                    <th>模板 / Ligands</th>
-                    <th>信心分數</th>
-                    <th>下載</th>
+                    <th>Source</th>
+                    <th>Model information</th>
+                    <th>Template / ligands</th>
+                    <th>Confidence score</th>
+                    <th>Download</th>
                 </tr>
             </thead>
             <tbody>${rows.join("")}</tbody>
@@ -173,30 +173,30 @@ function renderPredictedStructures(predicted) {
  * GO Functions
  * ============================================================ */
 // ------------------------------------------------------------------
-// Cell GO Viewer —— 取代原本 renderFunctions 的 tag 清單
+// Cell GO Viewer — replaces the original renderFunctions tag list.
 // ------------------------------------------------------------------
-// GO evidence code 分類上色：實驗證據 > 系統發生學 > 序列比對推論 > 人工文獻 > 電腦自動
+// Color-code GO evidence codes: experimental > phylogenetic > sequence similarity > literature/manual curation > computational.
 const EVIDENCE_CATEGORY = {
-    // 實驗證據（最可靠）－ 綠色
+    // Experimental evidence (most reliable) — green
     EXP: "exp", IDA: "exp", IPI: "exp", IMP: "exp", IGI: "exp", IEP: "exp",
     HTP: "exp", HDA: "exp", HMP: "exp", HGI: "exp", HEP: "exp",
-    // 系統發生學推論 － 藍色
+    // Phylogenetic inference — blue
     IBA: "phylo", IBD: "phylo", IKR: "phylo", IRD: "phylo",
-    // 序列/資料庫比對推論 － 紫色
+    // Sequence/database similarity inference — purple
     ISS: "seq", ISO: "seq", ISA: "seq", ISM: "seq", IGC: "seq", RCA: "seq",
-    // 人工文獻／curator 判斷 － 橘色
+    // Literature/manual curator judgment — orange
     TAS: "author", NAS: "author", IC: "author", ND: "author",
-    // 純電腦自動註解（未經人工審核）－ 灰色
+    // Computational annotation only (not manually reviewed) — gray
     IEA: "auto",
 };
 
 const CELLGO_LEGEND = `
     <div class="cellgo-legend">
-        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--exp"></i>實驗證據</span>
-        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--phylo"></i>系統發生學</span>
-        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--seq"></i>序列比對推論</span>
-        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--author"></i>文獻／人工判斷</span>
-        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--auto"></i>電腦自動 (IEA)</span>
+        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--exp"></i>Experimental evidence</span>
+        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--phylo"></i>Phylogenetic</span>
+        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--seq"></i>Sequence similarity inference</span>
+        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--author"></i>Literature/manual curation</span>
+        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--auto"></i>Computational (IEA)</span>
     </div>
 `;
 
@@ -204,8 +204,6 @@ function evidenceClass(code) {
     const cat = EVIDENCE_CATEGORY[(code || "").toUpperCase()];
     return cat ? `cellgo-evidence--${cat}` : "cellgo-evidence--other";
 }
-
-
 
 let _cellgoSvgTextPromise = null;
 function _getCellSvgText() {
@@ -218,7 +216,7 @@ function _getCellSvgText() {
 function renderCellGoView(functions) {
 
     if (!Array.isArray(functions) || functions.length === 0) {
-        return `<p style="color:var(--ink-dim)">目前資料庫中無 GO 註解。</p>`;
+        return `<p style="color:var(--ink-dim)">No GO annotations are available in the database.</p>`;
     }
 
     const groups = { C: [], F: [], P: []  };
@@ -231,7 +229,7 @@ function renderCellGoView(functions) {
         return f.term_name || f.go_term || f.go_name || f.name || "";
     }
 
-    // Molecular Function / Biological Process：跟原本一樣純展示，沒有對應胞器
+    // Molecular Function / Biological Process: display as before; no organelles are mapped.
     function renderStaticGroup(title, items) {
         if (!items.length) return "";
         return `
@@ -250,7 +248,7 @@ function renderCellGoView(functions) {
         `;
     }
 
-    // Cellular Component：可以點亮胞器的清單
+    // Cellular Component: list of organelles that can be highlighted.
     function renderMappableGroup(title, items) {
         if (!items.length) return "";
         return `
@@ -276,17 +274,17 @@ function renderCellGoView(functions) {
     return `
         <div class="cellgo-header">
             <div class="cellgo-hint">
-                頁面載入後會依序自動點亮對應的胞器；滑鼠移到圖上的胞器，右側會對應到相關的 GO function（反之亦然）。
+                After the page loads, the corresponding organelles are highlighted in sequence. Hover over an organelle in the diagram to show related GO functions on the right, and vice versa.
                 ${CELLGO_LEGEND}
             </div>
-            <button type="button" class="cellgo-expand-btn" data-role="cellgo-expand">🔍 放大檢視</button>
+            <button type="button" class="cellgo-expand-btn" data-role="cellgo-expand">🔍 Expand</button>
         </div>
         <div class="cellgo-layout">
             <div class="cellgo-cell-panel" data-role="cellgo-cell-panel">
-                <div class="cellgo-loading">細胞圖載入中...</div>
+                <div class="cellgo-loading">Loading cell diagram...</div>
             </div>
             <div class="cellgo-go-panel">
-                ${renderMappableGroup("Cellular Component（可點亮胞器）", groups.C)}
+                ${renderMappableGroup("Cellular Component (highlightable organelles)", groups.C)}
                 ${renderStaticGroup("Molecular Function", groups.F)}
                 ${renderStaticGroup("Biological Process", groups.P)}
                 
@@ -295,7 +293,7 @@ function renderCellGoView(functions) {
     `;
 }
 
-// 插入 DOM 之後呼叫：注入 SVG、跑自動導覽、綁雙向 hover
+// Call after inserting into the DOM: inject the SVG, run the automatic tour, and bind bidirectional hover.
 async function initCellGoView(container,proteinId) {
     if (!container) return;
     const cellPanel = container.querySelector('[data-role="cellgo-cell-panel"]');
@@ -304,15 +302,10 @@ async function initCellGoView(container,proteinId) {
 
     if (!cellPanel) return;
 
-    // ---- 放大按鈕：開新視窗秀完整版 cell_go_view ----
+    // ---- Expand button: open the full cell_go_view in a new window ----
     if (expandBtn && proteinId) {
         expandBtn.addEventListener("click", () => {
-            const url = `/protein/${encodeURIComponent(proteinId)}/cell-view`;
-            window.open(
-                url,
-                "cellGoViewWindow",
-                "width=1200,height=850,menubar=no,toolbar=no,location=no,status=no"
-            );
+            window.openProteinTabView("cell_go", proteinId);
         });
     }
 
@@ -321,7 +314,7 @@ async function initCellGoView(container,proteinId) {
         cellPanel.innerHTML = await _getCellSvgText();
         svgRoot = cellPanel.querySelector("svg");
     } catch (err) {
-        cellPanel.innerHTML = `<div class="cellgo-loading">細胞圖載入失敗</div>`;
+        cellPanel.innerHTML = `<div class="cellgo-loading">Failed to load the cell diagram.</div>`;
         return;
     }
 
@@ -339,7 +332,7 @@ async function initCellGoView(container,proteinId) {
     const items = Array.from(listC.querySelectorAll("li.mappable"));
     if (!items.length) return;
 
-    // ---- 依序自動導覽 ----
+    // ---- Automatic tour, in sequence ----
     const STEP_MS = 1300;
     let i = 0;
     function step() {
@@ -360,7 +353,7 @@ async function initCellGoView(container,proteinId) {
     }
     step();
 
-    // ---- 雙向 hover：圖上胞器 <-> 清單 ----
+    // ---- Bidirectional hover: organelles in the diagram <-> list ----
     cellPanel.addEventListener("mouseover", (e) => {
         const g = e.target.closest('[id^="SL"]');
         if (!g) return;
@@ -387,8 +380,6 @@ async function initCellGoView(container,proteinId) {
         setGlow(splitSl(li.dataset.sl), ["sl-glow-strong"], false);
     });
 }
-
- 
 
 
 function renderEvidence(evidence, reference_pmid) {
@@ -420,9 +411,9 @@ function renderRelations(relations, protein) {
     if (!Array.isArray(relations) || relations.length === 0) {
         return `
             <p style="color:var(--ink-dim)">
-                此蛋白質目前在資料庫中沒有記錄作為 substrate 的 E1–E2–E3 關係鏈。
+                No E1–E2–E3 relationship chain is currently recorded in the database with this protein as the substrate.
                 <br>
-                （ubiquitin 本身通常作為修飾分子而非 substrate；請改查 TP53 等範例受質蛋白）
+                (Ubiquitin itself is usually a modifier rather than a substrate; try an example substrate protein such as TP53.)
             </p>
         `;
     }
@@ -441,11 +432,11 @@ function renderRelations(relations, protein) {
             <span class="chain-node sub">${escapeHtml(r.substrate_id)} (substrate)</span>
 
             <div class="chain-meta">
-                <strong>類型：</strong>${escapeHtml(r.ub_type || "—")}<br>
-                <strong>修飾 Lysine：</strong>${escapeHtml(r.modified_lysine || "—")}<br>
-                <strong>結果：</strong>${escapeHtml(r.functional_outcome || "—")}<br>
+                <strong>Type:</strong>${escapeHtml(r.ub_type || "—")}<br>
+                <strong>Modified lysine:</strong>${escapeHtml(r.modified_lysine || "—")}<br>
+                <strong>Outcome:</strong>${escapeHtml(r.functional_outcome || "—")}<br>
                 ${renderEvidence(r.evidence, r.reference_pmid)}<br>
-                <em>資料來源：${escapeHtml(r.source_db || "—")}</em>
+                <em>Source: ${escapeHtml(r.source_db || "—")}</em>
             </div>
         </div>
     `).join("");

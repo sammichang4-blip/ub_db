@@ -13,7 +13,7 @@ def normalize_enzyme_ids(db_path, output_file):
     cur = conn.cursor()
 
     # ---------------------------------------------------------
-    # 取得所有 enzymes
+    # Fetch all enzymes
     # ---------------------------------------------------------
     enzymes = cur.execute(
         """
@@ -36,7 +36,7 @@ def normalize_enzyme_ids(db_path, output_file):
         old_id = enzyme["enzyme_id"]
 
         # -----------------------------------------------------
-        # 1. 先確認 enzyme_id 是否已經是 canonical protein_id
+        # 1. First confirm whether enzyme_id is already a canonical protein_id
         # -----------------------------------------------------
         protein = cur.execute(
             """
@@ -50,12 +50,12 @@ def normalize_enzyme_ids(db_path, output_file):
         ).fetchone()
 
         if protein:
-            # 已經是 canonical ID，不需要更新
+            # Already a canonical ID; no update needed
             continue
 
         # -----------------------------------------------------
-        # 2. proteins 找不到
-        #    → 到 identifier_table 找 alternative / legacy ID
+        # 2. If proteins is not found,
+        #    look in identifier_table for an alternative / legacy ID
         # -----------------------------------------------------
         identifiers = cur.execute(
             """
@@ -82,7 +82,7 @@ def normalize_enzyme_ids(db_path, output_file):
             continue
 
         # -----------------------------------------------------
-        # 3. identifier_table 找到 mapping
+        # 3. identifier_table found a mapping
         # -----------------------------------------------------
         if len(identifiers) > 1:
 
@@ -97,7 +97,7 @@ def normalize_enzyme_ids(db_path, output_file):
                     f"-> {row['protein_id']}"
                 )
 
-            # 為避免錯誤更新，這裡不自動處理
+            # To avoid incorrect updates, do not process automatically here
             continue
 
         row = identifiers[0]
@@ -106,7 +106,7 @@ def normalize_enzyme_ids(db_path, output_file):
         protein_name = row["protein_name"]
 
         # -----------------------------------------------------
-        # 4. 更新 enzymes.enzyme_id
+        # 4. Update enzymes.enzyme_id
         # -----------------------------------------------------
         try:
 
@@ -120,7 +120,7 @@ def normalize_enzyme_ids(db_path, output_file):
             )
 
             # -------------------------------------------------
-            # 5. 記錄成功更新
+            # 5. Record the successful update
             # -------------------------------------------------
             updated.append({
                 "old_id": old_id,
@@ -149,7 +149,7 @@ def normalize_enzyme_ids(db_path, output_file):
     conn.commit()
 
     # ---------------------------------------------------------
-    # 寫入 enzyme.txt
+    # Write enzyme.txt
     # ---------------------------------------------------------
     with open(output_file, "w", encoding="utf-8") as f:
 

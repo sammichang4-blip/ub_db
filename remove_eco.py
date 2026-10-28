@@ -146,10 +146,10 @@ try:
 
     print(
         f"\nprotein_alias:"
-        f"\n  原始資料：{len(rows)}"
-        f"\n  ECO 清理：{changed_count}"
-        f"\n  重複移除：{duplicate_count}"
-        f"\n  最終資料：{len(cleaned_protein_alias)}"
+        f"\n  Original data: {len(rows)}"
+        f"\n  ECO cleaned: {changed_count}"
+        f"\n  Duplicates removed: {duplicate_count}"
+        f"\n  Final data: {len(cleaned_protein_alias)}"
     )
 
 
@@ -227,10 +227,10 @@ try:
 
     print(
         f"\ngene_alias:"
-        f"\n  原始資料：{len(rows)}"
-        f"\n  ECO 清理：{changed_count}"
-        f"\n  重複移除：{duplicate_count}"
-        f"\n  最終資料：{len(cleaned_gene_alias)}"
+        f"\n  Original data: {len(rows)}"
+        f"\n  ECO cleaned: {changed_count}"
+        f"\n  Duplicates removed: {duplicate_count}"
+        f"\n  Final data: {len(cleaned_gene_alias)}"
     )
 
 

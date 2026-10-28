@@ -39,3 +39,39 @@ function showCopyMessage(msg) {
         box.style.opacity = "0";
     }, 1500);
 }
+
+function openProteinTabView(tabId, proteinId = null) {
+    if (window.CELL_PROTEIN_ID && typeof window.switchCellGoTab === "function") {
+        window.switchCellGoTab(tabId);
+        return;
+    }
+
+    const protein = window.currentProtein
+        || (typeof currentProtein !== "undefined" ? currentProtein : null);
+    const id = proteinId
+        || window.CELL_PROTEIN_ID
+        || (protein && (protein.protein_id || protein.uniprot_acc));
+
+    if (!id) {
+        console.error(`Cannot open tab ${tabId}: protein ID is missing.`);
+        return;
+    }
+
+    const targetUrl = new URL(
+        `/protein/${encodeURIComponent(id)}/cell-view`,
+        window.location.origin
+    );
+    targetUrl.searchParams.set("tab", tabId);
+
+    const selectedStructure = typeof currentPdbUrl !== "undefined"
+        ? currentPdbUrl
+        : null;
+    if (selectedStructure && ["domain", "pdbviewer"].includes(tabId)) {
+        targetUrl.searchParams.set("structure", selectedStructure);
+    }
+
+    const url = targetUrl.href;
+    window.open(url, "_blank", "width=1500,height=950,scrollbars=yes,resizable=yes");
+}
+
+window.openProteinTabView = openProteinTabView;

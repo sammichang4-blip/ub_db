@@ -10,13 +10,13 @@ Input:
 Output:
     ft.txt
 
-功能：
-1. 逐一解析 UniProt protein entry
-2. 取得 protein accession
-3. 解析所有 FT records
-4. 支援跨行 /note、/evidence、/ligand、/id 等 qualifier
-5. 保留完整 raw FT block
-6. 每一個 FT feature 輸出一筆 TSV
+Features:
+1. Parse each UniProt protein entry one by one
+2. Retrieve the protein accession
+3. Parse all FT records
+4. Support multi-line qualifiers such as /note, /evidence, /ligand, /id
+5. Preserve the complete raw FT block
+6. Output one TSV row per FT feature
 """
 
 import re
@@ -37,13 +37,13 @@ OUTPUT_FILE = Path("ft.txt")
 
 def clean_qualifier_value(value):
     """
-    清理 UniProt qualifier：
+    Clean UniProt qualifiers:
         /note="abc
         def"
 
     -> abc def
 
-    保留文字內容，但把跨行空白合併。
+    Keep the text content while collapsing cross-line whitespace.
     """
     value = value.strip()
 
@@ -62,7 +62,7 @@ def clean_qualifier_value(value):
 
 def parse_location(location):
     """
-    解析 UniProt FT location。
+    Parse UniProt FT locations.
 
     Examples:
         54

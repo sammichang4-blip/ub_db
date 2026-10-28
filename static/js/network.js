@@ -6,7 +6,7 @@ let cy = null;
 
 let editMode = false;
 
-// 保存目前 network 的完整原始 elements
+// Store the complete original elements for the current network.
 let originalElements = [];
 // =====================================================
 // Complex badge overlay
@@ -80,7 +80,7 @@ function refreshComplexBadges() {
             badge.style.cursor = "pointer";
             badge.style.pointerEvents = "auto";
             badge.style.transform = "translate(-50%, -50%)";
-            badge.title = "所屬 complex";
+            badge.title = "Associated complex";
 
             badge.onclick = (evt) => {
                 evt.stopPropagation();
@@ -98,12 +98,12 @@ function refreshComplexBadges() {
         const w = node.renderedWidth();
         const h = node.renderedHeight();
 
-        // 定位在 node 右上角
+        // Position at the upper-right corner of the node.
         badge.style.left = `${pos.x + w / 18}px`;
         badge.style.top = `${pos.y - h / 2}px`;
     });
 
-    // 移除對應 node 已經不存在的 badge
+    // Remove badges for nodes that no longer exist.
     Object.keys(complexBadges).forEach(id => {
 
         if (!currentIds.has(id)) {
@@ -150,7 +150,7 @@ function createComplexPanel() {
         panel.style.position = "fixed";
         panel.style.zIndex = "99999";
         panel.style.top = "80px";
-        panel.style.left = "20px";     // 跟 interaction-panel（右側）分開放左側
+        panel.style.left = "20px";     // Keep this on the left, separate from the interaction panel on the right.
         panel.style.width = "340px";
         panel.style.maxHeight = "70vh";
         panel.style.overflowY = "auto";
@@ -235,7 +235,7 @@ function linkifyPMID(text) {
 
 // =====================================================
 // Format PMID field
-// 例如：29729098;29729098;29729098
+// Example: 29729098;29729098;29729098.
 // =====================================================
 
 function formatPMIDs(value) {
@@ -253,7 +253,7 @@ function formatPMIDs(value) {
         return "-";
     }
 
-    // 去除重複 PMID
+    // Remove duplicate PMIDs.
     const uniquePMIDs = [
         ...new Set(pmids)
     ];
@@ -261,7 +261,7 @@ function formatPMIDs(value) {
     return uniquePMIDs
         .map(pmid => {
 
-            // 如果資料本身只有數字
+            // If the value contains only digits.
             if (/^\d+$/.test(pmid)) {
 
                 return `
@@ -280,7 +280,7 @@ function formatPMIDs(value) {
                 `;
             }
 
-            // 如果資料已經包含 PMID:
+            // If the value already includes PMID:
             return linkifyPMID(pmid);
 
         })
@@ -288,7 +288,7 @@ function formatPMIDs(value) {
 }
 
 // =====================================================
-// badge 點擊後的面板（跟 edge 那組平行的另一組，避免互相蓋掉）
+// Panel shown after clicking a badge (separate from the edge panel to prevent overlap).
 // =====================================================
 function showComplexPanel(proteinId, data) {
     const panel = createComplexPanel();
@@ -481,7 +481,7 @@ function hideComplexPanel() {
     }
 }
 // =====================================================
-// Interaction panel (click-triggered, 可釘住)
+// Interaction panel (click-triggered, can be pinned).
 // =====================================================
 
 function createInteractionPanel() {
@@ -702,7 +702,7 @@ function showInteractionTooltip(event, data) {
         `;
     } else {
         const first = data[0];
-        // 收集所有 PMID
+        // Collect all PMIDs.
         const pmids = [
             ...new Set(
                 data
@@ -956,7 +956,7 @@ function loadNetwork(gene) {
         // ==========================================
         data.edges.forEach(e => {
             /*
-             * 預期 API edge 可以有：
+             * API edges may include:
              *
              * {
              *   id: "...",
@@ -966,8 +966,8 @@ function loadNetwork(gene) {
              *   ubiquitin_linkages: ["K48", "K63"]
              * }
              *
-             * 如果沒有 ubiquitin_linkages，
-             * 仍然可以正常顯示 network。
+             * If ubiquitin_linkages is absent,
+             * the network can still be displayed normally.
              */
             elements.push({
                 data: e
@@ -975,12 +975,12 @@ function loadNetwork(gene) {
 
         });
         // ==========================================
-        // 保存原始 network
+        // Store the original network.
         // ==========================================
         originalElements =
             structuredClone(elements);
         // ==========================================
-        // 如果已有 Cytoscape，先 destroy
+        // Destroy Cytoscape first if it already exists.
         // ==========================================
         if (cy) {
             clearComplexBadges();
@@ -988,7 +988,7 @@ function loadNetwork(gene) {
             cy = null;
         }
         // ==========================================
-        // 建立 Cytoscape
+        // Create Cytoscape.
         // ==========================================
         cy = cytoscape({
             container:
@@ -1052,7 +1052,7 @@ function loadNetwork(gene) {
 
 
                         // --------------------------
-                        // 增加可點擊區域
+                        // Increase the clickable area.
                         // --------------------------
 
                         "overlay-opacity": 0,
@@ -1180,7 +1180,7 @@ function loadNetwork(gene) {
                         "opacity": 1,
 
                         // --------------------------
-                        // 有方向箭頭
+                        // Show a direction arrow.
                         // --------------------------
 
                         "target-arrow-shape":
@@ -1278,7 +1278,7 @@ function loadNetwork(gene) {
 
                     style: {
 
-                        // E3-substrate 是主要關係
+                        // E3-substrate is the primary relationship.
                         "width": 5,
                         "line-style": "solid",
 
@@ -1486,7 +1486,7 @@ function loadNetwork(gene) {
             "edge",
             function(evt) {
 
-                // Edit Mode 只允許操作 node
+                // In Edit Mode, only nodes can be manipulated.
                 if (editMode) {
 
                     return;
@@ -1617,7 +1617,7 @@ function toggleKeepSelection(node) {
         return;
     }
 
-    // Edit Mode 只允許 Node
+    // In Edit Mode, only nodes can be manipulated.
     if (!node || node.group() !== "nodes") {
         return;
     }
@@ -1626,7 +1626,7 @@ function toggleKeepSelection(node) {
     const type = node.data("type");
 
     // ==========================================
-    // 已選取 → 取消
+    // Selected → remove from keep list.
     // ==========================================
 
     if (node.hasClass("keep-selected")) {
@@ -1635,7 +1635,7 @@ function toggleKeepSelection(node) {
         node.unselect();
 
         console.log(
-            "取消保留 Node:",
+            "Removed Node from keep list:",
             id,
             type
         );
@@ -1643,7 +1643,7 @@ function toggleKeepSelection(node) {
     }
 
     // ==========================================
-    // 未選取 → 加入保留
+    // Not selected → add to keep list.
     // ==========================================
 
     else {
@@ -1652,7 +1652,7 @@ function toggleKeepSelection(node) {
         node.select();
 
         console.log(
-            "加入保留 Node:",
+            "Added Node to keep list:",
             id,
             type
         );
@@ -1701,14 +1701,14 @@ function clearNetworkSelection() {
     if (!cy) {
 
         console.warn(
-            "Clear Selection: Cytoscape 尚未建立"
+            "Clear Selection: Cytoscape has not been initialized."
         );
 
         return;
     }
 
     // ==========================================
-    // 只清除 Node selection
+    // Clear only the node selection.
     // ==========================================
 
     cy.nodes()
@@ -1733,7 +1733,7 @@ function keepSelected() {
     if (!cy) {
 
         alert(
-            "Network 尚未建立"
+            "The network has not been created yet."
         );
 
         return;
@@ -1742,14 +1742,14 @@ function keepSelected() {
     if (!editMode) {
 
         alert(
-            "請先開啟 Edit Mode"
+            "Turn on Edit Mode first."
         );
 
         return;
     }
 
     // ==========================================
-    // 取得被選取的 Node
+    // Get the selected node.
     // ==========================================
 
     const selectedNodes =
@@ -1758,14 +1758,14 @@ function keepSelected() {
     if (selectedNodes.length === 0) {
 
         alert(
-            "請先點選要保留的 Node"
+            "Select the node to keep first."
         );
 
         return;
     }
 
     // ==========================================
-    // 建立保留 Node ID
+    // Build the set of node IDs to keep.
     // ==========================================
 
     const keepNodeIds =
@@ -1785,7 +1785,7 @@ function keepSelected() {
     );
 
     // ==========================================
-    // 移除沒有被選取的 Node
+    // Remove nodes that are not selected.
     // ==========================================
 
     cy.nodes().forEach(node => {
@@ -1804,8 +1804,8 @@ function keepSelected() {
     // ==========================================
     // Edge：
     //
-    // 只保留 source / target
-    // 都存在的 Edge
+    // Keep only edges whose source and target
+    // both still exist.
     // ==========================================
 
     cy.edges().forEach(edge => {
@@ -1828,7 +1828,7 @@ function keepSelected() {
     });
 
     // ==========================================
-    // 清除選取樣式
+    // Clear selection styling.
     // ==========================================
 
     cy.nodes()
@@ -1891,7 +1891,7 @@ window.restoreNetwork = function() {
     if (!cy) {
 
         alert(
-            "Network 尚未建立"
+            "The network has not been created yet."
         );
 
         return;
@@ -1902,14 +1902,14 @@ window.restoreNetwork = function() {
 
 
     // ==========================================
-    // 清除目前 network
+    // Clear the current network.
     // ==========================================
 
     cy.elements().remove();
 
 
     // ==========================================
-    // 恢復原始 network
+    // Restore the original network.
     // ==========================================
 
     cy.add(
@@ -1920,7 +1920,7 @@ window.restoreNetwork = function() {
 
 
     // ==========================================
-    // 清除選取
+    // Clear selection.
     // ==========================================
 
     clearNetworkSelection();
@@ -2011,7 +2011,7 @@ function expandNode(id) {
             newElements
         );
         // ==========================================
-        // 更新 Restore 的基準
+        // Update the restore baseline.
         // ==========================================
         originalElements =
             cy.elements().jsons();
@@ -2143,7 +2143,7 @@ window.exportPNG = function() {
     if (!cy) {
 
         alert(
-            "Network 尚未建立"
+            "The network has not been created yet."
         );
 
         return;
@@ -2196,7 +2196,7 @@ function createNetworkEditorToolbar() {
 
 
     // ==========================================
-    // 如果不存在就建立
+    // Create it if it does not exist.
     // ==========================================
 
     let toolbar =
@@ -2259,7 +2259,7 @@ function createNetworkEditorToolbar() {
 
 
         // ==========================================
-        // 插入到 Cytoscape 上方
+        // Insert above Cytoscape.
         // ==========================================
 
         cyContainer.parentNode.insertBefore(
@@ -2303,7 +2303,7 @@ function createNetworkEditorToolbar() {
 
 
     // ==========================================
-    // 顯示 Toolbar
+    // Show the toolbar.
     // ==========================================
 
     toolbar.style.display =
@@ -2343,7 +2343,7 @@ window.enterEditMode = function() {
     if (!cy) {
 
         alert(
-            "Network 尚未建立"
+            "The network has not been created yet."
         );
 
         return;
@@ -2359,25 +2359,25 @@ window.enterEditMode = function() {
     }
 
     // ==========================================
-    // 開啟 Edit Mode
+    // Enable Edit Mode.
     // ==========================================
 
     editMode = true;
 
     // ==========================================
-    // 清除之前 selection
+    // Clear the previous selection.
     // ==========================================
 
     clearNetworkSelection();
 
     // ==========================================
-    // 建立 Toolbar
+    // Create the toolbar.
     // ==========================================
 
     createNetworkEditorToolbar();
 
     // ==========================================
-    // Edit Mode 視覺效果
+    // Edit Mode visual styling.
     // ==========================================
 
     cy.nodes().style(
@@ -2385,7 +2385,7 @@ window.enterEditMode = function() {
         0.15
     );
 
-    // Edge 淡化
+    // Dim edges.
     cy.edges().style(
         "opacity",
         0.25
@@ -2418,19 +2418,19 @@ window.exitEditMode = function() {
     }
 
     // ==========================================
-    // 關閉 Edit Mode
+    // Disable Edit Mode.
     // ==========================================
 
     editMode = false;
 
     // ==========================================
-    // 清除 selection
+    // Clear the selection.
     // ==========================================
 
     clearNetworkSelection();
 
     // ==========================================
-    // 恢復 Node overlay
+    // Restore the node overlay.
     // ==========================================
 
     cy.nodes().style(
@@ -2439,7 +2439,7 @@ window.exitEditMode = function() {
     );
 
     // ==========================================
-    // 恢復 Edge
+    // Restore edges.
     // ==========================================
 
     cy.edges().style(
@@ -2448,7 +2448,7 @@ window.exitEditMode = function() {
     );
 
     // ==========================================
-    // 隱藏 Toolbar
+    // Hide the toolbar.
     // ==========================================
 
     hideNetworkEditorToolbar();

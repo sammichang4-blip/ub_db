@@ -3,12 +3,12 @@
 // 07. Renderers: functional description, papers list,
 //     sequence track, copy-sequence, expanded paper popup
 //
-// 檔案分工（請依序載入，順序其實不影響執行，因為互相呼叫都發生在使用時）：
-//   07-papers-sequence.js    本檔：功能描述、論文、序列軌道、主頁面 feature 明細
-//   07b-evidence.js          Evidence：ECO 說明與 PubMed 等連結
-//   07c-sequence-popup.js    放大視窗：序列 + Mol* + feature 清單 + Ub/SASA/motif/測距
+// File responsibilities (load in order; the order does not affect execution because calls happen only when used):
+//   07-papers-sequence.js    This file: functional description, papers, sequence tracks, main-page feature details
+//   07b-evidence.js          Evidence: ECO descriptions and links to PubMed, etc.
+//   07c-sequence-popup.js    Expanded view: sequence + Mol* + feature list + Ub/SASA/motifs/distance measurement
 //
-// 依賴（由其他檔案提供）：
+// Dependencies (provided by other files):
 //   escapeHtml, highlightSearch, showCopyMessage,
 //   LYSINE_SITES, currentSearchKeyword
 // ============================================================
@@ -94,7 +94,7 @@ function renderPapers(papers, options = {}) {
     if (!expandAll && papers.length > VISIBLE_COUNT) {
         html += `
             <button class="show-more-btn" onclick="toggleMorePapers(this)">
-                顯示更多（還有 ${papers.length - VISIBLE_COUNT} 篇）
+                Show more (${papers.length - VISIBLE_COUNT} more)
             </button>
         `;
     }
@@ -115,25 +115,30 @@ function toggleMorePapers(btn) {
 
     btn.dataset.expanded = (!isExpanded).toString();
     btn.textContent = isExpanded
-        ? `顯示更多（還有 ${hiddenPapers.length} 篇）`
-        : "收起";
+        ? `Show more (${hiddenPapers.length} more)`
+        : "Show less";
 }
 
 // ------------------------------------------------------------
 // Expanded ("popup window") paper view with a year-range filter
 // ------------------------------------------------------------
-function openExpandedView() {
+function openExpandedView(targetWindow = null) {
+    if (!targetWindow) {
+        window.openProteinTabView("papers");
+        return;
+    }
+
     const data = window.currentData || window.currentProteinData;
     const p = window.currentProtein || (data && data.protein);
 
     if (!p || !data) {
-        console.error("尚未載入蛋白質資料");
+        console.error("Protein data has not been loaded.");
         return;
     }
 
-    const win = window.open("", "_blank", "width=900,height=800,scrollbars=yes,resizable=yes");
+    const win = targetWindow || window.open("", "_blank", "width=900,height=800,scrollbars=yes,resizable=yes");
     if (!win) {
-        alert("瀏覽器封鎖了彈出視窗，請允許彈出視窗後再試一次。");
+        alert("The browser blocked the pop-up. Allow pop-ups and try again.");
         return;
     }
 
@@ -172,7 +177,7 @@ function openExpandedView() {
         const container = win.document.getElementById("papers-container");
         const count = win.document.getElementById("paper-count");
         if (container) container.innerHTML = renderPapers(papers, { expandAll: true });
-        if (count) count.textContent = `${papers.length} 篇`;
+        if (count) count.textContent = `${papers.length} papers`;
     }
 
     const initialYears = 1;
@@ -185,9 +190,9 @@ function openExpandedView() {
         <html lang="zh-Hant">
         <head>
             <meta charset="UTF-8">
-            <title>${escapeHtml(p.protein_name)} (${escapeHtml(p.gene_name)}) - 詳細資料</title>
+            <title>${escapeHtml(p.protein_name)} (${escapeHtml(p.gene_name)}) - Details</title>
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; max-width:900px; margin:0 auto; padding:2em; line-height:1.6; color:#222; background:#fff; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; max-width:900px; margin:0 auto; padding:${targetWindow ? "0 1em 1em" : "2em"}; line-height:1.6; color:#222; background:#fff; }
                 h1 { font-size:1.4em; margin-bottom:0.3em; }
                 h5 { margin-top:1.5em; margin-bottom:0.8em; }
                 .function-card { padding:0.6em 0; border-bottom:1px solid #eee; }
@@ -224,27 +229,27 @@ function openExpandedView() {
                 currentSearchKeyword
             )}
 
-            <h5>📄 相關論文（PubMed，近期）</h5>
+            <h5>📄 Recent related papers (PubMed)</h5>
 
             <div class="paper-filter">
                 <div class="paper-filter-header">
-                    <span class="paper-filter-title">論文時間範圍</span>
+                    <span class="paper-filter-title">Publication date range</span>
                     <span>
-                        最近 <span id="paper-years-label">1 年</span>
-                        <span id="paper-count">${initialPapers.length} 篇</span>
+                        Last <span id="paper-years-label">1 year</span>
+                        <span id="paper-count">${initialPapers.length} papers</span>
                     </span>
                 </div>
 
                 <input type="range" id="paper-years" min="1" max="10" step="1" value="1">
 
                 <div class="year-scale">
-                    <span>1 年</span><span>2 年</span><span>3 年</span><span>4 年</span><span>5 年</span>
-                    <span>6 年</span><span>7 年</span><span>8 年</span><span>9 年</span><span>10 年</span>
+                    <span>1 year</span><span>2 years</span><span>3 years</span><span>4 years</span><span>5 years</span>
+                    <span>6 years</span><span>7 years</span><span>8 years</span><span>9 years</span><span>10 years</span>
                 </div>
 
                 <div class="year-buttons">
-                    <button class="year-btn active" data-year="all">全部（依滑桿）</button>
-                    依年份：
+                    <button class="year-btn active" data-year="all">All (use slider)</button>
+                    By year:
                     ${[2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
                         .map(year => `<button class="year-btn" data-year="${year}">${year}</button>`)
                         .join("")}
@@ -253,7 +258,7 @@ function openExpandedView() {
 
             <div id="papers-container">${papersHtml}</div>
 
-            <h5 style="color:#888;">🗂 功能描述（UniProt，較舊）</h5>
+            <h5 style="color:#888;">🗂 Functional description (UniProt, older)</h5>
             ${descHtml}
         </body>
         </html>
@@ -267,7 +272,7 @@ function openExpandedView() {
     if (slider) {
         slider.addEventListener("input", function () {
             const years = Number(this.value);
-            if (yearLabel) yearLabel.textContent = `${years} 年`;
+            if (yearLabel) yearLabel.textContent = `${years} ${years === 1 ? "year" : "years"}`;
 
             win.document.querySelectorAll(".year-btn").forEach(btn => btn.classList.remove("active"));
             const allBtn = win.document.querySelector('.year-btn[data-year="all"]');
@@ -330,7 +335,7 @@ function buildFeatureDetailsHtml(features = [], categories = []) {
     );
 
     if (!list.length) {
-        return `<div class="feature-empty">目前選取的分類沒有此蛋白質的 UniProt Feature。</div>`;
+        return `<div class="feature-empty">No UniProt features are available for this protein in the selected categories.</div>`;
     }
 
     return list.map(feature => {
@@ -365,18 +370,36 @@ function renderFeatureDetails(features = []) {
 // ------------------------------------------------------------
 // Sequence track (60-residue lines, 10-residue ruler groups)
 // ------------------------------------------------------------
+function cTerminalGgPositions(seq, features) {
+    const positions = new Set();
+    features.forEach(feature => {
+        if (String(feature.feature_type || "").toUpperCase() !== "CHAIN") return;
+
+        const start = Number(feature.start_pos);
+        const end = Number(feature.end_pos || feature.start_pos);
+        if (!Number.isInteger(start) || !Number.isInteger(end)
+            || start < 1 || end - start < 1 || end > seq.length) return;
+        if (seq[end - 2] === "G" && seq[end - 1] === "G") {
+            positions.add(end - 1);
+            positions.add(end);
+        }
+    });
+    return positions;
+}
+
 function renderSequence(seq, features = [], categories = window.activeFeatureCategories || []) {
     if (!seq) return "";
 
     const lineLength = 60;
     const groupSize = 10;
     const activeCategories = categories;
+    const ggPositions = cTerminalGgPositions(seq, features);
 
-    // 先過濾一次，避免每個殘基都掃全部 features
+    // Filter once so we do not scan all features for every residue.
     const usableFeatures = features.filter(feature => {
         const start = Number(feature.start_pos);
         if (!Number.isFinite(start) || start < 1) return false;
-        if (activeCategories.length === 0) return false;   // 沒選分類就不標色
+        if (activeCategories.length === 0) return false;   // Do not color anything if no categories are selected.
         return activeCategories.includes(window.FEATURE_TYPE_TO_CATEGORY[feature.feature_type]);
     });
 
@@ -411,18 +434,17 @@ function renderSequence(seq, features = [], categories = window.activeFeatureCat
                 const aa = seq[i];
 
                 let cls = "res";
-                const titleParts = [`位置 ${pos}: ${aa}`];
+                const titleParts = [`Position ${pos}: ${aa}`];
 
-                // 已知多泛素鏈接 Lysine
+                // Known polyubiquitin-linked lysine.
                 if (typeof LYSINE_SITES !== "undefined" && LYSINE_SITES.includes(pos) && aa === "K") {
                     cls += " lys-site";
-                    titleParts.push("已知多泛素鏈接 Lysine");
+                    titleParts.push("Known polyubiquitin-linked lysine");
                 }
 
-                // C-terminal Gly-Gly
-                if (pos >= seq.length - 1 && aa === "G") {
+                if (ggPositions.has(pos)) {
                     cls += " gg-site";
-                    titleParts.push("C-terminal Gly-Gly");
+                    titleParts.push("C-terminal Gly-Gly (site of covalent attachment to the substrate)");
                 }
 
                 // UniProt FT features
@@ -468,7 +490,7 @@ function renderAndUpdateSequence(sequence) {
     const seqBox = document.getElementById("protein-sequence");
 
     if (!seqBox) {
-        console.error("[UKW] 找不到 #protein-sequence");
+        console.error("[UKW] Could not find #protein-sequence.");
         return;
     }
 
@@ -493,7 +515,7 @@ function renderAndUpdateSequence(sequence) {
     }
 
     if (!savedSequence) {
-        console.error("[UKW] 找不到原始 sequence。");
+        console.error("[UKW] Could not find the original sequence.");
         return;
     }
 
@@ -526,7 +548,7 @@ function toggleFeatureCategory(category) {
     const validCategories = ["structural", "localization", "functional", "modification", "variation"];
 
     if (!validCategories.includes(category)) {
-        console.error("[UKW] 未知的 Feature 分類：", category);
+        console.error("[UKW] Unknown feature category:", category);
         return;
     }
 
@@ -549,13 +571,13 @@ function toggleFeatureCategory(category) {
     if (seqBox) {
         renderAndUpdateSequence(seqBox.dataset.sequence || window.currentProteinSequence || "");
     } else {
-        console.error("[UKW] 找不到 #protein-sequence；分類狀態已更新，但無法重繪序列。");
+        console.error("[UKW] Could not find #protein-sequence; category state was updated, but the sequence could not be redrawn.");
     }
 }
 
 window.toggleFeatureCategory = toggleFeatureCategory;
 
-// 若按鈕沒有 inline onclick，使用事件代理；有 inline onclick 則不重複切換。
+// Use event delegation if the button has no inline onclick; avoid toggling twice if it does.
 if (!window.__ukwFeatureCategoryDelegationInstalled) {
     document.addEventListener("click", function (event) {
         const button = event.target.closest("button");
@@ -578,7 +600,7 @@ if (!window.__ukwFeatureCategoryDelegationInstalled) {
 
         if (!looksLikeCategoryButton || !category) return;
 
-        // 只處理主頁面的按鈕（彈出視窗有自己的事件）
+        // Handle only main-page buttons (the pop-up has its own event handler).
         if (event.target.ownerDocument !== document) return;
 
         const inlineHandler = button.getAttribute("onclick") || "";
@@ -597,14 +619,14 @@ async function copySequence() {
     const seqBox = document.getElementById("protein-sequence");
 
     if (!seqBox) {
-        console.error("找不到 #protein-sequence");
+        console.error("Could not find #protein-sequence.");
         return;
     }
 
     const sequence = seqBox.dataset.sequence || "";
 
     if (!sequence) {
-        console.error("Sequence 是空的");
+        console.error("Sequence is empty.");
         return;
     }
 

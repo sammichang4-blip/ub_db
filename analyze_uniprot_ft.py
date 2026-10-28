@@ -4,12 +4,12 @@
 """
 UKW - UniProt FT Schema Analyzer
 
-分析 UP000005640_9606.dat 中所有 FT 的結構。
+Analyze all FT structures in UP000005640_9606.dat.
 
-輸出：
+Output:
     columns.txt
 
-格式：
+Format:
 
 [ACT_SITE]
   - evidence
@@ -30,9 +30,9 @@ UKW - UniProt FT Schema Analyzer
   - note
   - evidence
 
-目的：
-    只列出「不重複」的 FT type 與 qualifier，
-    用來評估 database schema。
+Purpose:
+    Only list unique FT types and qualifiers,
+    to evaluate the database schema.
 """
 
 from pathlib import Path
@@ -66,16 +66,16 @@ ft_structure = {}
 
 def extract_qualifier_names(lines):
     """
-    只抓 qualifier 名稱。
+    Only capture qualifier names.
 
-    例如：
+    Example:
 
         /note="..."
         /evidence="..."
         /ligand="arginine"
         /ligand_id="ChEBI:CHEBI:32696"
 
-    回傳：
+    Returns:
 
         {"note", "evidence", "ligand", "ligand_id"}
     """

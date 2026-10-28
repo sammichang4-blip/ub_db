@@ -7,7 +7,7 @@
 // Global state
 // ============================================================
 
-// 搜尋 / Protein
+// Search / protein
 window.currentProteinId = window.currentProteinId || null;
 window.currentData = window.currentData || null;
 window.currentProtein = window.currentProtein || null;
@@ -17,12 +17,12 @@ window.currentDomains = window.currentDomains || [];
 // Enzyme class state
 // ============================================================
 
-// API 回來的「完整 enzyme class 資料」
-// 例如：全部 E3
+// Complete enzyme class data returned by the API,
+// for example, all E3 enzymes.
 window.currentEnzymeClass = null;
 window.currentEnzymeData = [];
 
-// 目前實際顯示在畫面的資料
+// Data currently displayed on screen.
 window.currentDisplayedData = [];
 
 // Subfamily filter
@@ -57,7 +57,7 @@ async function doSearch(q) {
 
         const data = await res.json();
 
-        // 搜尋時清除 enzyme filter 狀態
+        // Clear enzyme filter state when searching.
         window.currentEnzymeClass = null;
         window.currentEnzymeData = [];
         window.currentDisplayedData = [];
@@ -76,7 +76,7 @@ async function doSearch(q) {
             detailPane.innerHTML = `
                 <div class="empty-state">
                     <p>
-                        找不到符合「${escapeHtml(q)}」的蛋白質。
+                        No proteins found matching "${escapeHtml(q)}".
                     </p>
                 </div>
             `;
@@ -92,7 +92,7 @@ async function doSearch(q) {
             detailPane.innerHTML = `
                 <div class="empty-state">
                     <p>
-                        搜尋失敗：
+                        Search failed:
                         ${escapeHtml(error.message)}
                     </p>
                 </div>
@@ -139,19 +139,17 @@ function renderResults(items, keyword = "") {
         return;
     }
 
-    const title =
-        document.querySelector(".pane-title");
+    const title = document.querySelector(".pane-title");
 
     if (title) {
         title.textContent = "";
     }
 
     // --------------------------------------------------------
-    // 清掉 subfamily filter
+    // Clear the subfamily filter.
     // --------------------------------------------------------
 
-    const filterBar =
-        document.getElementById("subfamily-filters");
+    const filterBar = document.getElementById("subfamily-filters");
 
     if (filterBar) {
 
@@ -160,7 +158,7 @@ function renderResults(items, keyword = "") {
     }
 
     // --------------------------------------------------------
-    // 清掉舊搜尋結果
+    // Clear previous search results.
     // --------------------------------------------------------
     resultsList.innerHTML = "";
 
@@ -172,22 +170,17 @@ function renderResults(items, keyword = "") {
     // Render
     // --------------------------------------------------------
     items.forEach(item => {
-        const li =
-            document.createElement("li");
+        const li = document.createElement("li");
 
         li.className = "result-item";
 
-        li.dataset.proteinId =
-            item.protein_id;
-
+        li.dataset.proteinId = item.protein_id;
 
         if (
-            item.protein_id ===
-            currentProteinId
+            item.protein_id === currentProteinId
         ) {
             li.classList.add("active");
         }
-
 
         li.innerHTML = `
             <div class="gene">
@@ -207,14 +200,12 @@ function renderResults(items, keyword = "") {
             </div>
         `;
 
-
         li.addEventListener(
             "click",
             () => {
                 loadProtein(item.protein_id);
             }
         );
-
 
         resultsList.appendChild(li);
     });
@@ -262,7 +253,7 @@ async function loadProtein(proteinId) {
     currentProteinId = proteinId;
 
     // --------------------------------------------------------
-    // 更新左側 active
+    // Update the active item on the left.
     // --------------------------------------------------------
 
     document
@@ -283,7 +274,6 @@ async function loadProtein(proteinId) {
         activeItem.classList.add("active");
     }
 
-
     try {
 
         const res =
@@ -291,30 +281,23 @@ async function loadProtein(proteinId) {
                 `/api/protein/${encodeURIComponent(proteinId)}`
             );
 
-
         if (!res.ok) {
             throw new Error(
                 `HTTP ${res.status}`
             );
         }
 
-
-        const data =
-            await res.json();
-
+        const data = await res.json();
 
         // ----------------------------------------------------
-        // 儲存目前 protein data
+        // Store the current protein data.
         // ----------------------------------------------------
 
         currentData = data;
 
-        currentProtein =
-            data.protein;
+        currentProtein = data.protein;
 
-        currentDomains =
-            data.domains || [];
-
+        currentDomains = data.domains || [];
 
         // ----------------------------------------------------
         // Render detail
@@ -330,7 +313,6 @@ async function loadProtein(proteinId) {
             document.getElementById(
                 `cellgo-panel-${data.protein.protein_id}`
             );
-
 
         if (cellGoPanel) {
 
@@ -348,13 +330,12 @@ async function loadProtein(proteinId) {
             error
         );
 
-
         if (detailPane) {
 
             detailPane.innerHTML = `
                 <div class="empty-state">
                     <p>
-                        載入失敗：
+                        Failed to load:
                         ${escapeHtml(error.message)}
                     </p>
                 </div>
@@ -367,12 +348,12 @@ async function loadProtein(proteinId) {
 // Load enzyme class
 // ============================================================
 //
-// currentEnzymeData 永遠保存「完整 class」
+// currentEnzymeData always stores the complete class.
 //
-// 例如：
-// E3 API → currentEnzymeData = 全部 E3
+// For example:
+// E3 API → currentEnzymeData = all E3 enzymes.
 //
-// 不論後面怎麼 filter，都不修改 currentEnzymeData。
+// Filtering later never modifies currentEnzymeData.
 // ============================================================
 
 async function loadProteinClass(enzymeClass) {
@@ -384,12 +365,10 @@ async function loadProteinClass(enzymeClass) {
             enzymeClass
         );
 
-
         const res =
             await fetch(
                 `/api/enzyme/${encodeURIComponent(enzymeClass)}`
             );
-
 
         if (!res.ok) {
             throw new Error(
@@ -397,46 +376,37 @@ async function loadProteinClass(enzymeClass) {
             );
         }
 
-
-        const data =
-            await res.json();
+        const data = await res.json();
 
 
         if (!resultsList) {
             return;
         }
 
-
         // ----------------------------------------------------
-        // 保存完整資料
+        // Store the complete data.
         // ----------------------------------------------------
 
-        window.currentEnzymeClass =
-            enzymeClass;
+        window.currentEnzymeClass = enzymeClass;
 
         window.currentEnzymeData =
             Array.isArray(data)
                 ? data
                 : [];
 
-
         // ----------------------------------------------------
         // Reset filters
         // ----------------------------------------------------
 
-        window.currentSubfamilyFilter =
-            null;
+        window.currentSubfamilyFilter = null;
 
-        window.currentNoPDBFilter =
-            false;
-
+        window.currentNoPDBFilter = false;
 
         // ----------------------------------------------------
-        // 目前顯示資料 = 全部
+        // Display all data for now.
         // ----------------------------------------------------
 
-        window.currentDisplayedData =
-            window.currentEnzymeData;
+        window.currentDisplayedData = window.currentEnzymeData;
 
         // ----------------------------------------------------
         // Title
@@ -447,14 +417,12 @@ async function loadProteinClass(enzymeClass) {
                 ".pane-title"
             );
 
-
         if (title) {
 
             title.innerHTML =
                 `${escapeHtml(enzymeClass)} ` +
                 `(${window.currentEnzymeData.length})`;
         }
-
         // ----------------------------------------------------
         // Render subfamily
         // ----------------------------------------------------
@@ -471,7 +439,6 @@ async function loadProteinClass(enzymeClass) {
         renderEnzymeList(
             window.currentEnzymeData
         );
-
 
         // ----------------------------------------------------
         // Load first protein
@@ -500,7 +467,7 @@ async function loadProteinClass(enzymeClass) {
 // Get current filtered data
 // ============================================================
 //
-// 所有 filter 都集中在這裡。
+// All filters are centralized here.
 //
 // currentEnzymeData
 //        ↓
@@ -518,7 +485,6 @@ function getCurrentFilteredData() {
             ? window.currentEnzymeData
             : [];
 
-
     // --------------------------------------------------------
     // No PDB
     // --------------------------------------------------------
@@ -532,7 +498,6 @@ function getCurrentFilteredData() {
                 p => Number(p.has_pdb) === 0
             );
     }
-
 
     // --------------------------------------------------------
     // Subfamily
@@ -550,9 +515,8 @@ function getCurrentFilteredData() {
             );
     }
 
-
     // --------------------------------------------------------
-    // 保存目前顯示資料
+    // Store the data currently displayed.
     // --------------------------------------------------------
 
     window.currentDisplayedData =
@@ -562,21 +526,19 @@ function getCurrentFilteredData() {
     return data;
 }
 
-
 // ============================================================
 // Render Subfamily filters
 // ============================================================
 //
-// 只有 E3 / DUB 顯示 subfamily filter
+// Show the subfamily filter only for E3 / DUB.
 //
-// 一般模式：
-//     使用完整 enzyme class data
+// Normal mode:
+//     Use the complete enzyme class data.
 //
-// No PDB 模式：
-//     只使用 has_pdb = 0 的 data
+// No-PDB mode:
+//     Use only data where has_pdb = 0.
 //
-// 因此：
-// 沒有 No-PDB 結果的 subfamily 不會出現
+// Therefore, subfamilies with no No-PDB results are not shown.
 // ============================================================
 
 function renderSubfamilyFilters(
@@ -589,25 +551,20 @@ function renderSubfamilyFilters(
             "subfamily-filters"
         );
 
-
     // --------------------------------------------------------
-    // 如果不存在就建立
+    // Create it if it does not exist.
     // --------------------------------------------------------
 
     if (!filterBar) {
 
-        filterBar =
-            document.createElement("div");
+        filterBar =  document.createElement("div");
 
-        filterBar.id =
-            "subfamily-filters";
-
+        filterBar.id = "subfamily-filters";
 
         const title =
             document.querySelector(
                 ".pane-title"
             );
-
 
         if (
             title &&
@@ -621,9 +578,8 @@ function renderSubfamilyFilters(
         }
     }
 
-
     // --------------------------------------------------------
-    // 只有 E3 / DUB 顯示
+    // Show only for E3 / DUB.
     // --------------------------------------------------------
 
     const showFilters =
@@ -641,21 +597,19 @@ function renderSubfamilyFilters(
         return;
     }
 
-
     // ========================================================
-    // 關鍵：
+    // Important:
     //
-    // No PDB 模式下，不使用完整 class data。
+    // Do not use the complete class data in No-PDB mode.
     //
-    // 即使呼叫端傳入 full data，
-    // 這裡也再次確保只留下 No-PDB。
+    // Even if the caller passes full data,
+    // ensure here that only No-PDB entries remain.
     // ========================================================
 
     let filterData =
         Array.isArray(data)
             ? [...data]
             : [];
-
 
     if (window.currentNoPDBFilter) {
 
@@ -665,9 +619,8 @@ function renderSubfamilyFilters(
             );
     }
 
-
     // --------------------------------------------------------
-    // 建立 subfamily list
+    // Build the subfamily list.
     // --------------------------------------------------------
 
     const subfamilies =
@@ -696,50 +649,39 @@ function renderSubfamilyFilters(
                 )
         );
 
-
     // --------------------------------------------------------
     // Render
     // --------------------------------------------------------
 
-    filterBar.style.display =
-        "block";
+    filterBar.style.display = "block";
 
     filterBar.innerHTML = "";
 
 
-    const label =
-        document.createElement("div");
+    const label = document.createElement("div");
 
-    label.className =
-        "filter-label";
+    label.className = "filter-label";
 
-    label.textContent =
-        "Subfamily";
+    label.textContent = "Subfamily";
 
 
-    const select =
-        document.createElement("select");
+    const select = document.createElement("select");
 
-    select.className =
-        "subfamily-select";
-
+    select.className = "subfamily-select";
 
     // --------------------------------------------------------
     // All
     // --------------------------------------------------------
 
-    const allOption =
-        document.createElement("option");
+    const allOption = document.createElement("option");
 
     allOption.value = "";
 
-    allOption.textContent =
-        "全部";
+    allOption.textContent = "All";
 
     select.appendChild(
         allOption
     );
-
 
     // --------------------------------------------------------
     // Subfamilies
@@ -753,11 +695,9 @@ function renderSubfamilyFilters(
                     "option"
                 );
 
-            option.value =
-                sf;
+            option.value = sf;
 
-            option.textContent =
-                sf;
+            option.textContent = sf;
 
             select.appendChild(
                 option
@@ -765,14 +705,11 @@ function renderSubfamilyFilters(
         }
     );
 
-
     // --------------------------------------------------------
-    // 保留目前選擇
+    // Keep the current selection.
     // --------------------------------------------------------
 
-    select.value =
-        window.currentSubfamilyFilter || "";
-
+    select.value = window.currentSubfamilyFilter || "";
 
     // --------------------------------------------------------
     // Change
@@ -813,9 +750,8 @@ async function loadProteinClassNoPDB(enzymeClass) {
 
         let data;
 
-
         // ====================================================
-        // 1. 使用目前已載入的完整 class data
+        // 1. Use the complete class data already loaded.
         // ====================================================
 
         if (
@@ -833,9 +769,8 @@ async function loadProteinClassNoPDB(enzymeClass) {
                 window.currentEnzymeData;
         }
 
-
         // ====================================================
-        // 2. 尚未載入這個 class → API
+        // 2. If this class has not been loaded yet, request it from the API.
         // ====================================================
 
         else {
@@ -850,7 +785,6 @@ async function loadProteinClassNoPDB(enzymeClass) {
                     `/api/enzyme/${encodeURIComponent(enzymeClass)}`
                 );
 
-
             if (!res.ok) {
 
                 throw new Error(
@@ -858,41 +792,31 @@ async function loadProteinClassNoPDB(enzymeClass) {
                 );
             }
 
-
-            data =
-                await res.json();
-
+            data = await res.json();
 
             if (!Array.isArray(data)) {
                 data = [];
             }
 
-
             // ------------------------------------------------
-            // 保存完整 class data
+            // Store the complete class data.
             // ------------------------------------------------
 
-            window.currentEnzymeClass =
-                enzymeClass;
+            window.currentEnzymeClass = enzymeClass;
 
-            window.currentEnzymeData =
-                data;
+            window.currentEnzymeData = data;
         }
 
+        // ====================================================
+        // 3. Set filter state.
+        // ====================================================
+
+        window.currentNoPDBFilter = true;
+
+        window.currentSubfamilyFilter = null;
 
         // ====================================================
-        // 3. 設定 filter state
-        // ====================================================
-
-        window.currentNoPDBFilter =
-            true;
-
-        window.currentSubfamilyFilter =
-            null;
-
-
-        // ====================================================
-        // 4. 取得 No-PDB data
+        // 4. Get the No-PDB data.
         // ====================================================
 
         const filtered =
@@ -900,14 +824,11 @@ async function loadProteinClassNoPDB(enzymeClass) {
                 p => Number(p.has_pdb) === 0
             );
 
-
         // ====================================================
-        // 5. 保存目前顯示資料
+        // 5. Store the data currently displayed.
         // ====================================================
 
-        window.currentDisplayedData =
-            filtered;
-
+        window.currentDisplayedData = filtered;
 
         // ====================================================
         // 6. Title
@@ -918,7 +839,6 @@ async function loadProteinClassNoPDB(enzymeClass) {
                 ".pane-title"
             );
 
-
         if (title) {
 
             title.innerHTML =
@@ -926,18 +846,16 @@ async function loadProteinClassNoPDB(enzymeClass) {
                 `No Experimental PDB (${filtered.length})`;
         }
 
-
         // ====================================================
         // 7. Subfamily
         //
-        // 只使用 No-PDB data
+        // Use only No-PDB data.
         // ====================================================
 
         renderSubfamilyFilters(
             enzymeClass,
             filtered
         );
-
 
         // ====================================================
         // 8. Render
@@ -946,7 +864,6 @@ async function loadProteinClassNoPDB(enzymeClass) {
         renderEnzymeList(
             filtered
         );
-
 
         // ====================================================
         // 9. Load first protein
@@ -973,11 +890,11 @@ async function loadProteinClassNoPDB(enzymeClass) {
 // Filter by Subfamily
 // ============================================================
 //
-// 不重新打 API。
-// 不直接從 currentEnzymeData 自己 filter。
-// 一律透過 getCurrentFilteredData()。
+// Do not call the API again.
+// Do not filter currentEnzymeData directly.
+// Always use getCurrentFilteredData().
 //
-// 因此：
+// As a result:
 //
 // E3
 // ↓
@@ -985,7 +902,7 @@ async function loadProteinClassNoPDB(enzymeClass) {
 // ↓
 // TRIM
 //
-// 會得到：
+// This returns:
 //
 // E3 ∩ No PDB ∩ TRIM
 // ============================================================
@@ -995,7 +912,7 @@ function filterBySubfamily(
 ) {
 
     // --------------------------------------------------------
-    // 設定 subfamily
+    // Set the subfamily.
     // --------------------------------------------------------
 
     window.currentSubfamilyFilter =
@@ -1005,24 +922,20 @@ function filterBySubfamily(
                 encodedSubfamily
             );
 
+    // --------------------------------------------------------
+    // Get the intersection of all filters.
+    // --------------------------------------------------------
+
+    const filtered = getCurrentFilteredData();
 
     // --------------------------------------------------------
-    // 取得所有 filter 的交集
-    // --------------------------------------------------------
-
-    const filtered =
-        getCurrentFilteredData();
-
-
-    // --------------------------------------------------------
-    // 更新 subfamily select
+    // Update the subfamily selector.
     // --------------------------------------------------------
 
     renderSubfamilyFilters(
         window.currentEnzymeClass,
         window.currentEnzymeData
     );
-
 
     // --------------------------------------------------------
     // Render
@@ -1031,7 +944,6 @@ function filterBySubfamily(
     renderEnzymeList(
         filtered
     );
-
 
     // --------------------------------------------------------
     // Title
@@ -1042,7 +954,6 @@ function filterBySubfamily(
             ".pane-title"
         );
 
-
     if (title) {
 
         let titleText =
@@ -1050,28 +961,23 @@ function filterBySubfamily(
                 window.currentEnzymeClass
             );
 
-
         if (
             window.currentNoPDBFilter
         ) {
 
-            titleText +=
-                " 無PDB";
+            titleText +=  " No PDB";
         }
 
 
-        titleText +=
-            ` (${filtered.length})`;
+        titleText += ` (${filtered.length})`;
 
 
-        title.innerHTML =
-            titleText;
+        title.innerHTML = titleText;
     }
 
-
     // --------------------------------------------------------
-    // 如果目前蛋白不在 filtered 裡
-    // 就載入第一個
+    // If the current protein is not in the filtered results,
+    // load the first one.
     // --------------------------------------------------------
 
     if (filtered.length > 0) {
@@ -1093,7 +999,6 @@ function filterBySubfamily(
     }
 }
 
-
 // ============================================================
 // Render enzyme list
 // ============================================================
@@ -1104,43 +1009,32 @@ function renderEnzymeList(data) {
         return;
     }
 
-
     resultsList.innerHTML = "";
-
 
     if (!Array.isArray(data)) {
         return;
     }
 
-
     data.forEach(p => {
 
-        const li =
-            document.createElement("li");
+        const li = document.createElement("li");
 
+        li.className = "result-item";
 
-        li.className =
-            "result-item";
-
-
-        li.dataset.proteinId =
-            p.protein_id;
-
+        li.dataset.proteinId =  p.protein_id;
 
         // ----------------------------------------------------
         // Active
         // ----------------------------------------------------
 
         if (
-            p.protein_id ===
-            window.currentProteinId
+            p.protein_id === window.currentProteinId
         ) {
 
             li.classList.add(
                 "active"
             );
         }
-
 
         // ----------------------------------------------------
         // HTML
@@ -1172,7 +1066,6 @@ function renderEnzymeList(data) {
             </div>
         `;
 
-
         // ----------------------------------------------------
         // Click
         // ----------------------------------------------------
@@ -1187,13 +1080,11 @@ function renderEnzymeList(data) {
             }
         );
 
-
         resultsList.appendChild(
             li
         );
     });
 }
-
 
 // ============================================================
 // Export functions
@@ -1210,5 +1101,3 @@ window.filterBySubfamily = filterBySubfamily;
 window.renderEnzymeList =renderEnzymeList;
 
 window.renderSubfamilyFilters = renderSubfamilyFilters;
-
-

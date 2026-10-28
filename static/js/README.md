@@ -1,31 +1,31 @@
-# UKW 前端 JavaScript 維護指南
+# UKW Frontend JavaScript Maintenance Guide
 
-前端腳本由 `templates/index.html` 以多個 `<script>` 標籤載入，並共用瀏覽器全域作用域；這些檔案不是 ES modules。HTML 中有內嵌事件處理器，且不同腳本會直接呼叫彼此的函式，因此載入順序屬於執行需求。
+Frontend scripts are loaded through multiple `<script>` tags in `templates/index.html` and share the browser's global scope; these files are not ES modules. HTML contains inline event handlers, and scripts call one another's functions directly, so load order is a runtime requirement.
 
-## 檔案職責
+## File Responsibilities
 
-| 檔案 | 主要職責 |
+| File | Primary Responsibility |
 |---|---|
-| `01-constants.js` | 共用常數，例如 lysine 位點資料 |
-| `02-state.js` | 前端共享狀態與 DOM 參照 |
-| `03-utils.js` | 共用 DOM、字串與呈現工具 |
-| `04-viewer.js` | Mol* 結構檢視器與結構載入 |
-| `05-search.js` | 搜尋結果、蛋白質載入、酵素分類與篩選 |
-| `06-annotation-sections.js` | 結構、domain、GO 與泛素化關係區塊 |
-| `07-papers-sequence.js` | 功能描述、論文、序列與相關檢視器 |
-| `08-detail.js` | 組合並呈現蛋白質詳細資料面板 |
-| `09-network.js` | Cytoscape 交互作用網路 |
-| `10-main.js` | 搜尋表單等頁面初始化事件 |
-| `11-domain.js` | Domain Explorer 互動與呈現 |
-| `cell_go_viewer.js` | Cell GO 細胞定位檢視器 |
-| `network.js`, `network_1.js` | 網路頁面相關腳本；使用前請確認模板引用哪個版本 |
-| `cell_go_viewer1.js`, `cell_go_viewer2.js` | Cell GO 檢視器的其他版本；使用前請確認模板引用狀況 |
+| `01-constants.js` | Shared constants, such as lysine site data |
+| `02-state.js` | Shared frontend state and DOM references |
+| `03-utils.js` | Shared DOM, string, and rendering utilities |
+| `04-viewer.js` | Mol* structure viewer and structure loading |
+| `05-search.js` | Search results, protein loading, enzyme classification, and filtering |
+| `06-annotation-sections.js` | Structure, domain, GO, and ubiquitination relationship sections |
+| `07-papers-sequence.js` | Function descriptions, papers, sequences, and related viewers |
+| `08-detail.js` | Assembles and renders the protein detail panel |
+| `09-network.js` | Cytoscape interaction network |
+| `10-main.js` | Page initialization events, such as the search form |
+| `11-domain.js` | Domain Explorer interactions and rendering |
+| `cell_go_viewer.js` | Cell GO cellular localization viewer |
+| `network.js`, `network_1.js` | Network page scripts; check which version is referenced by the template before use |
+| `cell_go_viewer1.js`, `cell_go_viewer2.js` | Alternate versions of the Cell GO viewer; check which version is referenced by the template before use |
 
-`*.old.js` 為舊版檔案，不應新增至正式載入清單。
+`*.old.js` files are legacy versions and should not be added to the production load list.
 
-## `index.html` 載入順序
+## `index.html` Load Order
 
-目前 `templates/index.html` 依以下順序載入主頁腳本：
+Currently, `templates/index.html` loads the main-page scripts in this order:
 
 ```html
 <script src="/static/js/01-constants.js"></script>
@@ -41,12 +41,12 @@
 <script src="/static/js/11-domain.js"></script>
 ```
 
-修改載入順序前，先確認腳本間的全域變數與函式依賴。若新增 `<script>`，請同時確認模板路徑正確，並在瀏覽器開發者工具檢查載入錯誤與 console 例外。
+Before changing the load order, check dependencies on global variables and functions between scripts. When adding a `<script>`, also verify the template path and check the browser developer tools for loading errors and console exceptions.
 
-## 修改指引
+## Editing Guidelines
 
-- 搜尋、清單篩選與蛋白質載入邏輯放在 `05-search.js`；詳細面板的組裝放在 `08-detail.js`。
-- 重用既有的共用狀態與工具，避免在多個檔案建立互相矛盾的全域狀態。
-- HTML 使用 `onclick` 呼叫的函式必須維持在全域可存取；若改用模組或事件委派，需同步調整模板中的事件綁定。
-- 修改 API 呼叫時，核對 Flask 路由及 JSON 欄位，並測試空結果、錯誤回應與正常資料。
-- 修改結構檢視器或網路圖時，確認 Mol*、Cytoscape.js 的載入順序及依賴資源仍可取得。
+- Keep search, list filtering, and protein-loading logic in `05-search.js`; assemble the detail panel in `08-detail.js`.
+- Reuse existing shared state and utilities to avoid creating conflicting global state across files.
+- Functions called by HTML `onclick` handlers must remain globally accessible. If switching to modules or event delegation, update the template's event bindings as well.
+- When changing API calls, verify the Flask routes and JSON fields, and test empty results, error responses, and valid data.
+- When changing the structure viewer or network graph, confirm that Mol*, Cytoscape.js, and their dependent resources still load in the correct order and remain available.

@@ -2316,7 +2316,7 @@ function renderDomainList(
                                 '${encodedAccession}'
                             )"
 
-                            title="點擊在 3D 結構中高亮此 domain"
+                            title="Click to highlight this domain in the 3D structure"
 
                         >
 
@@ -2574,7 +2574,7 @@ function renderDomains(
 
             <p style="color:var(--ink-dim)">
 
-                目前資料庫中無 domain 資料。
+                No domain data is currently available in the database.
 
             </p>
 
@@ -2822,7 +2822,7 @@ function renderDomainExplorerArchitecture(
 
             <p style="color:var(--ink-dim)">
 
-                目前資料庫中無 domain 資料。
+                No domain data is currently available in the database.
 
             </p>
 
@@ -3193,6 +3193,10 @@ function getDomainHoverScope(
  * ============================================================ */
 
 function openDomainExplorer() {
+    if (typeof window.openProteinTabView === "function") {
+        window.openProteinTabView("domain");
+        return;
+    }
 
     console.log(
         "===== OPEN DOMAIN EXPLORER ====="
@@ -3325,7 +3329,7 @@ function openDomainExplorer() {
 
 
         alert(
-            "無法取得目前蛋白質的 sequence length。"
+            "Could not retrieve the sequence length for the current protein."
         );
 
 
@@ -3356,7 +3360,7 @@ function openDomainExplorer() {
 
 
         alert(
-            "目前蛋白質沒有 Domain 資料。"
+            "No domain data is available for the current protein."
         );
 
 
@@ -3589,7 +3593,7 @@ async function loadDomainExplorerPDB() {
                 </div>
 
                 <p>
-                    目前沒有可用的 PDB structure
+                    No PDB structure is currently available.
                 </p>
 
             </div>
@@ -4024,6 +4028,7 @@ function selectDomain(
             encodedAccession || ""
         );
 
+    window.currentDomainSelection = { start, end, domainName, source, accession };
 
     /* --------------------------------------------------------
      * 3D structure highlight

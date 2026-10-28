@@ -471,14 +471,14 @@ body{
   gap: 8px;
 }
 
-/* PDB Viewer 左側跨兩列 */
+/* PDB viewer spans two rows on the left */
 
 .structure-viewer-card {
     grid-column:1;
     grid-row:span 2;
     min-height: 400px;
 }
-/* PDB Relation 右側跨兩列 */
+/* PDB relation viewer spans two rows on the right */
 .relation-viewer-card {
     grid-column:2;
     grid-row:span 2;
@@ -491,6 +491,29 @@ body{
     height:425px;
     position:relative;
 
+}
+
+#structure-load-status {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.88);
+    color: #344054;
+    font-weight: 600;
+    text-align: center;
+}
+
+#structure-load-status[hidden] {
+    display: none;
+}
+
+#structure-load-status.is-error {
+    background: rgba(255, 241, 242, 0.96);
+    color: #9f1239;
 }
 
 #pdb-full-viewer {
@@ -1752,7 +1775,7 @@ a.pdb-link:hover { text-decoration: underline; }
 .cellgo-goid { font-size: 10px; color: #999; margin-left: 5px; }
 .cellgo-evidence { font-size: 10px; color: #fff; background: #b0b7bf; border-radius: 4px; padding: 1px 5px; margin-left: 5px; }
 
-/* 發亮效果 */
+/* Glow effect */
 .sl-glow-strong .coloured { filter: drop-shadow(0 0 6px #ffcc00) drop-shadow(0 0 14px #ffcc00); transition: filter .25s ease; }
 .sl-glow-soft .coloured { filter: drop-shadow(0 0 5px rgba(255,204,0,.55)); transition: filter .4s ease; }
 @keyframes sl-pulse {
@@ -1782,12 +1805,12 @@ a.pdb-link:hover { text-decoration: underline; }
     border-color: #bbb;
 }
 
-.cellgo-evidence--exp    { background: #2e9e5b; }  /* 綠：實驗證據 */
-.cellgo-evidence--phylo  { background: #3f7fd1; }  /* 藍：系統發生學 */
-.cellgo-evidence--seq    { background: #9b6fd1; }  /* 紫：序列推論 */
-.cellgo-evidence--author { background: #e08a2c; }  /* 橘：人工/文獻 */
-.cellgo-evidence--auto   { background: #9aa1a8; }  /* 灰：純電腦自動 */
-.cellgo-evidence--other  { background: #b0b7bf; }  /* 沒對到分類的預設灰 */
+.cellgo-evidence--exp    { background: #2e9e5b; }  /* Green: experimental evidence */
+.cellgo-evidence--phylo  { background: #3f7fd1; }  /* Blue: phylogenetic inference */
+.cellgo-evidence--seq    { background: #9b6fd1; }  /* Purple: sequence inference */
+.cellgo-evidence--author { background: #e08a2c; }  /* Orange: curator/literature inference */
+.cellgo-evidence--auto   { background: #9aa1a8; }  /* Gray: computational inference */
+.cellgo-evidence--other  { background: #b0b7bf; }  /* Default gray for unclassified evidence */
 
 .cellgo-legend {
     display: flex;
@@ -1850,7 +1873,8 @@ a.pdb-link:hover { text-decoration: underline; }
   background: var(--navy-800);
   font-family: var(--mono);
 }
-/*和 UniProt / NCBI / UCSC 很像，在序列上方放一行座標，每 10 個胺基酸標示一次位置，讓每個 section-card 的內容區塊 有固定最大高度，超過後出現垂直 scrollbar， */
+/* UniProt/NCBI/UCSC-style sequence ruler: show a position every 10 amino acids.
+   Keep section-card content within a fixed maximum height and scroll vertically when needed. */
 .scroll-box{
     flex:1;
     overflow-y:auto;
@@ -1870,7 +1894,7 @@ a.pdb-link:hover { text-decoration: underline; }
     border-radius:4px;
 }
 
-/* 每一條 60 aa 序列 */
+/* Each sequence line contains 60 amino acids */
 .seq-line-block {
     display: block;
     width: max-content;
@@ -1878,7 +1902,7 @@ a.pdb-link:hover { text-decoration: underline; }
     margin-bottom: 8px;
 }
 
-/* 序號列與胺基酸列使用相同的分組 */
+/* Use matching groups for the ruler and amino acid rows */
 .seq-ruler,
 .seq-line {
     display: flex;
@@ -1889,7 +1913,7 @@ a.pdb-link:hover { text-decoration: underline; }
     white-space: nowrap;
 }
 
-/* 每組固定 10 格，禁止垂直排列 */
+/* Keep each group at 10 cells and prevent vertical wrapping */
 .seq-group {
     display: grid;
     grid-template-columns: repeat(10, 1.15em);
@@ -1899,7 +1923,7 @@ a.pdb-link:hover { text-decoration: underline; }
     box-sizing: border-box;
 }
 
-/* 每個胺基酸固定一格 */
+/* Allocate one fixed cell per amino acid */
 .seq-residue-group .res {
     display: block;
     width: 1.15em;
@@ -1913,7 +1937,7 @@ a.pdb-link:hover { text-decoration: underline; }
     font-size: 13px;
 }
 
-/* 每 10 個胺基酸的序號 */
+/* Position labels for every 10 amino acids */
 .seq-ruler-group .ruler-cell {
     display: block;
     width: 1.15em;
@@ -1927,12 +1951,12 @@ a.pdb-link:hover { text-decoration: underline; }
     color: var(--ink-dim);
 }
 
-/* 序號與胺基酸左側對齊 */
+/* Align positions and amino acids at the left edge */
 .seq-ruler {
     margin-bottom: 2px;
 }
 
-/* 避免外層容器把序列擠成直向 */
+/* Prevent parent containers from forcing the sequence into a vertical layout */
 .seq-wrap {
     display: block;
     overflow-x: auto;
@@ -1942,7 +1966,7 @@ a.pdb-link:hover { text-decoration: underline; }
     justify-content: flex-start;
 }
 
-/* ---------- 按鈕：未選取（淺色） ---------- */
+/* ---------- Inactive buttons (light colors) ---------- */
 .feature-category-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
 
 .feature-category-btn {
@@ -1956,20 +1980,20 @@ a.pdb-link:hover { text-decoration: underline; }
 }
 .feature-category-btn:hover { filter: brightness(0.95); }
 
-/* ---------- 按鈕：選取（顏色變深），再點一次恢復 ---------- */
+/* ---------- Active buttons (darker colors); select again to deactivate ---------- */
 .feature-category-btn.active {
     background: var(--cd);
     color: #fff;
 }
 
-/* ---------- 每個分類的顏色：淺色 / 深色 ---------- */
+/* ---------- Category colors: light / dark ---------- */
 [data-category="structural"]   { --cl:#dbeafe; --cd:#2563eb; }
 [data-category="localization"] { --cl:#dcfce7; --cd:#16a34a; }
 [data-category="functional"]   { --cl:#fee2e2; --cd:#dc2626; }
 [data-category="modification"] { --cl:#fef3c7; --cd:#d97706; }
 [data-category="variation"]    { --cl:#f3e8ff; --cd:#9333ea; }
 
-/* ---------- 序列上的標註（與按鈕同色系） ---------- */
+/* ---------- Sequence annotations (matching the category buttons) ---------- */
 .res.cat-structural   { background:#bfdbfe; }
 .res.cat-localization { background:#bbf7d0; }
 .res.cat-functional   { background:#fecaca; }
@@ -1978,7 +2002,7 @@ a.pdb-link:hover { text-decoration: underline; }
 
 .res[class*="cat-"] { border-radius:2px; }
 
-/* ---------- Feature 詳細清單的左側色條 ---------- */
+/* ---------- Left border for feature details ---------- */
 .feature-item { border-left:4px solid #ccc; padding:6px 10px; margin:6px 0; }
 .feature-item[data-category] { border-left-color: var(--cd); }
 

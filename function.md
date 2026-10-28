@@ -1,33 +1,33 @@
-# ⚡ JavaScript 函式清單總覽
+# ⚡ JavaScript Function Inventory
 
-本報告自動彙整專案中所有 `.js` 檔案內定義的 Function 名稱。
+This report automatically compiles the names of all functions defined in the project's `.js` files.
 
-## 📊 檔案摘要統計
-**🎯 專案總計偵測到： 500 個 JavaScript 函式**
+## 📊 File Summary
+**🎯 Total JavaScript functions detected in the project: 500**
 
-| 檔案路徑 | 函式數量 |
+| File Path | Function Count |
 | :--- | :--- |
-| `./static/js/08-detail.js` | **9** 個 |
-| `./static/js/05-search.js` | **25** 個 |
-| `./static/js/cell_go_viewer.js` | **49** 個 |
-| `./static/js/09-network.js` | **14** 個 |
-| `./static/js/01-constants.js` | *無偵測到函式* |
-| `./static/js/07-papers-sequence.js` | **40** 個 |
-| `./static/js/cell_go_viewer1.js` | **23** 個 |
-| `./static/js/03-utils.js` | **4** 個 |
-| `./static/js/02-state.js` | *無偵測到函式* |
-| `./static/js/11-domain.js` | **28** 個 |
-| `./static/js/10-main.js` | **2** 個 |
-| `./static/js/network_1.js` | **14** 個 |
-| `./static/js/06-annotation-sections.js` | **38** 個 |
-| `./static/js/04-viewer.js` | **23** 個 |
-| `./static/js/cell_go_viewer2.js` | **42** 個 |
-| `./static/js/network.js` | **60** 個 |
-| `./static/js/cytoscape/cytoscape-dagre.js` | **38** 個 |
-| `./static/js/cytoscape/cytoscape.min.js` | **1** 個 |
-| `./static/molstar/molstar.js` | **90** 個 |
+| `./static/js/08-detail.js` | **9** |
+| `./static/js/05-search.js` | **25** |
+| `./static/js/cell_go_viewer.js` | **49** |
+| `./static/js/09-network.js` | **14** |
+| `./static/js/01-constants.js` | *No functions detected* |
+| `./static/js/07-papers-sequence.js` | **40** |
+| `./static/js/cell_go_viewer1.js` | **23** |
+| `./static/js/03-utils.js` | **4** |
+| `./static/js/02-state.js` | *No functions detected* |
+| `./static/js/11-domain.js` | **28** |
+| `./static/js/10-main.js` | **2** |
+| `./static/js/network_1.js` | **14** |
+| `./static/js/06-annotation-sections.js` | **38** |
+| `./static/js/04-viewer.js` | **23** |
+| `./static/js/cell_go_viewer2.js` | **42** |
+| `./static/js/network.js` | **60** |
+| `./static/js/cytoscape/cytoscape-dagre.js` | **38** |
+| `./static/js/cytoscape/cytoscape.min.js` | **1** |
+| `./static/molstar/molstar.js` | **90** |
 
-## 📂 各檔案詳細函式清單
+## 📂 Function Inventory by File
 
 ### 📄 `./static/js/08-detail.js`
 - ⚡ `Lysine()`

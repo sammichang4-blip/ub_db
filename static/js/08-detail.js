@@ -12,7 +12,7 @@ function renderDetail(data) {
     window.currentProtein = p;
     window.currentProteinSequence = p.sequence || "";
     window.currentProteinFeatures = data.features || [];
-    window.activeFeatureCategories = [];   // 換蛋白質時重置分類選取
+    window.activeFeatureCategories = [];   // Reset category selections when switching proteins.
 
     console.log("renderDetail:", data);
 
@@ -39,17 +39,15 @@ function renderDetail(data) {
     currentPdbId = null;
     currentPdbUrl = null;
     
-    
-
     detailPane.innerHTML = `
         <div class="section-grid">
 
             <!-- Structure Viewer -->
             <div class="structure-viewer-card">
-                <button onclick="openPDBViewer()">🔍 放大 Structure Viewer</button>
+                <button onclick="openPDBViewer()">🔍 Expand Structure Viewer</button>
                 <div id="pdb-viewer"></div>
                 <div style="margin-top:8px; color:var(--ink-dim);">
-                    請點選下側 PDB ID 以載入結構，或使用上方搜尋框查詢其他蛋白質。
+                    Select a PDB ID below to load a structure, or use the search box above to find another protein.
                 </div>
             </div>
 
@@ -71,10 +69,10 @@ function renderDetail(data) {
 
             <!-- Experimental + predicted structures -->
             <div class="scroll-box section-card structure-card">
-                <h5 style="margin-top:1em;">🧬 實驗結構（PDB）</h5>
+                <h5 style="margin-top:1em;">🧬 Experimental structures (PDB)</h5>
                 ${renderStructures(data.structures)}
 
-                <h5 style="margin-top:1em;">🔮 預測結構（AlphaFold / AlphaFill / SWISS-MODEL）</h5>
+                <h5 style="margin-top:1em;">🔮 Predicted structures (AlphaFold / AlphaFill / SWISS-MODEL)</h5>
                 ${renderPredictedStructures(data.predicted_structures)}
             </div>
 
@@ -90,7 +88,7 @@ function renderDetail(data) {
                     ${escapeHtml(p.protein_name)}
                     <span style="color:var(--ink-dim); font-weight:400;">
                         (${escapeHtml(p.gene_name)})
-                        <button class="expand-btn" onclick="openExpandedView()" title="開新視窗放大檢視">🔍 放大檢視</button>
+                        <button class="expand-btn" onclick="openExpandedView()" title="Open an enlarged view in a new window">🔍 Expand</button>
                     </span>
                 </h2>
 
@@ -126,13 +124,13 @@ function renderDetail(data) {
 
                 
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h5 style="margin-top:1em;">📄 相關論文（PubMed，近期）</h5>
+                        <h5 style="margin-top:1em;">📄 Recent related papers (PubMed)</h5>
                         
                     </div>
 
                     ${renderPapers(data.papers)}
 
-                    <h5 style="margin-top:1em; color:var(--ink-dim);">🗂 功能描述（UniProt，較舊）</h5>
+                    <h5 style="margin-top:1em; color:var(--ink-dim);">🗂 Functional description (UniProt, older)</h5>
                     <div class="desc">${renderDescription(p.description)}</div>
                 </div>
             </div>
@@ -140,9 +138,9 @@ function renderDetail(data) {
             <!-- Sequence -->
             <div class="section-card">
                 <h3>
-                    ◈ 序列 Sequence
+                    ◈ Sequence
                     <button class="copy-btn" onclick="copySequence()">📋 Copy</button>
-                    <button class="copy-btn" style="margin-left:auto" onclick="openSequenceView()">🔍 放大</button>
+                    <button class="copy-btn" style="margin-left:auto" onclick="openSequenceView()">🔍 Expand</button>
                 </h3>
 
                 <div class="scroll-box">
@@ -223,13 +221,13 @@ function renderDetail(data) {
 
                             <span>
                                 <span class="dot gold"></span>
-                                已知多泛素鏈接 Lysine 位點
+                                Known polyubiquitin-linked lysine sites
                                 (K${LYSINE_SITES.join(", K")})
                             </span>
 
                             <span>
                                 <span class="dot rose"></span>
-                                C端 Gly-Gly（與受質共價鍵結位置）
+                                C-terminal Gly-Gly (site of covalent attachment to the substrate)
                             </span>
 
                         </div>
@@ -240,13 +238,13 @@ function renderDetail(data) {
             <!-- GO functions -->
             <div class="section-card">
 
-                <h3>◈ 功能 Function（GO 註解 + 細胞胞器對照）</h3>
+                <h3>◈ Function (GO annotations + cell organelle mapping)</h3>
                 <div class="scroll-box" id="cellgo-panel-${data.protein.protein_id}">${renderCellGoView(data.functions)}</div>
             </div>
 
             <!-- E1-E2-E3-substrate relations -->
             <div class="section-card">
-                <h3>◈ E1 – E2 – E3 – Substrate 關係鏈</h3>
+                <h3>◈ E1–E2–E3–substrate relationship chain</h3>
                 <div class="scroll-box">${renderRelations(data.ub_relations, p)}</div>
             </div>
 

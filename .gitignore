@@ -15,3 +15,6 @@
 /test.html
 /test.txt
 /update_ukw.py
+# Python runtime cache
+__pycache__/
+*.pyc

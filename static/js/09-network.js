@@ -273,12 +273,22 @@ window.changeLayout = function (type) {
     }
 };
 
-function openNetworkWindow(gene) {
+function openNetworkWindow(gene, targetWindow = null) {
+    if (!targetWindow) {
+        window.openProteinTabView("network");
+        return;
+    }
+
     if (!gene) {
         return;
     }
 
     const url = `/network/${encodeURIComponent(gene)}`;
+
+    if (targetWindow) {
+        targetWindow.location.href = new URL(url, window.location.href).href;
+        return;
+    }
 
     window.open(url, "_blank", "width=1500,height=900,scrollbars=yes,resizable=yes");
 }
@@ -287,7 +297,7 @@ window.exportPNG = function () {
     console.log("exportPNG:", cy);
 
     if (!cy) {
-        alert("Network 尚未建立");
+        alert("The network has not been created yet.");
         return;
     }
 

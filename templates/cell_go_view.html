@@ -2,50 +2,182 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>{{ protein_label }} - 細胞胞器 / GO Function 對照</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<script src="{{ url_for('static', filename='molstar/molstar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cytoscape/cytoscape.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cytoscape/cytoscape-dagre.js') }}"></script>
+
+
+<script src="/static/js/01-constants.js"></script>
+<script src="/static/js/02-state.js"></script>
+<script src="/static/js/03-utils.js"></script>
+<script src="/static/js/04-viewer.js"></script>
+<script src="/static/js/molstar-controls.js"></script>
+<script src="/static/js/05-search.js"></script>
+<script src="/static/js/06-annotation-sections.js"></script>
+<script src="/static/js/07-papers-sequence.js"></script>
+<script src="/static/js/07b-evidence.js"></script>
+<script src="/static/js/07c-sequence-popup.js"></script>
+<script src="/static/js/08-detail.js"></script>
+<script src="/static/js/09-network.js"></script>
+<script src="/static/js/10-main.js"></script>
+<script src="/static/js/11-domain.js"></script>
+
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/cell_go_view.css') }}">
+<script>
+  window.CELL_SVG_URL = {{ url_for('static', filename='img/Animal_cells.svg') | tojson }};
+  window.GO_API_URL = "/api/protein/" + encodeURIComponent({{ protein_id | tojson }}) + "/cell-go";
+  window.CELL_PROTEIN_ID = {{ protein_id | tojson }};
+  window.SEQUENCE_STYLE_URL = {{ url_for('static', filename='css/style.css') | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/cell_go_viewer.js') }}"></script>
+
 
 </head>
 <body>
 
-<header class="topbar">
-  <h1>{{ protein_label }} <span class="accession">({{ protein_id }})</span></h1>
-  <p class="hint">頁面載入後會依序自動點亮對應的胞器；滑鼠移到圖上的胞器，右側會自動對應到相關的 GO function（反之亦然）。</p>
-</header>
+<div class="tab-container">
+    <!-- 1. Tab navigation -->
+    <ul class="tab-menu">
+        <li class="tab-item active" data-tab-id="cell_go" onclick="switchTab(event, 'cell_go')">Cell GO</li>
+        <li class="tab-item" data-tab-id="sequence" onclick="switchTab(event, 'sequence')">Sequence</li>
+        <li class="tab-item" data-tab-id="domain" onclick="switchTab(event, 'domain')">Domain</li>
+        <li class="tab-item" data-tab-id="pdbviewer" onclick="switchTab(event, 'pdbviewer')">PDB Viewer</li>
+        <li class="tab-item" data-tab-id="papers" onclick="switchTab(event, 'papers')">Papers</li>
+        <li class="tab-item" data-tab-id="network" onclick="switchTab(event, 'network')">Network</li>
+    </ul>
 
-<main class="layout">
+    <!-- 2. Tab panels -->
+    <div class="tab-content">
+        <div id="cell_go" class="tab-panel active">
+            <div class="cellgo-header">
+                <div class="cellgo-hint">
 
-  <!-- 左側：Animal cell SVG -->
-  <section id="cell-container" class="cell-panel" aria-label="細胞構造圖">
-    <div class="loading" id="svg-loading">圖片載入中...</div>
-  </section>
+                <header class="topbar">
+                <h1>{{ protein_label }} <span class="accession">({{ protein_id }})</span></h1>
+                </header>
 
-  <!-- 右側：GO function 清單 -->
-  <aside class="go-panel">
-    <h2>GO Function</h2>
+                <p class="hint">After the page loads, mapped organelles are highlighted in sequence. Hover over an organelle or its corresponding GO Cellular Component term to highlight the matching item. Select an organelle to keep it highlighted.
+                <div class="cellgo-legend">
+                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--exp"></i>Experimental evidence</span>
+                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--phylo"></i>Phylogenetic inference</span>
+                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--seq"></i>Sequence similarity inference</span>
+                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--author"></i>Literature / curator inference</span>
+                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--auto"></i>Automatic (IEA)</span>
+                </div>
+                </p>
+                </div>
+            </div>
+            <main class="layout">
+            <!-- Left: animal cell SVG -->
+            <section id="cell-container" class="cell-panel" aria-label="Cell diagram">
+                <div class="loading" id="svg-loading" role="status" aria-live="polite">Loading cell diagram...</div>
+            </section>
 
-    <div class="go-group" data-aspect="C">
-      <h3>Cellular Component（胞器 / 位置）</h3>
-      <ul id="go-list-C" class="go-list"></ul>
+            <!-- Right: GO function list -->
+            <aside class="go-panel" aria-label="Gene Ontology function list">
+                <h2>GO Function</h2>
+
+                <div class="go-group" data-aspect="C">
+                <h3>Cellular Component (organelle / location)</h3>
+                <ul id="go-list-C" class="go-list"></ul>
+                </div>
+
+                <div class="go-group" data-aspect="F">
+                <h3>Molecular Function</h3>
+                <ul id="go-list-F" class="go-list go-list--static"></ul>
+                </div>
+
+                <div class="go-group" data-aspect="P">
+                <h3>Biological Process</h3>
+                <ul id="go-list-P" class="go-list go-list--static"></ul>
+                </div>
+            </aside>
+            </main>
+
+        </div>
+
+        <div id="sequence" class="tab-panel">
+            <div id="cellSequenceContent" class="cell-tab-loading">Select this tab to load sequence data.</div>
+        </div>
+
+        <div id="domain" class="tab-panel">
+            <div id="cellDomainContent" class="cell-tab-loading">Select this tab to load domain data.</div>
+        </div>
+        <div id="pdbviewer" class="tab-panel">
+            <div id="cellPdbContent" class="cell-tab-loading">Select this tab to load structure data.</div>
+        </div>
+        <div id="papers" class="tab-panel">
+            <div id="cellPapersContent" class="cell-tab-loading">Select this tab to load publication data.</div>
+        </div>
+        <div id="network" class="tab-panel">
+            <div id="cellNetworkContent" class="cell-tab-loading">Select this tab to load the interaction network.</div>
+        </div>
     </div>
+</div>
 
-    <div class="go-group" data-aspect="F">
-      <h3>Molecular Function</h3>
-      <ul id="go-list-F" class="go-list go-list--static"></ul>
-    </div>
 
-    <div class="go-group" data-aspect="P">
-      <h3>Biological Process</h3>
-      <ul id="go-list-P" class="go-list go-list--static"></ul>
-    </div>
-  </aside>
 
-</main>
 
 <script>
-  window.CELL_SVG_URL = {{ url_for('static', filename='img/Animal_cells.svg') | tojson }};
-  window.GO_API_URL = "/api/protein/" + encodeURIComponent({{ protein_id | tojson }}) + "/cell-go";
+
+    function switchTab(event, tabId) {
+        activateCellGoTab(tabId, event.currentTarget);
+    }
+
+    function activateCellGoTab(tabId, tabItem) {
+        const tabItems = document.querySelectorAll('.tab-item');
+        tabItems.forEach(item => item.classList.remove('active'));
+
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        tabPanels.forEach(panel => panel.classList.remove('active'));
+
+        if (tabItem) {
+            tabItem.classList.add('active');
+        } else {
+            document.querySelector(`.tab-item[data-tab-id="${tabId}"]`)?.classList.add('active');
+        }
+
+        const panel = document.getElementById(tabId);
+        if (!panel) {
+            console.error(`Tab panel not found: ${tabId}`);
+            return;
+        }
+
+        panel.classList.add('active');
+        if (tabId === "cell_go" && typeof window.startCellGoIntro === "function") {
+            window.startCellGoIntro();
+        }
+        if (typeof window.loadCellGoTab === 'function') {
+            window.loadCellGoTab(tabId);
+        }
+
+        if (tabId === "domain") {
+            requestAnimationFrame(() => {
+                if (typeof pdbViewer !== "undefined" && pdbViewer?.plugin?.layout?.events?.updated) {
+                    pdbViewer.plugin.layout.events.updated.next(void 0);
+                }
+                window.dispatchEvent(new Event("resize"));
+            });
+        }
+    }
+
+    window.switchCellGoTab = tabId => activateCellGoTab(tabId, null);
 </script>
-<script src="{{ url_for('static', filename='js/cell_go_viewer.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/cell-go-tabs.js') }}"></script>
+<script>
+    window.addEventListener("DOMContentLoaded", () => {
+        const requestedTab = new URLSearchParams(window.location.search).get("tab");
+        const allowedTabs = new Set(["cell_go", "sequence", "domain", "pdbviewer", "papers", "network"]);
+        if (requestedTab && allowedTabs.has(requestedTab)) {
+            window.switchCellGoTab(requestedTab);
+        }
+    });
+</script>
+
 </body>
 </html>

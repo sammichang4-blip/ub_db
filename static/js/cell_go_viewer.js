@@ -19,6 +19,8 @@
 
         // Intro animation timer
         introTimer: null,
+        introReady: false,
+        introRequested: false,
 
         // GO list hover → possibly multiple SVG cells
         hoverSlIds: [],
@@ -26,7 +28,6 @@
         // SVG cell hover
         cellHoverSlId: null
     };
-
 
     // ================================================================
     // INIT
@@ -46,14 +47,12 @@
                 loadGoTerms()
             ]);
 
-
         if (!svgOk) {
             console.error(
                 "[UKW] SVG loading failed."
             );
             return;
         }
-
 
         if (!goOk) {
             console.error(
@@ -62,16 +61,20 @@
             return;
         }
 
-
         renderGoLists();
 
         wireGoListInteractions();
 
         wireCellInteractions();
 
-        playIntroSequence();
+        state.introReady = true;
+        if (
+            state.introRequested ||
+            document.getElementById("cell_go")?.classList.contains("active")
+        ) {
+            playIntroSequence();
+        }
     }
-
 
     // ================================================================
     // LOAD SVG
@@ -84,7 +87,6 @@
                 "cell-container"
             );
 
-
         if (!container) {
 
             console.error(
@@ -93,7 +95,6 @@
 
             return false;
         }
-
 
         if (!window.CELL_SVG_URL) {
 
@@ -104,14 +105,12 @@
             return false;
         }
 
-
         try {
 
             console.log(
                 "[UKW] SVG URL:",
                 window.CELL_SVG_URL
             );
-
 
             const res =
                 await fetch(
@@ -136,7 +135,6 @@
                 );
             }
 
-
             const svgText =
                 await res.text();
 
@@ -148,14 +146,11 @@
                 );
             }
 
-
             container.innerHTML =
                 svgText;
 
-
             state.svgRoot =
                 container.querySelector("svg");
-
 
             if (!state.svgRoot) {
 
@@ -164,11 +159,11 @@
                 );
             }
 
+            installSvgHoverStyles();
 
             console.log(
                 "[UKW] SVG loaded."
             );
-
 
             console.log(
                 "[UKW] SVG SL nodes:",
@@ -176,7 +171,6 @@
                     "g.subcellular_location[id^='SL']"
                 ).length
             );
-
 
             return true;
 
@@ -190,21 +184,17 @@
 
             container.innerHTML = `
                 <div class="loading">
-                    細胞圖載入失敗：
+                    Failed to load cell diagram:
                     ${escapeHtml(err.message)}
                 </div>
             `;
 
-
             return false;
         }
     }
-
-
     // ================================================================
     // LOAD GO
     // ================================================================
-
     async function loadGoTerms() {
 
         if (!window.GO_API_URL) {
@@ -216,9 +206,7 @@
             return false;
         }
 
-
         try {
-
             const res =
                 await fetch(
                     window.GO_API_URL,
@@ -288,7 +276,6 @@
         }
     }
 
-
     // ================================================================
     // RENDER GO LISTS
     // ================================================================
@@ -334,7 +321,6 @@
 
         return nodes.length > 0;
     }
-
 
     // ================================================================
     // RENDER ONE GO LIST
@@ -396,15 +382,13 @@
                 }
             );
 
-
         if (!sortedTerms.length) {
-
             const li =
                 document.createElement("li");
 
 
             li.textContent =
-                "（沒有資料）";
+                "(No data)";
 
 
             ul.appendChild(li);
@@ -492,7 +476,7 @@
                 ${
                     term.evidence
                         ? `
-                        <span class="go-evidence">
+                        <span class="go-evidence ${evidenceClass(term.evidence)}">
                             ${escapeHtml(
                                 term.evidence
                             )}
@@ -506,8 +490,8 @@
             /*
              * GO ID
              *
-             * 所有 C/F/P 都建立
-             * 因此全部可以 click → QuickGO
+             * Build all C/F/P lists,
+             * so all terms can be clicked → QuickGO.
              */
 
             li.dataset.goId =
@@ -622,6 +606,8 @@
     // ================================================================
 
     function playIntroSequence() {
+
+        stopIntroSequence();
 
         const items =
             Array.from(
@@ -762,6 +748,16 @@
             });
     }
 
+    window.startCellGoIntro = function () {
+        if (!state.introReady) {
+            state.introRequested = true;
+            return;
+        }
+
+        state.introRequested = false;
+        playIntroSequence();
+    };
+
 
     // ================================================================
     // CLEAR GO HOVER
@@ -784,8 +780,8 @@
 
 
         /*
-         * 如果目前沒有 selected cell，
-         * 就恢復/關閉 description
+         * If no cell is currently selected,
+         * restore / close the description.
          */
 
         if (
@@ -852,8 +848,8 @@
 
 
                         /*
-                         * 只有 Cellular Component
-                         * 有 SVG hover
+                         * Only Cellular Component
+                         * has SVG hover.
                          */
 
                         if (
@@ -882,11 +878,18 @@
                                 term
                             );
 
+                        console.debug("[UKW] GO → SVG hover mapping", {
+                            goId: term.go_id || term.goId || term.id || "",
+                            goName: getTermName(term),
+                            slIds: svgNodes.map(node => node.getAttribute("id")),
+                            svgUrl: window.CELL_SVG_URL
+                        });
 
-                        if (
-                            !svgNodes.length
-                        ) {
-
+                        if (!svgNodes.length) {
+                            console.warn("[UKW] No SVG mapping for GO term", {
+                                goId: term.go_id || term.goId || term.id || "",
+                                goName: getTermName(term)
+                            });
                             return;
                         }
 
@@ -911,8 +914,8 @@
 
 
                         /*
-                         * 第一個 mapped cell
-                         * 顯示 description
+                         * Show the description
+                         * for the first mapped cell.
                          */
 
                         showCellDescription(
@@ -1034,9 +1037,8 @@
 
 
                 /*
-                 * 如果只是從同一個 <g>
-                 * 的 child 移到另一個 child，
-                 * 不算真正離開
+                 * Moving from one child to another within the same <g>
+                 * does not count as actually leaving.
                  */
 
                 if (
@@ -1096,8 +1098,8 @@
 
 
                 /*
-                 * 還在同一個 SVG <g>
-                 * 裡面，不是真的離開
+                 * The pointer is still within the same SVG <g>;
+                 * it has not actually left.
                  */
 
                 if (
@@ -1121,14 +1123,14 @@
 
                 /*
                  * ----------------------------------------------------
-                 * 最重要的邏輯
+                 * Most important logic:
                  *
-                 * 沒有 selected cell
-                 * 且沒有 GO hover
-                 * → description 消失
+                 * No selected cell
+                 * and no GO hover
+                 * → hide the description.
                  *
-                 * 有 selected cell
-                 * → description 保留
+                 * A cell is selected
+                 * → keep the description visible.
                  * ----------------------------------------------------
                  */
 
@@ -1254,8 +1256,8 @@
             card.id = "cell-detail-card";
 
             /*
-            * Description Card 放在 cell-panel，
-            * 不要放在 #cell-container 裡。
+            * Place the description card in cell-panel,
+            * not inside #cell-container.
             */
             const panel = document.querySelector(".cell-panel");
 
@@ -1319,13 +1321,15 @@
             slId;
 
 
-        node.classList.add(
-            "sl-selected"
-        );
+        if (isInteriorNode(node)) {
+          setInteriorOverlay("select", true);
+        } else {
+            node.classList.add("sl-selected");
+        }
 
 
         /*
-         * Click 後 description 保留
+         * Keep the description visible after a click.
          */
 
         showCellDescription(
@@ -1334,7 +1338,7 @@
 
 
         /*
-         * 找對應 GO Cellular Component
+         * Find the corresponding GO Cellular Component.
          */
 
         const meta =
@@ -1374,7 +1378,7 @@
     // ================================================================
 
     function clearSelectedCell() {
-
+        setInteriorOverlay("select", false);
         if (
             state.selectedSlId
         ) {
@@ -1432,78 +1436,75 @@
     // ================================================================
 
     function getSvgMetadata(node) {
-
         if (!node) {
-
-            return {
-                slId: "",
-                name: "",
-                description: "",
-                node: null
-            };
+            return { slId: "", name: "", description: "", node: null };
         }
 
+        // Use the text nodes inside each SL group as the SVG names and descriptions.
+        // <text class="subcell_name" property="name">Cytosol</text>
+        // <text class="subcell_description" property="description">...</text>
+        // Do not rely on text visibility or whitespace in the class attribute string.
+        const nameElement = Array.from(
+            node.querySelectorAll("text.subcell_name[property='name'], text[property='name']")
+        ).find(element => {
+            const owner = getOwningSlNode(element);
+            return !owner || owner === node;
+        }) || null;
 
-        let nameElement = null;
-        let descriptionElement = null;
-
-
-        /*
-         * 不依賴 :scope
-         * 直接找 child
-         */
-
-        for (
-            const child of node.children
-        ) {
-
-            if (
-                child.getAttribute(
-                    "property"
-                ) === "name"
-            ) {
-
-                nameElement =
-                    child;
-            }
-
-
-            if (
-                child.getAttribute(
-                    "property"
-                ) === "description"
-            ) {
-
-                descriptionElement =
-                    child;
-            }
-        }
-
+        const descriptionElement = Array.from(
+            node.querySelectorAll("text.subcell_description[property='description'], text[property='description']")
+        ).find(element => {
+            const owner = getOwningSlNode(element);
+            return !owner || owner === node;
+        }) || null;
 
         return {
-
-            slId:
-                normalizeSlId(
-                    node.getAttribute(
-                        "id"
-                    ) || ""
-                ),
-
-
-            name:
-                nameElement
-                    ? nameElement.textContent.trim()
-                    : "",
-
-
-            description:
-                descriptionElement
-                    ? descriptionElement.textContent.trim()
-                    : "",
-
-
+            slId: normalizeSlId(node.getAttribute("id") || ""),
+            name: nameElement ? nameElement.textContent.trim() : "",
+            description: descriptionElement ? descriptionElement.textContent.trim() : "",
             node
         };
+    }
+
+    // Walk up from the SVG subcell_name text node to find the SL group that owns the name.
+    function getOwningSlNode(element) {
+        let current = element;
+        while (current && current !== state.svgRoot) {
+            if (
+                current.tagName &&
+                current.tagName.toLowerCase() === "g" &&
+                current.classList &&
+                current.classList.contains("subcellular_location") &&
+                /^SL/i.test(current.getAttribute("id") || "")
+            ) {
+                return current;
+            }
+            current = current.parentElement;
+        }
+        return null;
+    }
+
+    // Locate the SL ID directly from the name in <text class="subcell_name"> in the SVG.
+    function findSvgNodesByName(name) {
+        if (!state.svgRoot) return [];
+        const target = normalizeName(name);
+        if (!target) return [];
+
+        const found = [];
+        const nameElements = state.svgRoot.querySelectorAll(
+            "text.subcell_name[property='name'], text[property='name']"
+        );
+
+        for (const element of nameElements) {
+            if (normalizeName(element.textContent) !== target) continue;
+            const node = getOwningSlNode(element);
+            if (node) found.push(node);
+        }
+        return uniqueNodes(found);
+    }
+
+    function findSvgNodeByName(name) {
+        return findSvgNodesByName(name)[0] || null;
     }
 
 
@@ -1549,99 +1550,100 @@
     // FIND SVG NODES FOR GO TERM
     // ================================================================
 
+    // GO IDs are stable even when the API label and SVG label differ slightly.
+    // These are verified against the bundled Animal_cells.svg SL groups.
+    const GO_TO_SVG_SL = {
+        "GO:0005829": ["SL0091"], // cytosol
+        "GO:0005737": ["SL0086"], // cytoplasm (parent group of cytosol)
+        "GO:0010008": ["SL0101"], // endosome membrane
+        "GO:0030867": ["SL0235"]  // rough endoplasmic reticulum membrane
+    };
+
+    const SVG_NAME_ALIASES = {
+        "cytosol": ["Cytosol"],
+        "cytoplasm": ["Cytoplasm"],
+        "endosome membrane": ["Endosome membrane"],
+        "rough endoplasmic reticulum membrane": ["Rough endoplasmic reticulum membrane"]
+    };
+
+    function normalizeGoId(value) {
+        const raw = String(value || "").trim().toUpperCase();
+        const match = raw.match(/(?:GO[:_ -]?)?(\d{7})/);
+        return match ? `GO:${match[1]}` : raw;
+    }
+
     function getSvgNodesForGoTerm(term) {
+        if (!term || !state.svgRoot) return [];
 
-        if (
-            !term ||
-            !state.svgRoot
-        ) {
+        // GO IDs are preferred. Accept common API spellings such as go_id,
+        // goId, id, GO_0005829, or a bare seven-digit GO number.
+        const goId = normalizeGoId(term.go_id || term.goId || term.id || term.go_term_id || "");
+        const mappedIds = GO_TO_SVG_SL[goId] || [];
+        const idNodes = mappedIds.map(id => findSvgNodeById(id)).filter(Boolean);
+        if (idNodes.length) return expandForVisibleGeometry(idNodes);
 
-            return [];
+        // If an API field contains the ID under another key, scan the known
+        // identifiers before falling back to labels.
+        const possibleIds = [term.go_id, term.goId, term.id, term.go_term_id]
+            .map(normalizeGoId);
+        for (const candidateId of possibleIds) {
+            const ids = GO_TO_SVG_SL[candidateId] || [];
+            const nodes = ids.map(id => findSvgNodeById(id)).filter(Boolean);
+            if (nodes.length) return expandForVisibleGeometry(nodes);
         }
 
+        // Exact label matching uses the SL group that owns the text, rather
+        // than an ancestor group or the first nested text encountered.
+        const targetName = normalizeName(getTermName(term));
+        const aliases = SVG_NAME_ALIASES[targetName] || [];
+        const namesToTry = [targetName, ...aliases.map(normalizeName)];
+        for (const candidateName of [...new Set(namesToTry)].filter(Boolean)) {
+            const matches = findSvgNodesByName(candidateName);
+            if (matches.length) return expandForVisibleGeometry(matches);
+        }
 
-        const nodes = [];
+        // API-provided SL IDs are the final fallback.
+        const apiNodes = getTermSlIds(term).map(id => findSvgNodeById(id)).filter(Boolean);
+        return expandForVisibleGeometry(apiNodes);
+    }
 
+    // An SL group may be a semantic/container node with no drawable geometry.
+    // In Animal_cells.svg, SL0086 (Cytoplasm) contains SL0091 (Cytosol), and
+    // the visible cytoplasm/cytosol silhouette is drawn by SL0091. Keep the
+    // semantic parent in the result (for its description), and also include
+    // descendant SL groups that actually own visible shapes for highlighting.
+    function expandForVisibleGeometry(nodes) {
+        const result = [];
+        for (const node of uniqueNodes(nodes)) {
+            result.push(node);
+            if (hasDirectSvgGeometry(node)) continue;
 
-        // ------------------------------------------------------------
-        // 1. Mapping SL IDs
-        // ------------------------------------------------------------
+            const descendants = Array.from(node.querySelectorAll(
+                "g.subcellular_location[id^='SL']"
+            ));
+            const drawableDescendants = descendants.filter(hasDirectSvgGeometry);
+            result.push(...drawableDescendants);
+        }
+        return uniqueNodes(result);
+    }
 
-        const slIds =
-            getTermSlIds(term);
-
-
-        for (
-            const slId of slIds
-        ) {
-
-            const node =
-                findSvgNodeById(
-                    slId
-                );
-
-
-            if (
-                node &&
-                node.classList.contains(
-                    "subcellular_location"
-                ) &&
-                !nodes.includes(node)
-            ) {
-
-                nodes.push(node);
+    function hasDirectSvgGeometry(node) {
+        if (!node) return false;
+        const shapeSelector = "path, ellipse, polygon, rect, circle, polyline, line, image, use";
+        return Array.from(node.children || []).some(child => {
+            if (child.matches && child.matches(shapeSelector)) return true;
+            // Some SVGs wrap a shape in a plain <g>; do not cross into a nested
+            // SL group, because that geometry belongs to the nested location.
+            if (child.tagName && child.tagName.toLowerCase() === "g" &&
+                !(child.classList && child.classList.contains("subcellular_location"))) {
+                return !!child.querySelector(shapeSelector);
             }
-        }
+            return false;
+        });
+    }
 
-
-        // ------------------------------------------------------------
-        // 2. Fallback: GO term name
-        // ------------------------------------------------------------
-
-        if (
-            nodes.length === 0
-        ) {
-
-            const target =
-                normalizeName(
-                    getTermName(term)
-                );
-
-
-            if (target) {
-
-                const svgNodes =
-                    state.svgRoot.querySelectorAll(
-                        "g.subcellular_location"
-                    );
-
-
-                for (
-                    const node of svgNodes
-                ) {
-
-                    const meta =
-                        getSvgMetadata(
-                            node
-                        );
-
-
-                    if (
-                        normalizeName(
-                            meta.name
-                        ) === target
-                    ) {
-
-                        nodes.push(
-                            node
-                        );
-                    }
-                }
-            }
-        }
-
-
-        return nodes;
+    function uniqueNodes(nodes) {
+        return [...new Set(nodes.filter(Boolean))];
     }
 
 
@@ -1667,9 +1669,15 @@
         }
 
 
-        return state.svgRoot.querySelector(
+        const candidate = state.svgRoot.querySelector(
             `[id="${CSS.escape(id)}"]`
         );
+
+        return candidate &&
+            candidate.classList &&
+            candidate.classList.contains("subcellular_location")
+                ? candidate
+                : null;
     }
 
 
@@ -1780,68 +1788,172 @@
     }
 
 
+    const INTERIOR_SL_IDS = ["SL0086", "SL0091"];          // Cytoplasm, Cytosol
+    const INTERIOR_OVERLAY_CLASS = "cell-interior-overlay";
+    const interiorSources = new Set();                      // "intro" | "hover" | "select"
+    
+    function isInteriorNode(node) {
+        return !!node &&
+            INTERIOR_SL_IDS.includes(normalizeSlId(node.getAttribute("id")));
+    }
+    
+    // The three sources (automatic highlighting / hover / click) share one overlay.
+    // Show it when any source is active; remove it only when all are inactive, so they do not clear one another.
+    function setInteriorOverlay(source, enabled) {
+    
+        if (enabled) {
+            interiorSources.add(source);
+        } else {
+            interiorSources.delete(source);
+        }
+    
+        refreshInteriorOverlay();
+    }
+    
+    function refreshInteriorOverlay() {
+    
+        if (!state.svgRoot) {
+            return;
+        }
+    
+        const existing =
+            state.svgRoot.querySelector(`.${INTERIOR_OVERLAY_CLASS}`);
+    
+        if (interiorSources.size === 0) {
+            if (existing) {
+                existing.remove();
+            }
+            return;
+        }
+    
+        if (existing) {
+            return;
+        }
+    
+        const base = state.svgRoot.querySelector("#path_2_");
+    
+        if (!base) {
+            console.warn("[UKW] Cell interior path (path_2_) not found.");
+            return;
+        }
+    
+        const overlay = base.cloneNode(false);
+    
+        overlay.removeAttribute("id");
+        overlay.setAttribute("class", INTERIOR_OVERLAY_CLASS);
+        overlay.setAttribute("fill", "#FF8C00");
+        overlay.setAttribute("fill-opacity", "0.35");
+        overlay.setAttribute("stroke", "none");
+        overlay.setAttribute("pointer-events", "none");
+    
+        // Place after SL0198 (the perinuclear region, a white ellipse):
+        // cover path_2_, the cell cortex, and the perinuclear region, while remaining below the cytoskeleton, nucleus, and
+        // other organelles. If SL0198 is not found, fall back to immediately after path_2_.
+        const anchor = findSvgNodeById("SL0198") || base;
+    
+        anchor.parentNode.insertBefore(overlay, anchor.nextSibling);
+    }
+    
     // ================================================================
     // SVG GLOW
-    // ================================================================
-
-    function setIntroGlow(
-        target,
-        enabled
-    ) {
-
-        const nodes =
-            resolveSvgNodes(
-                target
-            );
-
-
-        nodes.forEach(
-            node => {
-
-                node.classList.toggle(
-                    "sl-glow-strong",
-                    enabled
-                );
-
-                node.classList.toggle(
-                    "sl-glow-pulse",
-                    enabled
-                );
-
-                node.classList.toggle(
-                    "sl-glow-soft",
-                    enabled
-                );
-            }
-        );
+    // ================================================================    
+    function setIntroGlow(target, enabled) {
+    
+        const nodes = resolveSvgNodes(target);
+    
+        // Cytoplasm / Cytosol: fill only, without an outline glow
+        // (the outline glow would fall on the path_2_ boundary and look like the cell membrane).
+        if (nodes.some(isInteriorNode)) {
+            setInteriorOverlay("intro", enabled);
+        }
+    
+        nodes
+            .filter(node => !isInteriorNode(node))
+            .forEach(node => {
+    
+                node.classList.toggle("sl-glow-strong", enabled);
+                node.classList.toggle("sl-glow-pulse", enabled);
+                node.classList.toggle("sl-glow-soft", enabled);
+            });
     }
 
 
-    function setGlow(
-        target,
-        enabled
-    ) {
-
-        const nodes =
-            resolveSvgNodes(
-                target
-            );
-
-
-        nodes.forEach(
-            node => {
-
-                node.classList.toggle(
-                    "explorer-hover",
-                    enabled
-                );
-
-                node.classList.toggle(
-                    "sl-hover",
-                    enabled
-                );
+    function installSvgHoverStyles() {
+        if (!state.svgRoot || state.svgRoot.querySelector("#ukw-go-hover-style")) return;
+        const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+        style.setAttribute("id", "ukw-go-hover-style");
+        style.textContent = `
+            .ukw-go-shape-highlight {
+                stroke: #ff3b30 !important;
+                stroke-width: 3.2 !important;
+                filter: drop-shadow(0 0 3px rgba(255, 59, 48, 0.95)) !important;
+                vector-effect: non-scaling-stroke;
             }
+            /* Cytoplasm/Cytosol share the cell-interior silhouette in Animal_cells.svg.
+               Fill that silhouette so the highlight is not mistaken for the membrane. */
+            
+            }
+        `;
+        state.svgRoot.insertBefore(style, state.svgRoot.firstChild);
+    }
+
+    // Return actual drawable SVG elements belonging to this SL group and its
+    // nested SL groups. This avoids relying on inherited group CSS to highlight
+    // the Cytoplasm parent, whose visible silhouette is drawn by child SL0091.
+    function getDrawableElements(node) {
+        if (!node) return [];
+        const shapeSelector = "path, ellipse, polygon, rect, circle, polyline, line, image, use";
+        const found = [];
+
+        function walk(parent) {
+            for (const child of Array.from(parent.children || [])) {
+                if (child.matches && child.matches(shapeSelector)) {
+                    found.push(child);
+                    continue;
+                }
+                // A nested SL group is a separate semantic location. Do not
+                // accidentally highlight its shapes unless that SL group was
+                // independently selected by expandForVisibleGeometry().
+                if (child.tagName && child.tagName.toLowerCase() === "g" &&
+                    child.classList && child.classList.contains("subcellular_location")) {
+                    continue;
+                }
+                if (child.children && child.children.length) walk(child);
+            }
+        }
+
+        walk(node);
+        return found;
+    }
+
+    
+    function setGlow(target, enabled) {
+    
+        const requestedNodes = resolveSvgNodes(target);
+    
+        if (requestedNodes.some(isInteriorNode)) {
+            setInteriorOverlay("hover", enabled);
+        }
+    
+        const others = requestedNodes.filter(node => !isInteriorNode(node));
+    
+        const nodes = uniqueNodes(
+            others.flatMap(node => expandForVisibleGeometry([node]))
         );
+    
+        const shapes = uniqueNodes(nodes.flatMap(getDrawableElements));
+    
+        nodes.forEach(node => {
+            node.classList.toggle("explorer-hover", enabled);
+            node.classList.toggle("sl-hover", enabled);
+            node.classList.toggle("ukw-go-highlight", enabled);
+        });
+    
+        // [FIX] This previously called shape.classList.toggle("coloured", ...),
+        // which permanently removed the "coloured" class already present in the SVG when turned off. Removed.
+        shapes.forEach(shape => {
+            shape.classList.toggle("ukw-go-shape-highlight", enabled);
+        });
     }
 
 

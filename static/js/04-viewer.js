@@ -28,6 +28,9 @@ async function initViewer() {
         pdbViewer = await molstar.Viewer.create("pdb-viewer", {
             layoutIsExpanded: false,
             layoutShowControls: false,
+            layoutShowSequence: false,
+            layoutShowLog: false,
+            layoutShowRemoteState: false,
             collapseLeftPanel: true,
             collapseRightPanel: true
         });
@@ -39,10 +42,10 @@ async function initViewer() {
         // amber accent (#FFD54F, already used for "selected" state
         // elsewhere, e.g. the network view's .keep-selected nodes) for
         // visual consistency. Non-fatal if it fails.
-        //setStructureSelectionColor(0xE91E63, 0xE91E63)  // 粉紅
-        // setStructureSelectionColor(0x00BCD4, 0x00BCD4)  // 青色
-        // setStructureSelectionColor(0xFFD54F, 0xFFD54F); // 黃色
-        setStructureSelectionColor(0xE91E63, 0x00BCD4)  // 選取=琥珀，滑鼠 hover=青
+        //setStructureSelectionColor(0xE91E63, 0xE91E63)  // Pink
+        // setStructureSelectionColor(0x00BCD4, 0x00BCD4)  // Cyan
+        // setStructureSelectionColor(0xFFD54F, 0xFFD54F); // Yellow
+        setStructureSelectionColor(0xE91E63, 0x00BCD4)  // Selection = amber, mouse hover = cyan
         return true;
     }
     catch (error) {
@@ -70,7 +73,7 @@ async function initViewer() {
 
 function setStructureSelectionColor(selectHexColor, highlightHexColor) {
     if (!pdbViewer || !pdbViewer.plugin || !pdbViewer.plugin.canvas3d) {
-        console.warn("Mol* viewer 尚未初始化，無法設定選取顏色");
+        console.warn("Mol* viewer has not been initialized; cannot set selection color.");
         return false;
     }
 
@@ -97,12 +100,73 @@ function setStructureSelectionColor(selectHexColor, highlightHexColor) {
         return true;
     }
     catch (error) {
-        console.error("設定選取顏色失敗：", error);
+        console.error("Failed to set selection color:", error);
         return false;
     }
 }
 
 window.setStructureSelectionColor = setStructureSelectionColor;
+
+let structureLoadControls = [];
+let structureLoadingActive = false;
+
+function setStructureLoadStatus(message, isError = false) {
+    const container = document.getElementById("pdb-viewer");
+    if (!container) return;
+
+    let status = document.getElementById("structure-load-status");
+    if (!status) {
+        status = document.createElement("div");
+        status.id = "structure-load-status";
+        status.setAttribute("role", "status");
+        status.setAttribute("aria-live", "polite");
+        container.append(status);
+    }
+
+    status.setAttribute("role", isError ? "alert" : "status");
+    status.hidden = !message;
+    status.classList.toggle("is-error", isError);
+    status.textContent = message;
+}
+
+function setStructureLoading(isLoading, message = "", isError = false) {
+    document.getElementById("pdb-viewer")?.setAttribute("aria-busy", String(isLoading));
+    if (isLoading && !structureLoadingActive) {
+        structureLoadingActive = true;
+        structureLoadControls = Array.from(document.querySelectorAll(
+            '[onclick*="showPDBStructure"], #cellDomainStructureSelect, [data-structure-index], [data-domain-view-action], [data-viewer-action]'
+        )).map(control => {
+            const state = {
+                control,
+                disabled: "disabled" in control ? control.disabled : undefined,
+                tabIndex: control.getAttribute("tabindex"),
+                ariaDisabled: control.getAttribute("aria-disabled"),
+                pointerEvents: control.style.pointerEvents
+            };
+            if ("disabled" in control) control.disabled = true;
+            else control.setAttribute("tabindex", "-1");
+            control.setAttribute("aria-disabled", "true");
+            control.style.pointerEvents = "none";
+            return state;
+        });
+    } else if (!isLoading && structureLoadingActive) {
+        structureLoadingActive = false;
+        for (const state of structureLoadControls) {
+            if (!state.control.isConnected) continue;
+            if (state.disabled !== undefined) state.control.disabled = state.disabled;
+            if (state.tabIndex === null) state.control.removeAttribute("tabindex");
+            else state.control.setAttribute("tabindex", state.tabIndex);
+            if (state.ariaDisabled === null) state.control.removeAttribute("aria-disabled");
+            else state.control.setAttribute("aria-disabled", state.ariaDisabled);
+            state.control.style.pointerEvents = state.pointerEvents;
+        }
+        structureLoadControls = [];
+    }
+
+    setStructureLoadStatus(message, isError);
+}
+
+window.setStructureLoading = setStructureLoading;
 
 async function clearPDBViewer() {
     if (!pdbViewer) {
@@ -123,11 +187,19 @@ async function showPDBStructure(pdb_url) {
     console.log("Loading structure:", pdb_url);
 
     if (!pdb_url) {
-        console.warn("Empty PDB URL");
-        return;
+        const message = "No structure file was specified.";
+        console.warn(message);
+        setStructureLoading(false, message, true);
+        return false;
     }
 
-    currentPdbUrl = pdb_url;
+    const structureSource = window.currentStructureSource;
+    const proteinId = window.currentProteinId
+        || (window.currentProtein && (window.currentProtein.protein_id || window.currentProtein.uniprot_acc));
+    const structureUrl = ["alphafold", "swiss_model"].includes(structureSource) && proteinId
+        ? `/data/${structureSource === "alphafold" ? "alphafold" : "swiss_model"}/${encodeURIComponent(proteinId)}.pdb`
+        : pdb_url;
+    currentPdbUrl = structureUrl;
 
     const match = String(pdb_url).match(/\/([^\/]+)\.(pdb|cif)$/i);
 
@@ -138,12 +210,15 @@ async function showPDBStructure(pdb_url) {
     console.log("currentPdbId:", currentPdbId);
     console.log("currentPdbUrl:", currentPdbUrl);
 
+    setStructureLoading(true, "Initializing structure viewer…");
     if (!pdbViewer) {
         const ready = await initViewer();
 
         if (!ready) {
-            console.error("Mol* viewer not initialized");
-            return;
+            const message = "Mol* viewer initialization failed; the structure could not be loaded.";
+            console.error(message);
+            setStructureLoading(false, message, true);
+            return false;
         }
     }
 
@@ -156,57 +231,79 @@ async function showPDBStructure(pdb_url) {
     // it looks like real structure data first and fail loudly here
     // instead.
     // ------------------------------------------------------------
+    setStructureLoadStatus("Downloading structure file…");
     let rawText;
 
     try {
-        const probe = await fetch(pdb_url);
+        let probe;
+        try {
+            probe = await fetch(structureUrl);
+        } catch (error) {
+            throw new Error(`Could not connect to or read the structure file: ${error.message || error}`);
+        }
 
         if (!probe.ok) {
-            throw new Error(`HTTP ${probe.status} for ${pdb_url}`);
+            if (probe.status === 404 || probe.status === 410) {
+                throw new Error(`Structure file not found (HTTP ${probe.status}): ${structureUrl}`);
+            }
+            throw new Error(`Structure file request failed (HTTP ${probe.status}): ${structureUrl}`);
         }
 
         rawText = await probe.text();
     }
     catch (error) {
         console.error("Structure fetch failed:", pdb_url, error);
-        alert(`無法下載結構檔案：${error.message}`);
-        return;
+        setStructureLoading(false, error.message || String(error), true);
+        return false;
     }
 
-    const ext = String(pdb_url).toLowerCase().endsWith(".cif") ? "mmcif" : "pdb";
+    const lowerUrl = String(structureUrl).toLowerCase();
+    const ext = lowerUrl.endsWith(".cif") || lowerUrl.endsWith(".mmcif") ? "mmcif" : "pdb";
 
     if (!isLikelyStructureFile(rawText, ext)) {
-        console.error(
-            "回應內容看起來不是有效的",
-            ext === "mmcif" ? "mmCIF" : "PDB",
-            "檔案（可能是 404 頁面、空內容或格式判斷錯誤）：",
-            pdb_url,
-            "\nFirst 200 chars:",
-            rawText.slice(0, 200)
-        );
-        alert("載入結構失敗：伺服器回傳的內容不是有效的結構檔（可能是路徑錯誤或格式判斷有誤，請查看主控台）。");
-        return;
+        const message = `Incorrect file format: the response is not a valid ${ext === "mmcif" ? "mmCIF" : "PDB"} structure file.`;
+        console.error(message, structureUrl, rawText.slice(0, 200));
+        setStructureLoading(false, message, true);
+        return false;
     }
 
     try {
         await clearPDBViewer();
 
-        const data = await pdbViewer.plugin.builders.data.download({
-            url: pdb_url,
-            isBinary: false
-        });
+        setStructureLoadStatus("Parsing structure and building the 3D view…");
+        let data;
+        try {
+            data = await pdbViewer.plugin.builders.data.download({
+                url: structureUrl,
+                isBinary: false
+            });
+        } catch (error) {
+            throw new Error(`Mol* failed to download structure data: ${error.message || error}`);
+        }
+
+        let trajectory;
+        try {
+            trajectory = await pdbViewer.plugin.builders.structure.parseTrajectory(data, ext);
+        } catch (error) {
+            throw new Error(`Mol* could not parse this structure file: ${error.message || error}`);
+        }
 
         console.log("Mol* data:", data);
 
-        const trajectory = await pdbViewer.plugin.builders.structure.parseTrajectory(data, ext);
-
-        await pdbViewer.plugin.builders.structure.hierarchy.applyPreset(trajectory, "default");
+        try {
+            await pdbViewer.plugin.builders.structure.hierarchy.applyPreset(trajectory, "default");
+        } catch (error) {
+            throw new Error(`Mol* failed to create the structure view: ${error.message || error}`);
+        }
 
         console.log("Structure loaded:", pdb_url);
+        setStructureLoading(false);
+        return true;
     }
     catch (error) {
         console.error("Load structure failed:", pdb_url, error);
-        alert(`載入結構失敗：${error.message || error}`);
+        setStructureLoading(false, error.message || String(error), true);
+        return false;
     }
 }
 
@@ -236,6 +333,15 @@ function isLikelyStructureFile(text, ext) {
 function setCurrentPDB(pdbId, pdbUrl) {
     currentPdbId = pdbId || null;
     currentPdbUrl = pdbUrl || null;
+    if (pdbId === "AlphaFold") {
+        window.currentStructureSource = "alphafold";
+    } else if (pdbId === "SWISS-MODEL") {
+        window.currentStructureSource = "swiss_model";
+    } else if (pdbId === "AlphaFill") {
+        window.currentStructureSource = "alphafill";
+    } else if (pdbId) {
+        window.currentStructureSource = "pdb";
+    }
 
     console.log("Current PDB:", currentPdbId, currentPdbUrl);
 }
@@ -257,11 +363,11 @@ function setCurrentPDB(pdbId, pdbUrl) {
 
 async function highlightStructureRange(startResidue, endResidue, options = {}) {
     if (!pdbViewer || !pdbViewer.plugin) {
-        console.warn("Mol* viewer 尚未初始化，無法高亮殘基範圍");
+        console.warn("Mol* viewer has not been initialized; cannot highlight the residue range.");
         return false;
     }
 
-    const chainId = options.chainId || undefined; // undefined = 不限鏈
+    const chainId = options.chainId || undefined; // undefined = any chain
     const plugin = pdbViewer.plugin;
 
     // --------------------------------------------------------
@@ -306,13 +412,13 @@ async function highlightStructureRange(startResidue, endResidue, options = {}) {
                 });
             }
             catch (focusError) {
-                console.warn("鏡頭 focus 到選取範圍失敗（不影響已完成的選取）：", focusError);
+                console.warn("Could not focus the camera on the selected range (the selection itself succeeded):", focusError);
             }
 
             return true;
         }
         catch (error) {
-            console.warn("structureInteractivity 呼叫失敗，改嘗試其他方式：", error);
+            console.warn("structureInteractivity call failed; trying another approach:", error);
         }
     }
 
@@ -324,16 +430,16 @@ async function highlightStructureRange(startResidue, endResidue, options = {}) {
 
     if (!lib) {
         console.error(
-            "molstar.lib 沒有被目前這份 molstar.js 匯出，無法用程式呼叫選取/高亮 API。\n" +
-            "請在主控台執行 `console.log(pdbViewer)` 和 `console.log(molstar.lib)` 確認你的 Mol* 版本實際提供什麼，" +
-            "再回報給我，我可以照實際結構調整這支函式。"
+            "molstar.lib is not exported by this molstar.js build, so the selection/highlighting API cannot be called programmatically.\n" +
+            "Run `console.log(pdbViewer)` and `console.log(molstar.lib)` in the console to check what your Mol* version actually provides, " +
+            "then report the results so this function can be adjusted to match."
         );
         return false;
     }
 
     try {
-        // 不同版本 molstar.lib 底下的巢狀路徑可能不同，這裡列出已知常見位置，
-        // 找不到就把整個 lib 印出來，方便對照調整。
+        // Nested paths under molstar.lib can vary between versions. Check common known locations here;
+        // if none are found, print the entire lib for comparison and adjustment.
         const idListModule =
             lib?.molScript?.util?.idList ??
             lib?.["mol-script"]?.util?.["id-list"] ??
@@ -341,8 +447,8 @@ async function highlightStructureRange(startResidue, endResidue, options = {}) {
 
         if (!idListModule || typeof idListModule.compileIdListSelection !== "function") {
             console.error(
-                "在 molstar.lib 裡找不到 compileIdListSelection，實際的 molstar.lib 內容如下，" +
-                "請把這個物件的 key 結構回報給我：",
+                "Could not find compileIdListSelection in molstar.lib. The actual molstar.lib contents are shown below; " +
+                "please report the key structure of this object:",
                 lib
             );
             return false;
@@ -356,7 +462,7 @@ async function highlightStructureRange(startResidue, endResidue, options = {}) {
 
         plugin.managers.structure.selection.fromCompiledQuery("set", query);
 
-        // 順便把鏡頭帶過去，並用高亮色標出來
+        // Also move the camera to the range and highlight it.
         const sel = plugin.managers.structure.selection.getStructure(
             plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data
         );
@@ -370,7 +476,7 @@ async function highlightStructureRange(startResidue, endResidue, options = {}) {
         return true;
     }
     catch (error) {
-        console.error("透過 molstar.lib 高亮殘基範圍失敗：", error);
+        console.error("Failed to highlight the residue range through molstar.lib:", error);
         return false;
     }
 }
@@ -381,7 +487,12 @@ window.highlightStructureRange = highlightStructureRange;
 // Full-window (popout) PDB viewer
 // ------------------------------------------------------------
 
-window.openPDBViewer = function () {
+window.openPDBViewer = function (targetWindow = null) {
+    if (!targetWindow) {
+        window.openProteinTabView("pdbviewer");
+        return;
+    }
+
     console.log("Open PDB Viewer");
     console.log("PDB ID:", currentPdbId);
     console.log("PDB URL:", currentPdbUrl);
@@ -395,12 +506,26 @@ window.openPDBViewer = function () {
     // for experimental PDB structures and every predicted-structure
     // source alike.
     if (!currentPdbUrl) {
-        alert("沒有 PDB structure");
+        alert("No PDB structure is available.");
         return;
     }
 
-    const viewerUrl = `/structure-viewer?url=${encodeURIComponent(currentPdbUrl)}`;
+    const proteinId = window.currentProteinId
+        || (window.currentProtein && (window.currentProtein.protein_id || window.currentProtein.uniprot_acc));
+    const structureUrl = ["alphafold", "swiss_model"].includes(window.currentStructureSource) && proteinId
+        ? `/data/${window.currentStructureSource === "alphafold" ? "alphafold" : "swiss_model"}/${encodeURIComponent(proteinId)}.pdb`
+        : currentPdbUrl;
+    const viewerQuery = new URLSearchParams({ url: structureUrl });
+    if (window.currentStructureSource) {
+        viewerQuery.set("source", window.currentStructureSource);
+    }
+    const viewerUrl = `/structure-viewer?${viewerQuery.toString()}`;
     console.log("Viewer URL:", viewerUrl);
+
+    if (targetWindow) {
+        targetWindow.location.href = new URL(viewerUrl, window.location.href).href;
+        return;
+    }
 
     window.open(viewerUrl, "_blank", "width=1400,height=900,scrollbars=yes,resizable=yes");
 };
@@ -431,20 +556,20 @@ function showModelDetail(source) {
 
     if (source === "alphafold") {
         if (title) {
-            title.textContent = `AlphaFold 預測結構 — ${model.protein_id}`;
+            title.textContent = `AlphaFold predicted structure — ${model.protein_id}`;
         }
 
         structureUrl = model.pdb_url;
 
         detailHtml = `
-            <p><strong>模型版本：</strong>${escapeHtml(model.model_version || "—")}</p>
-            <p><strong>平均 pLDDT 信心分數：</strong>${model.confidence_avg ? Number(model.confidence_avg).toFixed(1) : "—"}</p>
-            <p><strong>更新時間：</strong>${escapeHtml(model.updated_at || "—")}</p>
+            <p><strong>Model version:</strong>${escapeHtml(model.model_version || "—")}</p>
+            <p><strong>Mean pLDDT confidence score:</strong>${model.confidence_avg ? Number(model.confidence_avg).toFixed(1) : "—"}</p>
+            <p><strong>Updated:</strong>${escapeHtml(model.updated_at || "—")}</p>
         `;
     }
     else if (source === "alphafill") {
         if (title) {
-            title.textContent = `AlphaFill 預測結構 — ${model.protein_id}`;
+            title.textContent = `AlphaFill predicted structure — ${model.protein_id}`;
         }
 
         structureUrl = model.cif_url;
@@ -459,23 +584,23 @@ function showModelDetail(source) {
         }
 
         detailHtml = `
-            <p><strong>Hit 數量：</strong>${escapeHtml(model.hit_count ?? "—")}</p>
+            <p><strong>Hit count:</strong>${escapeHtml(model.hit_count ?? "—")}</p>
             <p><strong>Ligands：</strong>${ligands.length ? escapeHtml(ligands.join(", ")) : "—"}</p>
-            <p><strong>更新時間：</strong>${escapeHtml(model.updated_at || "—")}</p>
+            <p><strong>Updated:</strong>${escapeHtml(model.updated_at || "—")}</p>
         `;
     }
     else if (source === "swiss_model") {
         if (title) {
-            title.textContent = `SWISS-MODEL 預測結構 — ${model.protein_id}`;
+            title.textContent = `SWISS-MODEL predicted structure — ${model.protein_id}`;
         }
 
         structureUrl = model.coordinates_url;
 
         detailHtml = `
-            <p><strong>模板：</strong>${escapeHtml(model.template || "—")}</p>
+            <p><strong>Template:</strong>${escapeHtml(model.template || "—")}</p>
             <p><strong>QMEAN：</strong>${model.qmean ? Number(model.qmean).toFixed(2) : "—"}</p>
             <p><strong>GMQE：</strong>${model.gmqe ? Number(model.gmqe).toFixed(2) : "—"}</p>
-            <p><strong>覆蓋率：</strong>${model.coverage ? (Number(model.coverage) * 100).toFixed(1) + "%" : "—"}</p>
+            <p><strong>Coverage:</strong>${model.coverage ? (Number(model.coverage) * 100).toFixed(1) + "%" : "—"}</p>
         `;
     }
 
@@ -489,7 +614,6 @@ function showModelDetail(source) {
     if (viewerContainer && modalViewerSlot && !viewerOriginalParent) {
         viewerOriginalParent = viewerContainer.parentNode;
         viewerPlaceholder = document.createComment("viewer-placeholder");
-
         viewerOriginalParent.replaceChild(viewerPlaceholder, viewerContainer);
         modalViewerSlot.appendChild(viewerContainer);
     }
@@ -497,6 +621,7 @@ function showModelDetail(source) {
     modal.style.display = "flex";
 
     if (structureUrl) {
+        window.currentStructureSource = source;
         showPDBStructure(structureUrl);
     }
 }
