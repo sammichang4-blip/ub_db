@@ -7,6 +7,73 @@
     let domainStructureLoadPromise = null;
     let structureFrameMessageHandler = null;
 
+    function proteinHeadingHtml(protein) {
+        const name = protein.protein_name || protein.gene_name || protein.protein_id || "";
+        const gene = protein.gene_name || protein.protein_id || "";
+        const details = [
+            protein.uniprot_acc && `UniProt: ${protein.uniprot_acc}`,
+            protein.entry_name,
+            protein.organism,
+            protein.length && `${protein.length} aa`
+        ].filter(Boolean);
+
+        return `
+            <header class="cell-tab-protein-heading">
+                <h2>${escapeHtml(name)} (${escapeHtml(gene)})</h2>
+                ${details.length ? `<p>${escapeHtml(details[0])}${details.length > 1 ? ` · ${details.slice(1).map(escapeHtml).join(" · ")}` : ""}</p>` : ""}
+            </header>
+        `;
+    }
+
+    function setupColumnResizer(container, firstPanel, handle, secondPanel, minPanelWidth, minWindowWidth = 1050) {
+        if (!container || !firstPanel || !handle || !secondPanel) return;
+
+        const handleWidth = 8;
+        const gap = Number.parseFloat(getComputedStyle(container).columnGap) || 0;
+        const clampWidth = width => Math.max(
+            minPanelWidth,
+            Math.min(container.clientWidth - minPanelWidth - handleWidth - gap * 2, width)
+        );
+        const resize = width => {
+            const firstWidth = clampWidth(width);
+            container.style.gridTemplateColumns = `${firstWidth}px ${handleWidth}px minmax(0, 1fr)`;
+            handle.setAttribute(
+                "aria-valuenow",
+                String(Math.round(firstWidth / Math.max(1, container.clientWidth - handleWidth - gap * 2) * 100))
+            );
+            window.dispatchEvent(new Event("resize"));
+            if (typeof pdbViewer !== "undefined" && pdbViewer?.plugin?.handleResize) {
+                pdbViewer.plugin.handleResize();
+            }
+        };
+
+        handle.addEventListener("pointerdown", event => {
+            if (window.matchMedia(`(max-width: ${minWindowWidth}px)`).matches) return;
+            event.preventDefault();
+            handle.setPointerCapture(event.pointerId);
+            document.body.classList.add("resizing-columns");
+            const move = pointerEvent => {
+                resize(pointerEvent.clientX - container.getBoundingClientRect().left - handleWidth / 2);
+            };
+            const finish = () => {
+                document.body.classList.remove("resizing-columns");
+                handle.removeEventListener("pointermove", move);
+                handle.removeEventListener("pointerup", finish);
+                handle.removeEventListener("pointercancel", finish);
+            };
+            handle.addEventListener("pointermove", move);
+            handle.addEventListener("pointerup", finish);
+            handle.addEventListener("pointercancel", finish);
+        });
+
+        handle.addEventListener("keydown", event => {
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+            event.preventDefault();
+            const direction = event.key === "ArrowRight" ? 1 : -1;
+            resize(firstPanel.getBoundingClientRect().width + direction * 24);
+        });
+    }
+
     function setTabMessage(tabId, message, isError = false) {
         const panel = document.getElementById(tabId);
         if (!panel) {
@@ -128,7 +195,7 @@
         );
 
         document.getElementById("cellDomainContent").innerHTML = `
-            <h2>${escapeHtml(protein.protein_name || protein.gene_name || protein.protein_id)} Domain</h2>
+            ${proteinHeadingHtml(protein)}
             <div class="cell-domain-workspace">
                 <section class="cell-domain-track">
                     <div class="cell-domain-track-header">
@@ -142,6 +209,7 @@
                         <p>Select a domain to view its position in the 3D structure.</p>
                     </div>
                 </section>
+                <div class="cellgo-resize-handle" role="separator" aria-label="Resize domain and structure panels" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="60" tabindex="0"></div>
                 <section class="cell-domain-structure">
                     <div class="cell-domain-viewer-toolbar" aria-label="Mol* viewer controls">
                         <button type="button" data-domain-view-action="reset">Reset view</button>
@@ -175,6 +243,15 @@
                 </section>
             </div>
         `;
+
+        setupColumnResizer(
+            document.querySelector(".cell-domain-workspace"),
+            document.querySelector(".cell-domain-track"),
+            document.querySelector(".cell-domain-workspace .cellgo-resize-handle"),
+            document.querySelector(".cell-domain-structure"),
+            240,
+            1050
+        );
 
         const structureSelect = document.getElementById("cellDomainStructureSelect");
         const confidenceButton = document.querySelector('[data-domain-view-action="confidence"]');
@@ -295,27 +372,28 @@
             || null;
         const activeIndex = choices.indexOf(active);
 
-        const renderViewerControls = (sideOfLegend = false, showConfidenceLegend = false) => `
-            <div class="cell-tab-viewer-controls${sideOfLegend ? " cell-tab-viewer-controls--side" : ""}" aria-label="Structure viewer controls">
+        const renderViewerControls = () => `
+            <div class="cell-tab-viewer-controls" aria-label="Structure viewer controls">
                 <button type="button" data-embedded-viewer-action="reset" disabled>Reset view</button>
                 <button type="button" data-embedded-viewer-action="cartoon" disabled>Cartoon</button>
                 <button type="button" data-embedded-viewer-action="surface" disabled>Surface</button>
                 <button type="button" data-embedded-viewer-action="confidence" disabled>pLDDT confidence</button>
                 <button type="button" data-embedded-viewer-action="fullscreen" disabled>Fullscreen</button>
-                ${showConfidenceLegend ? `
-                    <aside class="cell-tab-plddt-legend" aria-label="AlphaFold pLDDT color range">
-                        <strong>pLDDT confidence score (0–100)</strong>
-                        <div class="cell-tab-plddt-gradient" role="img" aria-label="Low scores are red, transitioning through white to blue at high scores."></div>
-                        <div class="cell-tab-plddt-ticks" aria-hidden="true">
-                            <span style="left: 0%">0</span><span style="left: 50%">50</span><span style="left: 70%">70</span><span style="left: 90%">90</span><span style="left: 100%">100</span>
-                        </div>
-                        <div class="cell-tab-plddt-ranges">
-                            &lt;50 very low · 50–70 low · 70–90 confident · ≥90 very high
-                        </div>
-                    </aside>
-                ` : ""}
                 <span id="cellPdbControlStatus" role="status" aria-live="polite"></span>
             </div>
+        `;
+
+        const renderConfidenceLegend = choice => `
+            <aside class="cell-tab-plddt-legend" aria-label="AlphaFold pLDDT color range" ${choice?.source === "alphafold" ? "" : "hidden"}>
+                <strong>pLDDT confidence score (0–100)</strong>
+                <div class="cell-tab-plddt-gradient" role="img" aria-label="Low scores are red, transitioning through white to blue at high scores."></div>
+                <div class="cell-tab-plddt-ticks" aria-hidden="true">
+                    <span style="left: 0%">0</span><span style="left: 50%">50</span><span style="left: 70%">70</span><span style="left: 90%">90</span><span style="left: 100%">100</span>
+                </div>
+                <div class="cell-tab-plddt-ranges">
+                    &lt;50 very low · 50–70 low · 70–90 confident · ≥90 very high
+                </div>
+            </aside>
         `;
 
         const renderMetadata = choice => {
@@ -325,17 +403,13 @@
 
             if (choice.source === "alphafold") {
                 return `
-                    <div class="cell-tab-alphafold-metadata">
-                        <div class="cell-tab-alphafold-summary">
-                            <div class="cell-tab-metadata-source-row">
-                                <span class="cell-tab-metadata-source">Selected: ${escapeHtml(choice.label)}</span>
-                                ${renderViewerControls(true, true)}
-                            </div>
-                            <dl>
-                                <div><dt>Mean pLDDT</dt><dd>${formatMetric(choice.metadata?.confidence_avg, 1)}</dd></div>
-                            </dl>
-                        </div>
+                    <div class="cell-tab-metadata-source-row">
+                        <span class="cell-tab-metadata-source">Selected: ${escapeHtml(choice.label)}</span>
+                        ${renderViewerControls()}
                     </div>
+                    <dl>
+                        <div><dt>Mean pLDDT</dt><dd>${formatMetric(choice.metadata?.confidence_avg, 1)}</dd></div>
+                    </dl>
                 `;
             }
 
@@ -347,7 +421,7 @@
                 return `
                     <div class="cell-tab-metadata-source-row">
                         <span class="cell-tab-metadata-source">Selected: ${escapeHtml(choice.label)}</span>
-                        ${renderViewerControls(true)}
+                        ${renderViewerControls()}
                     </div>
                     <dl>
                         <div><dt>QMEAN</dt><dd>${formatMetric(choice.metadata?.qmean, 3)}</dd></div>
@@ -360,7 +434,7 @@
             return `
                 <div class="cell-tab-metadata-source-row">
                     <span class="cell-tab-metadata-source">Selected: ${escapeHtml(choice.label)}</span>
-                    ${renderViewerControls(true)}
+                    ${renderViewerControls()}
                 </div>
                 <p class="cell-tab-metadata-empty">${choice.source === "pdb" ? "Experimental structure; no predicted model quality score." : "No quality metrics are available for this source."}</p>
             `;
@@ -373,11 +447,12 @@
         }
 
         document.getElementById("cellPdbContent").innerHTML = `
-            <h2>${escapeHtml(protein.protein_name || protein.gene_name || protein.protein_id)} Structure</h2>
+            ${proteinHeadingHtml(protein)}
             <div class="cell-tab-structure-header">
                 <section id="cellPdbMetadata" class="cell-tab-metadata" aria-live="polite">
                     ${renderMetadata(active)}
                 </section>
+                ${renderConfidenceLegend(active)}
                 <div class="cell-tab-structure-picker">
                     <label class="cell-tab-structure-select-label" for="cellPdbStructureSelect">Select a structure source</label>
                     <select id="cellPdbStructureSelect" class="cell-tab-structure-select" disabled>
@@ -455,6 +530,7 @@
             if (!choice) return;
             event.currentTarget.disabled = true;
             selectedChoice = choice;
+            document.querySelector(".cell-tab-plddt-legend").hidden = choice.source !== "alphafold";
             updateViewerControls(false, true);
             document.getElementById("cellPdbMetadata").innerHTML = renderMetadata(choice);
             setCurrentPDB(choice.id, choice.url);
@@ -469,7 +545,7 @@
         const protein = data.protein;
         const content = document.getElementById("cellSequenceContent");
         content.innerHTML = `
-            <h2>${escapeHtml(protein.protein_name || protein.gene_name || protein.protein_id)} Sequence</h2>
+            ${proteinHeadingHtml(protein)}
             <iframe id="cellSequenceFrame" class="cell-tab-feature-frame" title="Sequence and 3D Viewer"></iframe>
         `;
         return document.getElementById("cellSequenceFrame");
@@ -487,7 +563,7 @@
     function renderNetworkTab(data) {
         const protein = data.protein;
         document.getElementById("cellNetworkContent").innerHTML = `
-            <h2>${escapeHtml(protein.protein_name || protein.gene_name || protein.protein_id)} Network</h2>
+            ${proteinHeadingHtml(protein)}
             <iframe id="cellNetworkFrame" class="cell-tab-feature-frame" title="Network"></iframe>
         `;
         return document.getElementById("cellNetworkFrame");
@@ -559,4 +635,15 @@
         tabInitializationPromises.set(tabId, initialization);
         return initialization;
     };
+
+    window.addEventListener("DOMContentLoaded", () => {
+        setupColumnResizer(
+            document.getElementById("cellGoWorkspace"),
+            document.getElementById("cell-container"),
+            document.querySelector("#cellGoWorkspace .cellgo-resize-handle"),
+            document.querySelector("#cellGoWorkspace .go-panel"),
+            240,
+            900
+        );
+    });
 })();

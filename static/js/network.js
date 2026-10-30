@@ -2114,17 +2114,15 @@ window.changeLayout = function(type) {
 // Open network window
 // =====================================================
 
-function openNetworkWindow(gene) {
+function openNetworkWindow(gene, targetWindow = null) {
+    const url = `/network/${encodeURIComponent(gene)}`;
 
-    window.open(
+    if (targetWindow) {
+        targetWindow.location.href = new URL(url, window.location.href).href;
+        return;
+    }
 
-        `/network/${encodeURIComponent(gene)}`,
-
-        "_blank",
-
-        "width=1500,height=900"
-
-    );
+    window.open(url, "_blank", "width=1500,height=900");
 }
 
 

@@ -24,6 +24,21 @@ body {
 .topbar h1 { margin: 0 0 4px; font-size: 20px; }
 .topbar .accession { color: #888; font-weight: normal; font-size: 15px; }
 .topbar .hint { margin: 0; color: #666; font-size: 13px; }
+.topbar .protein-page-meta { margin: 0; color: #667085; font-size: 13px; }
+
+.cell-tab-protein-heading {
+    margin: 0 0 12px;
+}
+
+.cell-tab-protein-heading h2 {
+    margin: 0 0 4px;
+}
+
+.cell-tab-protein-heading p {
+    margin: 0;
+    color: #667085;
+    font-size: 0.9rem;
+}
 
 /* =========================================================
    Main Layout
@@ -348,7 +363,7 @@ body {
 
     font-size: 16px;
 }
-
+}
 
 .inspector-grid {
 
@@ -703,23 +718,21 @@ body {
 }
 
 .cell-tab-structure-header {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(220px, 0.8fr);
     align-items: stretch;
-    flex-wrap: wrap;
     gap: 8px 16px;
     margin: 8px 0 12px;
 }
 
 .cell-tab-structure-header .cell-tab-metadata {
-    flex: 1 1 360px;
     min-width: 0;
     margin: 0;
 }
 
 .cell-tab-structure-picker {
-    flex: 0 1 280px;
-    min-width: min(220px, 100%);
-    align-self: flex-start;
+    min-width: 0;
+    align-self: stretch;
     padding: 12px 14px;
     border: 1px solid #d5dbe1;
     border-radius: 8px;
@@ -764,20 +777,6 @@ body {
     background: #f8fafc;
 }
 
-.cell-tab-alphafold-metadata {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px 24px;
-}
-
-.cell-tab-alphafold-summary {
-    display: grid;
-    gap: 10px;
-    min-width: 0;
-    flex: 1 1 100%;
-}
-
 .cell-tab-metadata-source-row {
     display: flex;
     flex-wrap: wrap;
@@ -787,17 +786,13 @@ body {
 
 .cell-tab-metadata-source {
     display: block;
-    margin-bottom: 8px;
+    margin: 0;
     font-weight: 600;
 }
 
-.cell-tab-alphafold-summary .cell-tab-metadata-source {
-    margin: 0;
-}
-
 .cell-tab-plddt-legend {
-    flex: 0 1 340px;
-    max-width: 340px;
+    min-width: 0;
+    max-width: none;
     margin: 0;
     padding: 8px 10px;
     border: 1px solid #d5dbe1;
@@ -840,20 +835,9 @@ body {
 
 .cell-tab-viewer-controls {
     display: flex;
-    flex: 1 0 100%;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-}
-
-.cell-tab-viewer-controls--side {
-    flex: 1 1 100%;
-    align-content: center;
-}
-
-.cell-tab-viewer-controls--side .cell-tab-plddt-legend {
-    flex: 0 1 300px;
-    margin-left: 4px;
 }
 
 .cell-tab-viewer-controls button {
@@ -882,15 +866,31 @@ body {
     font-size: 0.78rem;
 }
 
-.cell-tab-viewer-controls--side #cellPdbControlStatus:empty {
-    display: none;
-}
-
 .cell-tab-metadata dl {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 24px;
     margin: 0;
+}
+
+@media (max-width: 900px) {
+    .cell-tab-structure-header {
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 0.8fr);
+    }
+
+    .cell-tab-structure-picker {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 600px) {
+    .cell-tab-structure-header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cell-tab-structure-header > * {
+        grid-column: 1;
+    }
 }
 
 .cell-tab-metadata dl > div {
@@ -1332,5 +1332,63 @@ body { min-height: 100vh; }
 
     .go-list .go-evidence {
         font-size: 11px;
+    }
+}
+
+#cellGoWorkspace {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) 8px minmax(0, 2fr);
+    gap: 12px;
+}
+
+#cellGoWorkspace > .cell-panel,
+#cellGoWorkspace > .go-panel {
+    min-width: 0;
+}
+
+.cell-domain-workspace {
+    grid-template-columns: minmax(0, 1.2fr) 8px minmax(0, 0.8fr);
+    gap: 12px;
+}
+
+.cellgo-resize-handle {
+    width: 8px;
+    min-height: 100px;
+    align-self: stretch;
+    border-radius: 4px;
+    background: #e5e7eb;
+    cursor: col-resize;
+    touch-action: none;
+}
+
+.cellgo-resize-handle:hover,
+.cellgo-resize-handle:focus-visible {
+    background: #2563eb;
+    outline: none;
+}
+
+body.resizing-columns,
+body.resizing-columns * {
+    cursor: col-resize !important;
+    user-select: none;
+}
+
+@media (max-width: 1050px) {
+    .cell-domain-workspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cell-domain-workspace > .cellgo-resize-handle {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    #cellGoWorkspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #cellGoWorkspace > .cellgo-resize-handle {
+        display: none;
     }
 }

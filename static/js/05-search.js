@@ -28,6 +28,9 @@ window.currentDisplayedData = [];
 // Subfamily filter
 window.currentSubfamilyFilter = null;
 
+// Protein category filter (UBL / Non-conjugatable UBL)
+window.currentProteinCategoryFilter = null;
+
 // No PDB filter
 window.currentNoPDBFilter = false;
 
@@ -63,6 +66,7 @@ async function doSearch(q) {
         window.currentDisplayedData = [];
 
         window.currentSubfamilyFilter = null;
+        window.currentProteinCategoryFilter = null;
         window.currentNoPDBFilter = false;
 
         renderResults(data, q);
@@ -399,6 +403,7 @@ async function loadProteinClass(enzymeClass) {
         // ----------------------------------------------------
 
         window.currentSubfamilyFilter = null;
+        window.currentProteinCategoryFilter = null;
 
         window.currentNoPDBFilter = false;
 
@@ -499,6 +504,12 @@ function getCurrentFilteredData() {
             );
     }
 
+    if (window.currentProteinCategoryFilter) {
+        data = data.filter(
+            p => p.protein_category === window.currentProteinCategoryFilter
+        );
+    }
+
     // --------------------------------------------------------
     // Subfamily
     // --------------------------------------------------------
@@ -579,12 +590,13 @@ function renderSubfamilyFilters(
     }
 
     // --------------------------------------------------------
-    // Show only for E3 / DUB.
+    // Show enzyme subfamilies for E3 / DUB and protein categories for UBL.
     // --------------------------------------------------------
 
     const showFilters =
         enzymeClass === "E3" ||
-        enzymeClass === "DUB";
+        enzymeClass === "DUB" ||
+        enzymeClass === "UBL";
 
 
     if (!showFilters) {
@@ -617,6 +629,41 @@ function renderSubfamilyFilters(
             filterData.filter(
                 p => Number(p.has_pdb) === 0
             );
+    }
+
+    if (enzymeClass === "UBL") {
+        const categories = ["UBL", "Non-conjugatable UBL"]
+            .filter(category => filterData.some(p => p.protein_category === category));
+
+        filterBar.style.display = "block";
+        filterBar.innerHTML = "";
+
+        const label = document.createElement("div");
+        label.className = "filter-label";
+        label.textContent = "Protein category";
+
+        const select = document.createElement("select");
+        select.className = "subfamily-select";
+
+        const allOption = document.createElement("option");
+        allOption.value = "";
+        allOption.textContent = "All UBL categories";
+        select.appendChild(allOption);
+
+        categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = `${category} (${filterData.filter(p => p.protein_category === category).length})`;
+            select.appendChild(option);
+        });
+
+        select.value = window.currentProteinCategoryFilter || "";
+        select.addEventListener("change", function () {
+            filterByProteinCategory(this.value || null);
+        });
+
+        filterBar.append(label, select);
+        return;
     }
 
     // --------------------------------------------------------
@@ -814,6 +861,7 @@ async function loadProteinClassNoPDB(enzymeClass) {
         window.currentNoPDBFilter = true;
 
         window.currentSubfamilyFilter = null;
+        window.currentProteinCategoryFilter = null;
 
         // ====================================================
         // 4. Get the No-PDB data.
@@ -995,6 +1043,35 @@ function filterBySubfamily(
             loadProtein(
                 filtered[0].protein_id
             );
+        }
+    }
+}
+
+function filterByProteinCategory(category) {
+    window.currentProteinCategoryFilter = category;
+
+    const filtered = getCurrentFilteredData();
+
+    renderSubfamilyFilters(
+        window.currentEnzymeClass,
+        window.currentEnzymeData
+    );
+    renderEnzymeList(filtered);
+
+    const title = document.querySelector(".pane-title");
+    if (title) {
+        const titleParts = [escapeHtml(window.currentEnzymeClass)];
+        if (window.currentNoPDBFilter) titleParts.push("No Experimental PDB");
+        if (category) titleParts.push(escapeHtml(category));
+        title.innerHTML = `${titleParts.join(" · ")} (${filtered.length})`;
+    }
+
+    if (filtered.length > 0) {
+        const currentExists = filtered.some(
+            protein => protein.protein_id === window.currentProteinId
+        );
+        if (!currentExists) {
+            loadProtein(filtered[0].protein_id);
         }
     }
 }

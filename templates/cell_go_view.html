@@ -55,27 +55,29 @@
         <div id="cell_go" class="tab-panel active">
             <div class="cellgo-header">
                 <div class="cellgo-hint">
-
-                <header class="topbar">
-                <h1>{{ protein_label }} <span class="accession">({{ protein_id }})</span></h1>
-                </header>
-
-                <p class="hint">After the page loads, mapped organelles are highlighted in sequence. Hover over an organelle or its corresponding GO Cellular Component term to highlight the matching item. Select an organelle to keep it highlighted.
-                <div class="cellgo-legend">
-                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--exp"></i>Experimental evidence</span>
-                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--phylo"></i>Phylogenetic inference</span>
-                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--seq"></i>Sequence similarity inference</span>
-                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--author"></i>Literature / curator inference</span>
-                    <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--auto"></i>Automatic (IEA)</span>
-                </div>
-                </p>
+                    <header class="topbar">
+                        <h1>{{ protein_name }} ({{ gene_name }})</h1>
+                        <p class="protein-page-meta">
+                            UniProt: {{ uniprot_acc }}{% if entry_name %} · {{ entry_name }}{% endif %}{% if organism %} · {{ organism }}{% endif %} · {{ protein_length }} aa
+                        </p>
+                    </header>
+                    <p class="hint">After the page loads, mapped organelles are highlighted in sequence. Hover over an organelle or its corresponding GO Cellular Component term to highlight the matching item. Select an organelle to keep it highlighted.</p>
+                    <div class="cellgo-legend">
+                        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--exp"></i>Experimental evidence</span>
+                        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--phylo"></i>Phylogenetic inference</span>
+                        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--seq"></i>Sequence similarity inference</span>
+                        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--author"></i>Literature / curator inference</span>
+                        <span class="cellgo-legend-item"><i class="cellgo-evidence cellgo-evidence--auto"></i>Automatic (IEA)</span>
+                    </div>
                 </div>
             </div>
-            <main class="layout">
+            <main class="layout" id="cellGoWorkspace">
             <!-- Left: animal cell SVG -->
             <section id="cell-container" class="cell-panel" aria-label="Cell diagram">
                 <div class="loading" id="svg-loading" role="status" aria-live="polite">Loading cell diagram...</div>
             </section>
+
+            <div class="cellgo-resize-handle" role="separator" aria-label="Resize cell diagram and GO function panels" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="60" tabindex="0"></div>
 
             <!-- Right: GO function list -->
             <aside class="go-panel" aria-label="Gene Ontology function list">

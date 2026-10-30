@@ -9,6 +9,7 @@ Usage:
 
 import sqlite3
 import os
+import json
 from urllib.parse import unquote
 from flask import Flask, jsonify, render_template, request, g , abort
 from flask import send_from_directory
@@ -76,10 +77,50 @@ def structure_viewer():
     if not _is_safe_structure_url(pdb_url):
         abort(400, description="Invalid or disallowed structure URL")
 
+    try:
+        requested_structures = json.loads(request.args.get("structures", "[]"))
+    except json.JSONDecodeError:
+        abort(400, description="Invalid structure choices")
+
+    structure_sources = {"pdb", "alphafold", "alphafill", "swiss_model"}
+    structure_options = []
+    if isinstance(requested_structures, list):
+        for choice in requested_structures:
+            if not isinstance(choice, dict):
+                continue
+            url = choice.get("url")
+            source = choice.get("source")
+            if not isinstance(url, str) or not _is_safe_structure_url(url):
+                continue
+            if not isinstance(source, str) or source not in structure_sources:
+                continue
+            structure_options.append({
+                "label": str(choice.get("label") or source),
+                "url": url,
+                "source": source,
+            })
+
+    if not any(choice["url"] == pdb_url for choice in structure_options):
+        source = request.args.get("source", "")
+        if source not in structure_sources:
+            source = "pdb"
+        structure_options.insert(0, {
+            "label": source,
+            "url": pdb_url,
+            "source": source,
+        })
+
     return render_template(
         "pdb.html",
         pdb_url=pdb_url,
         structure_source=request.args.get("source", ""),
+        protein_name=request.args.get("protein", ""),
+        gene_name=request.args.get("gene", ""),
+        uniprot_acc=request.args.get("uniprot", ""),
+        entry_name=request.args.get("entry", ""),
+        organism=request.args.get("organism", ""),
+        protein_length=request.args.get("length", ""),
+        structure_options=structure_options,
     )
 
 
@@ -88,7 +129,18 @@ def structure_viewer():
 @app.route("/pdb/<pdbid>")
 def pdb_viewer(pdbid):
     pdb_url = f"/data/pdb/{pdbid}.pdb"
-    return render_template("pdb.html", pdb_url=pdb_url, structure_source="pdb")
+    return render_template(
+        "pdb.html",
+        pdb_url=pdb_url,
+        structure_source="pdb",
+        protein_name="",
+        gene_name="",
+        uniprot_acc="",
+        entry_name="",
+        organism="",
+        protein_length="",
+        structure_options=[{"label": pdbid, "url": pdb_url, "source": "pdb"}],
+    )
 
 @app.route("/data/pdb/<filename>")
 def serve_pdb(filename):
@@ -1279,6 +1331,12 @@ def protein_cell_view(protein_id):
         "cell_go_view.html",
         protein_id=protein_id,
         protein_label=label,
+        protein_name=protein.get("protein_name") or label,
+        gene_name=protein.get("gene_name") or protein_id,
+        uniprot_acc=protein.get("uniprot_acc") or protein_id,
+        entry_name=protein.get("entry_name") or "",
+        organism=protein.get("organism") or "",
+        protein_length=protein.get("length") or len(protein.get("sequence") or ""),
     )
 
 

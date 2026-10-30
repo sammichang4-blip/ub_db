@@ -224,6 +224,7 @@ ${styles}
 ${sequenceStyles}
 <link rel="stylesheet" href="${MOLSTAR_CSS_URL}">
 <style>
+    ${embedded ? "#sequence-heading { display:none; }" : ""}
     html, body { height:100%; margin:0; background:#fff; color:#222;
         font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif; }
 
@@ -253,8 +254,28 @@ ${sequenceStyles}
 
     #mol { position:relative; min-height:0; background:#f3f4f6; overflow:hidden; }
     #mol-host { position:absolute; inset:0; }
-    #pdb-picker { position:absolute; top:6px; left:6px; z-index:1000; }
+    #mol-toolbar { position:absolute; top:6px; left:6px; right:6px; z-index:1000;
+        display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:6px;
+        pointer-events:none; }
+    #pdb-picker, #structure-controls { position:relative; pointer-events:auto; }
     #pdb-picker select { padding:3px 6px; border:1px solid #ccc; border-radius:5px; background:#fff; font-size:.85em; max-width:220px; }
+    #structure-controls { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
+    #structure-controls button { padding:4px 6px; border:1px solid #c7cdd4; border-radius:5px;
+        background:#fff; color:#344054; cursor:pointer; font-size:.75em; }
+    #structure-controls button:disabled { opacity:.5; cursor:not-allowed; }
+    #structure-control-status { flex-basis:100%; min-height:1em; color:#667085; text-align:right; font-size:.72em; }
+    #structure-details { position:absolute; top:42px; left:6px; z-index:1000; max-width:calc(100% - 12px);
+        padding:5px 8px; border:1px solid #d0d5dd; border-radius:5px; background:rgba(255,255,255,.94);
+        color:#344054; font-size:.72em; pointer-events:none; }
+    #structure-details[hidden] { display:none; }
+    #structure-details dl { display:flex; flex-wrap:wrap; gap:2px 12px; margin:0; }
+    #structure-details dl div { display:flex; gap:4px; }
+    #structure-details dt { color:#667085; }
+    #structure-details dd { margin:0; font-weight:600; }
+    #sequence-plddt-legend strong { display:block; font-size:.95em; }
+    #sequence-plddt-gradient { height:8px; margin:3px 0 2px; border:1px solid rgba(52,64,84,.2);
+        border-radius:5px; background:linear-gradient(90deg,#bf2222 0%,#fff 50%,#3361e1 100%); }
+    #sequence-plddt-ranges { color:#667085; font-size:.9em; }
     #mol-msg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
         color:#888; z-index:5; pointer-events:none; text-align:center; padding:1em; }
     #list-wrap { display:flex; flex-direction:column; min-height:0; min-width:0; position:relative; z-index:20; }
@@ -348,9 +369,11 @@ ${sequenceStyles}
 <body>
 <div id="app">
     <div id="left">
-        <h1>${escapeHtml(p.protein_name || "")}
-            <span style="font-weight:400;color:#888;">(${escapeHtml(p.gene_name || "")})</span></h1>
-        <div style="color:#888;">UniProt: ${escapeHtml(p.uniprot_acc || "")} · ${escapeHtml(p.length || seq.length)} aa</div>
+        <header id="sequence-heading">
+            <h1>${escapeHtml(p.protein_name || p.gene_name || "")}
+                <span style="font-weight:400;color:#888;">(${escapeHtml(p.gene_name || "")})</span></h1>
+            <div style="color:#888;">UniProt: ${escapeHtml(p.uniprot_acc || "")} · ${escapeHtml(p.entry_name || "")} · ${escapeHtml(p.organism || "")} · ${escapeHtml(p.length || seq.length)} aa</div>
+        </header>
         <div class="toolbar">
             <label style="display:flex;align-items:center;gap:6px;">Font size
                 <input type="range" id="seq-size" min="10" max="32" value="15">
@@ -393,7 +416,17 @@ ${sequenceStyles}
 
     <div id="right">
         <div id="mol">
-            <div id="pdb-picker"><select id="pdb-select" title="Switch structure"></select></div>
+            <div id="mol-toolbar">
+                <div id="pdb-picker"><select id="pdb-select" title="Switch structure"></select></div>
+                <div id="structure-controls" aria-label="Structure viewer controls">
+                    <button type="button" data-structure-action="cartoon" disabled>Cartoon</button>
+                    <button type="button" data-structure-action="surface" disabled>Surface</button>
+                    <button type="button" data-structure-action="confidence" disabled>pLDDT confidence</button>
+                    <button type="button" data-structure-action="fullscreen" disabled>Fullscreen</button>
+                    <span id="structure-control-status" role="status" aria-live="polite"></span>
+                </div>
+            </div>
+            <div id="structure-details" hidden></div>
             <div id="mol-msg">${structure ? "Loading 3D structure…" : "No 3D structure is available for this protein."}</div>
             <div id="mol-host"></div>
         </div>
@@ -432,6 +465,8 @@ ${sequenceStyles}
     const listBox = doc.getElementById("list");
     const info = doc.getElementById("pick-info");
     const msg = doc.getElementById("mol-msg");
+    const structureDetails = doc.getElementById("structure-details");
+    const structureControlStatus = doc.getElementById("structure-control-status");
 
     let viewer = null;
     let loadToken = 0;         // Discard stale asynchronous results when switching structures.
@@ -2455,9 +2490,9 @@ ${sequenceStyles}
     refreshAll();
 
     // ---------------- Load Mol* ----------------
-    function loadScript(src) {
+    function loadScript(src, isLoaded) {
         return new Promise((resolve, reject) => {
-            if (win.molstar && win.molstar.Viewer) { resolve(); return; }
+            if (isLoaded()) { resolve(); return; }
             const sc = doc.createElement("script");
             sc.src = src;
             sc.onload = resolve;
@@ -2472,7 +2507,11 @@ ${sequenceStyles}
         if (viewerPromise) return viewerPromise;
 
         viewerPromise = (async () => {
-            await loadScript(MOLSTAR_JS_URL);
+            await loadScript(MOLSTAR_JS_URL, () => win.molstar?.Viewer);
+            await loadScript(
+                new URL("/static/js/molstar-controls.js", location.origin).href,
+                () => win.molstarControls
+            );
 
             viewer = await win.molstar.Viewer.create(doc.getElementById("mol-host"), {
                 layoutIsExpanded: false,
@@ -2502,6 +2541,76 @@ ${sequenceStyles}
     const pdbSelect = doc.getElementById("pdb-select");
     let structureOptions = [];
 
+    function formatMetric(value, digits) {
+        if (value === null || value === undefined || value === "") return "—";
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue.toFixed(digits) : "—";
+    }
+
+    function renderStructureDetails(st) {
+        if (!st || !["alphafold", "swiss_model"].includes(st.source)) {
+            structureDetails.hidden = true;
+            structureDetails.innerHTML = "";
+            return;
+        }
+
+        const metadata = st.metadata || data.predicted_structures?.[st.source] || {};
+        if (st.source === "alphafold") {
+            structureDetails.innerHTML = `
+                <dl><div><dt>Mean pLDDT</dt><dd>${formatMetric(metadata.confidence_avg, 1)}</dd></div></dl>
+                <div id="sequence-plddt-legend">
+                    <strong>pLDDT confidence score (0–100)</strong>
+                    <div id="sequence-plddt-gradient" role="img" aria-label="Low confidence is red, high confidence is blue"></div>
+                    <div id="sequence-plddt-ranges">&lt;50 Very low · 50–70 Low · 70–90 Confident · ≥90 Very high</div>
+                </div>
+            `;
+        } else {
+            const coverage = metadata.coverage;
+            const coveragePercent = coverage === null || coverage === undefined || coverage === ""
+                ? "—"
+                : `${formatMetric(Number(coverage) * 100, 1)}%`;
+            structureDetails.innerHTML = `
+                <dl>
+                    <div><dt>QMEAN</dt><dd>${formatMetric(metadata.qmean, 3)}</dd></div>
+                    <div><dt>GMQE</dt><dd>${formatMetric(metadata.gmqe, 3)}</dd></div>
+                    <div><dt>Coverage</dt><dd>${coveragePercent}</dd></div>
+                </dl>
+            `;
+        }
+        structureDetails.hidden = false;
+    }
+
+    function updateStructureControls(ready = false) {
+        doc.querySelectorAll("[data-structure-action]").forEach(button => {
+            button.disabled = !ready
+                || (button.dataset.structureAction === "confidence" && structure?.source !== "alphafold");
+        });
+    }
+
+    doc.getElementById("structure-controls").addEventListener("click", async event => {
+        const button = event.target.closest("[data-structure-action]");
+        if (!button || button.disabled) return;
+
+        const action = button.dataset.structureAction;
+        const actions = {
+            cartoon: () => win.molstarControls.setCartoon(viewer),
+            surface: () => win.molstarControls.setSurface(viewer),
+            confidence: () => win.molstarControls.setConfidence(viewer),
+            fullscreen: () => win.molstarControls.toggleFullscreen(doc.getElementById("mol"))
+        };
+        updateStructureControls(false);
+        structureControlStatus.textContent = action === "fullscreen" ? "" : "Updating structure view…";
+        try {
+            await actions[action]();
+            structureControlStatus.textContent = "";
+        } catch (error) {
+            console.error("[UKW] Structure viewer control failed:", error);
+            structureControlStatus.textContent = error.message || String(error);
+        } finally {
+            updateStructureControls(Boolean(viewer?.plugin?.managers?.structure?.hierarchy?.current?.structures?.length));
+        }
+    });
+
     function buildStructureOptions() {
         const opts = [];
 
@@ -2521,7 +2630,7 @@ ${sequenceStyles}
                 : (ps.alphafold.pdb_url || ps.alphafold.cif_url);
             if (u) opts.push({
                 label: "AlphaFold",
-                st: { source: "alphafold", id: ps.alphafold.uniprot_id, url: u, format: guessFormat(u) }
+                st: { source: "alphafold", id: ps.alphafold.uniprot_id, url: u, format: guessFormat(u), metadata: ps.alphafold }
             });
         }
         if (ps.alphafill && ps.alphafill.cif_url) {
@@ -2531,7 +2640,7 @@ ${sequenceStyles}
             const u = ps.swiss_model.local_pdb_path
                 ? localModelUrl("swiss_model")
                 : ps.swiss_model.coordinates_url;
-            opts.push({ label: "SWISS-MODEL", st: { source: "swiss_model", id: ps.swiss_model.uniprot_id, url: u, format: "pdb" } });
+            opts.push({ label: "SWISS-MODEL", st: { source: "swiss_model", id: ps.swiss_model.uniprot_id, url: u, format: "pdb", metadata: ps.swiss_model } });
         }
 
         structureOptions = opts;
@@ -2569,6 +2678,9 @@ ${sequenceStyles}
         coverage = null;
         sasaData = null;
         sasaStatus = "";
+        structureControlStatus.textContent = "";
+        updateStructureControls(false);
+        renderStructureDetails(structure);
 
         doc.getElementById("cov-info").textContent = "";
         measureSel = [];
@@ -2593,6 +2705,7 @@ ${sequenceStyles}
             await ensureViewer();
             if (token !== loadToken) return;
 
+            win.molstarControls.resetConfidence(viewer);
             try { viewer.plugin.managers.structure.focus.clear(); } catch (e) { /* ignore */ }
             await viewer.plugin.clear();
             if (token !== loadToken) return;
@@ -2613,6 +2726,7 @@ ${sequenceStyles}
             if (token !== loadToken) return;
 
             msg.style.display = "none";
+            updateStructureControls(true);
             applyViewerStyle();
             resizeMolstar();
 

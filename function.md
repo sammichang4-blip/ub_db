@@ -1,69 +1,76 @@
 # ⚡ JavaScript Function Inventory
 
-This report automatically compiles the names of all functions defined in the project's `.js` files.
+This report automatically aggregates the Function names defined in all `.js` files in the project.
 
-## 📊 File Summary
-**🎯 Total JavaScript functions detected in the project: 500**
+## 📊 File Summary Statistics
+**🎯 Project total detected: 824 JavaScript functions**
 
-| File Path | Function Count |
+| File path | Function count |
 | :--- | :--- |
-| `./static/js/08-detail.js` | **9** |
-| `./static/js/05-search.js` | **25** |
-| `./static/js/cell_go_viewer.js` | **49** |
+| `./static/js/08-detail.js` | **8** |
+| `./static/js/05-search.js` | **30** |
+| `./static/js/cell_go_viewer.js` | **70** |
 | `./static/js/09-network.js` | **14** |
-| `./static/js/01-constants.js` | *No functions detected* |
-| `./static/js/07-papers-sequence.js` | **40** |
-| `./static/js/cell_go_viewer1.js` | **23** |
-| `./static/js/03-utils.js` | **4** |
-| `./static/js/02-state.js` | *No functions detected* |
-| `./static/js/11-domain.js` | **28** |
+| `./static/js/01-constants.js` | **1** |
+| `./static/js/07-papers-sequence.js` | **57** |
+| `./static/js/03-utils.js` | **7** |
+| `./static/js/cell-go-tabs.js` | **47** |
+| `./static/js/02-state.js` | *No function detected* |
+| `./static/js/11-domain.js` | **60** |
 | `./static/js/10-main.js` | **2** |
 | `./static/js/network_1.js` | **14** |
+| `./static/js/07b-evidence.js` | **16** |
 | `./static/js/06-annotation-sections.js` | **38** |
-| `./static/js/04-viewer.js` | **23** |
-| `./static/js/cell_go_viewer2.js` | **42** |
-| `./static/js/network.js` | **60** |
+| `./static/js/04-viewer.js` | **30** |
+| `./static/js/molstar-controls.js` | **12** |
+| `./static/js/cell_zh_data.js` | **14** |
+| `./static/js/network.js` | **59** |
+| `./static/js/07c-sequence-popup.js` | **216** |
 | `./static/js/cytoscape/cytoscape-dagre.js` | **38** |
 | `./static/js/cytoscape/cytoscape.min.js` | **1** |
 | `./static/molstar/molstar.js` | **90** |
 
-## 📂 Function Inventory by File
+## 📂 Detailed Function List by File
 
 ### 📄 `./static/js/08-detail.js`
-- ⚡ `Lysine()`
-- ⚡ `UniProt()`
+- ⚡ `K$()`
 - ⚡ `button()`
+- ⚡ `data()`
 - ⚡ `div()`
 - ⚡ `else()`
 - ⚡ `renderDetail()`
 - ⚡ `setTimeout()`
-- ⚡ `span()`
 - ⚡ `try()`
 
 ### 📄 `./static/js/05-search.js`
-- ⚡ `const()`
+- ⚡ `HTTP()`
+- ⚡ `No()`
+- ⚡ `api()`
+- ⚡ `categories()`
+- ⚡ `cellgo()`
 - ⚡ `data()`
-- ⚡ `div()`
 - ⚡ `doSearch()`
-- ⚡ `document()`
 - ⚡ `else()`
+- ⚡ `filterByProteinCategory()`
 - ⚡ `filterBySubfamily()`
+- ⚡ `forEach()`
+- ⚡ `getCurrentFilteredData()`
 - ⚡ `highlightSearch()`
-- ⚡ `initCellGoView()`
 - ⚡ `items()`
-- ⚡ `li()`
 - ⚡ `loadProtein()`
 - ⚡ `loadProteinClass()`
 - ⚡ `loadProteinClassNoPDB()`
-- ⚡ `p()`
+- ⚡ `new()`
+- ⚡ `option()`
 - ⚡ `renderEnzymeList()`
 - ⚡ `renderResults()`
 - ⚡ `renderSubfamilyFilters()`
+- ⚡ `result()`
 - ⚡ `select()`
-- ⚡ `sort()`
-- ⚡ `subfamilies()`
+- ⚡ `sf()`
 - ⚡ `throw()`
 - ⚡ `title()`
+- ⚡ `titleText()`
 - ⚡ `try()`
 - ⚡ `updateActiveResult()`
 
@@ -71,37 +78,50 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `GO()`
 - ⚡ `SVG()`
 - ⚡ `a()`
+- ⚡ `child()`
 - ⚡ `clearExplorerHover()`
 - ⚡ `clearItem()`
 - ⚡ `clearSelectedCell()`
+- ⚡ `console()`
 - ⚡ `const()`
 - ⚡ `else()`
 - ⚡ `escapeHtml()`
 - ⚡ `event()`
+- ⚡ `expandForVisibleGeometry()`
+- ⚡ `find()`
 - ⚡ `findGoByNodeName()`
 - ⚡ `findGoTermById()`
 - ⚡ `findSvgNodeById()`
+- ⚡ `findSvgNodeByName()`
+- ⚡ `findSvgNodesByName()`
 - ⚡ `forEach()`
 - ⚡ `getDeepestSLNode()`
+- ⚡ `getDrawableElements()`
+- ⚡ `getOwningSlNode()`
 - ⚡ `getSvgMetadata()`
 - ⚡ `getSvgNodesForGoTerm()`
 - ⚡ `getTermName()`
 - ⚡ `getTermSlIds()`
 - ⚡ `goTermsByAspect()`
+- ⚡ `hasDirectSvgGeometry()`
 - ⚡ `hasSvgMapping()`
 - ⚡ `hideCellDescription()`
 - ⚡ `highlightGoTerms()`
 - ⚡ `https()`
 - ⚡ `id()`
 - ⚡ `init()`
+- ⚡ `installSvgHoverStyles()`
+- ⚡ `isInteriorNode()`
 - ⚡ `item()`
 - ⚡ `li()`
 - ⚡ `loadGoTerms()`
 - ⚡ `loadSvg()`
-- ⚡ `node()`
+- ⚡ `nodes()`
+- ⚡ `normalizeGoId()`
 - ⚡ `normalizeName()`
 - ⚡ `normalizeSlId()`
 - ⚡ `playIntroSequence()`
+- ⚡ `refreshInteriorOverlay()`
 - ⚡ `renderGoLists()`
 - ⚡ `renderOneList()`
 - ⚡ `resolveSvgNodes()`
@@ -109,12 +129,20 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `scrollToGoTerm()`
 - ⚡ `selectCellNode()`
 - ⚡ `setGlow()`
+- ⚡ `setInteriorOverlay()`
 - ⚡ `setIntroGlow()`
+- ⚡ `shapes()`
 - ⚡ `showCellDescription()`
+- ⚡ `span()`
 - ⚡ `splitSl()`
+- ⚡ `state()`
 - ⚡ `step()`
 - ⚡ `stopIntroSequence()`
 - ⚡ `try()`
+- ⚡ `ukw()`
+- ⚡ `uniqueNodes()`
+- ⚡ `walk()`
+- ⚡ `window()`
 - ⚡ `wireCellInteractions()`
 - ⚡ `wireGoListInteractions()`
 
@@ -134,108 +162,187 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `try()`
 - ⚡ `window()`
 
+### 📄 `./static/js/01-constants.js`
+- ⚡ `const()`
+
 ### 📄 `./static/js/07-papers-sequence.js`
+- ⚡ `Array()`
+- ⚡ `Object()`
+- ⚡ `Show()`
 - ⚡ `UniProt()`
 - ⚡ `a()`
 - ⚡ `blocks()`
 - ⚡ `body()`
 - ⚡ `btn()`
+- ⚡ `buildFeatureDetailsHtml()`
+- ⚡ `buildFeatureTypeCategoryMap()`
+- ⚡ `cTerminalGgPositions()`
+- ⚡ `categories()`
+- ⚡ `cls()`
 - ⚡ `const()`
 - ⚡ `copySequence()`
-- ⚡ `count()`
 - ⚡ `desc()`
 - ⚡ `div()`
+- ⚡ `document()`
 - ⚡ `else()`
+- ⚡ `evidenceHtml()`
+- ⚡ `feature()`
+- ⚡ `features()`
 - ⚡ `filterPapersByYear()`
 - ⚡ `filterPapersByYears()`
 - ⚡ `getPaperDate()`
+- ⚡ `groupResidues()`
 - ⚡ `h1()`
 - ⚡ `h5()`
 - ⚡ `hiddenClass()`
 - ⚡ `hiddenPapers()`
-- ⚡ `html()`
-- ⚡ `lineHtml()`
+- ⚡ `label()`
 - ⚡ `map()`
 - ⚡ `openExpandedView()`
 - ⚡ `paper()`
 - ⚡ `papers()`
+- ⚡ `renderAndUpdateSequence()`
 - ⚡ `renderDescription()`
+- ⚡ `renderFeatureDetails()`
 - ⚡ `renderPapers()`
 - ⚡ `renderSequence()`
+- ⚡ `residueHtml()`
 - ⚡ `return()`
-- ⚡ `ruler()`
 - ⚡ `score()`
+- ⚡ `showPapers()`
 - ⚡ `slider()`
 - ⚡ `span()`
+- ⚡ `strong()`
 - ⚡ `title()`
+- ⚡ `titleParts()`
+- ⚡ `toggleFeatureCategory()`
 - ⚡ `toggleMorePapers()`
 - ⚡ `try()`
-- ⚡ `updatePapers()`
-- ⚡ `updatePapersByYear()`
+- ⚡ `types()`
+- ⚡ `usableFeatures()`
+- ⚡ `window()`
 - ⚡ `year()`
 - ⚡ `yearButtons()`
-- ⚡ `yearLabel()`
-
-### 📄 `./static/js/cell_go_viewer1.js`
-- ⚡ `const()`
-- ⚡ `container()`
-- ⚡ `cssEscape()`
-- ⚡ `else()`
-- ⚡ `escapeHtml()`
-- ⚡ `forEach()`
-- ⚡ `goTermsByAspect()`
-- ⚡ `highlightBySlId()`
-- ⚡ `id()`
-- ⚡ `init()`
-- ⚡ `li()`
-- ⚡ `list()`
-- ⚡ `loadGoTerms()`
-- ⚡ `loadSvg()`
-- ⚡ `normalizeSlId()`
-- ⚡ `playIntroSequence()`
-- ⚡ `renderGoLists()`
-- ⚡ `renderOneList()`
-- ⚡ `setGlow()`
-- ⚡ `splitSl()`
-- ⚡ `step()`
-- ⚡ `try()`
-- ⚡ `wireHoverInteractions()`
 
 ### 📄 `./static/js/03-utils.js`
 - ⚡ `cacheDOM()`
+- ⚡ `console()`
 - ⚡ `escapeHtml()`
+- ⚡ `openProteinTabView()`
+- ⚡ `protein()`
 - ⚡ `setTimeout()`
 - ⚡ `showCopyMessage()`
 
+### 📄 `./static/js/cell-go-tabs.js`
+- ⚡ `api()`
+- ⚡ `aside()`
+- ⚡ `button()`
+- ⚡ `case()`
+- ⚡ `choices()`
+- ⚡ `console()`
+- ⚡ `const()`
+- ⚡ `container()`
+- ⚡ `details()`
+- ⚡ `div()`
+- ⚡ `document()`
+- ⚡ `domainStructureLoadPromise()`
+- ⚡ `else()`
+- ⚡ `finally()`
+- ⚡ `finish()`
+- ⚡ `formatMetric()`
+- ⚡ `getStructureChoices()`
+- ⚡ `h2()`
+- ⚡ `handle()`
+- ⚡ `info()`
+- ⚡ `initialization()`
+- ⚡ `initializeTab()`
+- ⚡ `loadDomainStructure()`
+- ⚡ `loadProteinData()`
+- ⚡ `option()`
+- ⚡ `p()`
+- ⚡ `protein()`
+- ⚡ `proteinHeadingHtml()`
+- ⚡ `renderDomainTab()`
+- ⚡ `renderNetworkTab()`
+- ⚡ `renderPapersTab()`
+- ⚡ `renderSequenceTab()`
+- ⚡ `renderStructureTab()`
+- ⚡ `renderViewerControls()`
+- ⚡ `return()`
+- ⚡ `select()`
+- ⚡ `setTabMessage()`
+- ⚡ `setupColumnResizer()`
+- ⚡ `span()`
+- ⚡ `structureFrameMessageHandler()`
+- ⚡ `structureSelect()`
+- ⚡ `then()`
+- ⚡ `throw()`
+- ⚡ `try()`
+- ⚡ `updateViewerControls()`
+- ⚡ `url()`
+- ⚡ `window()`
+
 ### 📄 `./static/js/11-domain.js`
-- ⚡ `Object()`
-- ⚡ `Residues()`
+- ⚡ `0()`
 - ⚡ `a()`
-- ⚡ `aa()`
 - ⚡ `arr()`
+- ⚡ `assignLanes()`
+- ⚡ `bIPR()`
 - ⚡ `background()`
+- ⚡ `buildDomainColorMap()`
+- ⚡ `class()`
 - ⚡ `closeDomainExplorer()`
 - ⚡ `const()`
+- ⚡ `constructor()`
 - ⚡ `createDomainSegment()`
+- ⚡ `data()`
+- ⚡ `debugDomains()`
 - ⚡ `domain()`
-- ⚡ `domains()`
+- ⚡ `domainEscapeHtml()`
 - ⚡ `else()`
 - ⚡ `event()`
-- ⚡ `getDomainColor()`
+- ⚡ `getDomainFamilyKey()`
+- ⚡ `getDomainHoverScope()`
+- ⚡ `getDomainIdentityKeys()`
+- ⚡ `getDomainName()`
+- ⚡ `getFamilyColor()`
+- ⚡ `getInterProId()`
+- ⚡ `getRepeatColor()`
+- ⚡ `getStableFamilyColor()`
 - ⚡ `groupDomainsBySource()`
+- ⚡ `hashString()`
+- ⚡ `height()`
+- ⚡ `injectDomainStyle()`
+- ⚡ `key()`
 - ⚡ `left()`
+- ⚡ `lightenColor()`
 - ⚡ `loadDomainExplorerPDB()`
+- ⚡ `normalizeDomainName()`
+- ⚡ `normalizeDomainRecord()`
+- ⚡ `normalizeDomainRecords()`
 - ⚡ `openDomainExplorer()`
+- ⚡ `opts()`
+- ⚡ `other()`
 - ⚡ `renderDomainExplorerArchitecture()`
 - ⚡ `renderDomainList()`
 - ⚡ `renderDomainSourceTrack()`
 - ⚡ `renderDomains()`
-- ⚡ `requestAnimationFrame()`
+- ⚡ `repeat()`
+- ⚡ `resolveDomainColorKey()`
+- ⚡ `return()`
+- ⚡ `root()`
 - ⚡ `selectDomain()`
-- ⚡ `sources()`
+- ⚡ `selected()`
+- ⚡ `sortDomainSources()`
+- ⚡ `source()`
 - ⚡ `start()`
+- ⚡ `style()`
+- ⚡ `this()`
 - ⚡ `title()`
+- ⚡ `top()`
+- ⚡ `try()`
 - ⚡ `width()`
+- ⚡ `window()`
 
 ### 📄 `./static/js/10-main.js`
 - ⚡ `searchForm()`
@@ -256,6 +363,24 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `throw()`
 - ⚡ `try()`
 - ⚡ `window()`
+
+### 📄 `./static/js/07b-evidence.js`
+- ⚡ `const()`
+- ⚡ `ecoLabel()`
+- ⚡ `ecoListeners()`
+- ⚡ `evidenceHtml()`
+- ⚡ `evidenceLink()`
+- ⚡ `fetch()`
+- ⚡ `headers()`
+- ⚡ `opts()`
+- ⚡ `out()`
+- ⚡ `parseEvidence()`
+- ⚡ `parts()`
+- ⚡ `push()`
+- ⚡ `raw()`
+- ⚡ `return()`
+- ⚡ `rows()`
+- ⚡ `then()`
 
 ### 📄 `./static/js/06-annotation-sections.js`
 - ⚡ `E3$()`
@@ -298,73 +423,66 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `try()`
 
 ### 📄 `./static/js/04-viewer.js`
-- ⚡ `alert()`
 - ⚡ `await()`
 - ⚡ `chainId()`
 - ⚡ `clearPDBViewer()`
 - ⚡ `closeStructureModal()`
 - ⚡ `const()`
+- ⚡ `data()`
 - ⚡ `else()`
 - ⚡ `highlightStructureRange()`
 - ⚡ `initViewer()`
 - ⚡ `isLikelyStructureFile()`
+- ⚡ `label()`
 - ⚡ `lib()`
+- ⚡ `map()`
 - ⚡ `p()`
 - ⚡ `pdbViewer()`
 - ⚡ `plugin()`
+- ⚡ `proteinData()`
 - ⚡ `setCurrentPDB()`
+- ⚡ `setStructureLoadStatus()`
+- ⚡ `setStructureLoading()`
 - ⚡ `setStructureSelectionColor()`
 - ⚡ `showModelDetail()`
 - ⚡ `showPDBStructure()`
 - ⚡ `startResidue()`
+- ⚡ `structureChoices()`
 - ⚡ `throw()`
 - ⚡ `title()`
 - ⚡ `try()`
+- ⚡ `url()`
 - ⚡ `window()`
 
-### 📄 `./static/js/cell_go_viewer2.js`
-- ⚡ `cls()`
+### 📄 `./static/js/molstar-controls.js`
+- ⚡ `async()`
+- ⚡ `colorParams()`
 - ⚡ `const()`
-- ⚡ `createInspector()`
-- ⚡ `e()`
-- ⚡ `else()`
-- ⚡ `escapeHtml()`
-- ⚡ `findGoByNodeName()`
-- ⚡ `findGoTermsBySlId()`
-- ⚡ `forEach()`
-- ⚡ `formatNumber()`
-- ⚡ `getDeepestSLNode()`
-- ⚡ `getSvgAnnotation()`
-- ⚡ `getSvgSubcellAnnotation()`
-- ⚡ `goTermsByAspect()`
-- ⚡ `hasGoMapping()`
-- ⚡ `highlightBySlId()`
-- ⚡ `highlightGoTerms()`
-- ⚡ `id()`
-- ⚡ `init()`
-- ⚡ `li()`
-- ⚡ `loadGoTerms()`
-- ⚡ `loadSvg()`
-- ⚡ `map()`
-- ⚡ `normalizeSlId()`
-- ⚡ `panel()`
-- ⚡ `playIntroSequence()`
-- ⚡ `renderGoLists()`
-- ⚡ `renderOneList()`
-- ⚡ `return()`
-- ⚡ `selectSvgNode()`
-- ⚡ `setGlow()`
-- ⚡ `showCellDetail()`
-- ⚡ `showSvgDescription()`
-- ⚡ `splitSl()`
-- ⚡ `state()`
-- ⚡ `step()`
-- ⚡ `strong()`
-- ⚡ `termName()`
-- ⚡ `try()`
-- ⚡ `updateInspector()`
-- ⚡ `wireHoverInteractions()`
-- ⚡ `wireSvgInspector()`
+- ⚡ `getPolymerComponents()`
+- ⚡ `getStructureRef()`
+- ⚡ `hasBFactorValues()`
+- ⚡ `list()`
+- ⚡ `resetCamera()`
+- ⚡ `resetConfidence()`
+- ⚡ `setRepresentation()`
+- ⚡ `theme()`
+- ⚡ `window()`
+
+### 📄 `./static/js/cell_zh_data.js`
+- ⚡ `SL0023()`
+- ⚡ `SL0067()`
+- ⚡ `SL0094()`
+- ⚡ `SL0095()`
+- ⚡ `SL0098()`
+- ⚡ `SL0132()`
+- ⚡ `SL0135()`
+- ⚡ `SL0152()`
+- ⚡ `SL0158()`
+- ⚡ `SL0174()`
+- ⚡ `SL0266()`
+- ⚡ `names()`
+- ⚡ `notes()`
+- ⚡ `window()`
 
 ### 📄 `./static/js/network.js`
 - ⚡ `HTTP()`
@@ -404,7 +522,6 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `linkifyPMID()`
 - ⚡ `loadNetwork()`
 - ⚡ `map()`
-- ⚡ `network()`
 - ⚡ `newElements()`
 - ⚡ `openNetworkWindow()`
 - ⚡ `pmids()`
@@ -427,6 +544,224 @@ This report automatically compiles the names of all functions defined in the pro
 - ⚡ `updateEditorToolbar()`
 - ⚡ `updateSelectionCount()`
 - ⚡ `window()`
+
+### 📄 `./static/js/07c-sequence-popup.js`
+- ⚡ `Lys()`
+- ⚡ `Nearest()`
+- ⚡ `Of()`
+- ⚡ `SASA()`
+- ⚡ `Selected()`
+- ⚡ `Single()`
+- ⚡ `UB_ORDER()`
+- ⚡ `addMeasure()`
+- ⚡ `app()`
+- ⚡ `applyCoverageClass()`
+- ⚡ `applyMotifClass()`
+- ⚡ `applyPickClass()`
+- ⚡ `applySasaClass()`
+- ⚡ `applyUbClass()`
+- ⚡ `applyViewerStyle()`
+- ⚡ `atomDist()`
+- ⚡ `atoms()`
+- ⚡ `b()`
+- ⚡ `body()`
+- ⚡ `box()`
+- ⚡ `btn()`
+- ⚡ `buildLoci()`
+- ⚡ `buildMotifListHtml()`
+- ⚡ `buildPanels()`
+- ⚡ `buildRules()`
+- ⚡ `buildSasaListHtml()`
+- ⚡ `buildSasaPanel()`
+- ⚡ `buildStructureOptions()`
+- ⚡ `buildUbListHtml()`
+- ⚡ `buildUbPanel()`
+- ⚡ `button()`
+- ⚡ `ca()`
+- ⚡ `cap()`
+- ⚡ `caret()`
+- ⚡ `cat()`
+- ⚡ `categories()`
+- ⚡ `cellKey()`
+- ⚡ `clearMeasureLine()`
+- ⚡ `clearMolstar()`
+- ⚡ `clearPick()`
+- ⚡ `closePanels()`
+- ⚡ `color()`
+- ⚡ `computeCoverage()`
+- ⚡ `computeSasa()`
+- ⚡ `console()`
+- ⚡ `const()`
+- ⚡ `cov()`
+- ⚡ `d()`
+- ⚡ `data()`
+- ⚡ `div()`
+- ⚡ `dl()`
+- ⚡ `doc()`
+- ⚡ `drawMeasureLine()`
+- ⚡ `el()`
+- ⚡ `else()`
+- ⚡ `embedded()`
+- ⚡ `ensureViewer()`
+- ⚡ `escapeHtml()`
+- ⚡ `evidenceHtml()`
+- ⚡ `feats()`
+- ⚡ `features()`
+- ⚡ `filter()`
+- ⚡ `finally()`
+- ⚡ `fn()`
+- ⚡ `formatMetric()`
+- ⚡ `ft()`
+- ⚡ `g()`
+- ⚡ `gA()`
+- ⚡ `ga()`
+- ⚡ `getObservedResidues()`
+- ⚡ `getStructureData()`
+- ⚡ `group()`
+- ⚡ `guessFormat()`
+- ⚡ `h()`
+- ⚡ `h1()`
+- ⚡ `hasCoverage()`
+- ⚡ `html()`
+- ⚡ `i()`
+- ⚡ `id()`
+- ⚡ `injectTypeColors()`
+- ⚡ `input()`
+- ⚡ `isUBL()`
+- ⚡ `isWaterAt()`
+- ⚡ `known()`
+- ⚡ `label()`
+- ⚡ `lastMainUrl()`
+- ⚡ `left()`
+- ⚡ `let()`
+- ⚡ `lig()`
+- ⚡ `ligAtoms()`
+- ⚡ `ligNames()`
+- ⚡ `ligText()`
+- ⚡ `link()`
+- ⚡ `list()`
+- ⚡ `listBox()`
+- ⚡ `loadScript()`
+- ⚡ `loadSifts()`
+- ⚡ `localModelUrl()`
+- ⚡ `lowLys()`
+- ⚡ `m()`
+- ⚡ `makeSplitter()`
+- ⚡ `map()`
+- ⚡ `measure()`
+- ⚡ `measurePair()`
+- ⚡ `mol()`
+- ⚡ `motif()`
+- ⚡ `motifHits()`
+- ⚡ `name()`
+- ⚡ `nearbyLigands()`
+- ⚡ `onEcoLoaded()`
+- ⚡ `onMolClick()`
+- ⚡ `onUp()`
+- ⚡ `openSequenceView()`
+- ⚡ `opts()`
+- ⚡ `out()`
+- ⚡ `panel()`
+- ⚡ `parseLinkage()`
+- ⚡ `pct()`
+- ⚡ `pdb()`
+- ⚡ `pdbSelect()`
+- ⚡ `pick()`
+- ⚡ `plugin()`
+- ⚡ `pmidLinks()`
+- ⚡ `pos()`
+- ⚡ `positions()`
+- ⚡ `presentTypes()`
+- ⚡ `ranges()`
+- ⚡ `rangesKey()`
+- ⚡ `rec()`
+- ⚡ `redrawList()`
+- ⚡ `redrawSequence()`
+- ⚡ `refreshAll()`
+- ⚡ `relText()`
+- ⚡ `rels()`
+- ⚡ `removeWater()`
+- ⚡ `renderCoverageInfo()`
+- ⚡ `renderMeasure()`
+- ⚡ `renderPosInfo()`
+- ⚡ `renderStructureDetails()`
+- ⚡ `renderer()`
+- ⚡ `residueAtoms()`
+- ⚡ `residues()`
+- ⚡ `resizeMolstar()`
+- ⚡ `return()`
+- ⚡ `right()`
+- ⚡ `rules()`
+- ⚡ `runMotif()`
+- ⚡ `sasa()`
+- ⚡ `sasaBadge()`
+- ⚡ `sasaClass()`
+- ⚡ `sasaData()`
+- ⚡ `sasaGroups()`
+- ⚡ `sasaItemHtml()`
+- ⚡ `sasaStatus()`
+- ⚡ `scrollIntoView()`
+- ⚡ `section()`
+- ⚡ `selectCategory()`
+- ⚡ `selectSasa()`
+- ⚡ `selectType()`
+- ⚡ `selectUb()`
+- ⚡ `seq()`
+- ⚡ `seqBox()`
+- ⚡ `sequence()`
+- ⚡ `setInfo()`
+- ⚡ `setMeasureMode()`
+- ⚡ `setMotifStatus()`
+- ⚡ `setPick()`
+- ⚡ `setPickRanges()`
+- ⚡ `setTimeout()`
+- ⚡ `showRangesInMolstar()`
+- ⚡ `siftsMap()`
+- ⚡ `siftsStatus()`
+- ⚡ `site()`
+- ⚡ `sortFeatures()`
+- ⚡ `source()`
+- ⚡ `span()`
+- ⚡ `split()`
+- ⚡ `splitter()`
+- ⚡ `st()`
+- ⚡ `startSasa()`
+- ⚡ `strong()`
+- ⚡ `structure()`
+- ⚡ `structureFromMain()`
+- ⚡ `structureOptions()`
+- ⚡ `sw()`
+- ⚡ `switchStructure()`
+- ⚡ `syncSelect()`
+- ⚡ `title()`
+- ⚡ `togglePickRanges()`
+- ⚡ `toolbar()`
+- ⚡ `try()`
+- ⚡ `tryPair()`
+- ⚡ `type()`
+- ⚡ `types()`
+- ⚡ `u()`
+- ⚡ `ub()`
+- ⚡ `ubGroupLabel()`
+- ⚡ `ubOptionRows()`
+- ⚡ `ubSites()`
+- ⚡ `ubSortLinks()`
+- ⚡ `ubiRepeats()`
+- ⚡ `ubiUnitPos()`
+- ⚡ `ublFromNote()`
+- ⚡ `uniprotPosFor()`
+- ⚡ `uniqueRanges()`
+- ⚡ `unpFor()`
+- ⚡ `updateSasaUI()`
+- ⚡ `updateStructureControls()`
+- ⚡ `updateUbUI()`
+- ⚡ `url()`
+- ⚡ `validFeatures()`
+- ⚡ `viewer()`
+- ⚡ `viewerPromise()`
+- ⚡ `visibleFeatures()`
+- ⚡ `visibleUbSites()`
+- ⚡ `why()`
 
 ### 📄 `./static/js/cytoscape/cytoscape-dagre.js`
 - ⚡ `DagreLayout()`

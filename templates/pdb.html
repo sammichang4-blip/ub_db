@@ -32,8 +32,17 @@
     ></script>
     <script src="{{ url_for('static', filename='js/molstar-controls.js') }}"></script>
 
+    <script>
+        if (window.parent !== window) {
+            document.documentElement.classList.add("embedded-viewer");
+        }
+    </script>
 
     <style>
+
+        html.embedded-viewer {
+            --viewer-header-height: 0px;
+        }
 
         html,
         body {
@@ -57,31 +66,64 @@
 
             position: absolute;
 
-            inset: 48px 0 0;
+            inset: var(--viewer-header-height, 140px) 0 0;
 
             width: 100%;
 
         }
 
-        #viewer-toolbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+        #viewer-header {
+            position: relative;
             z-index: 1200;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-height: 48px;
-            padding: 6px 10px;
-            box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.96);
+            padding: 8px 12px;
             border-bottom: 1px solid #d0d5dd;
+            background: rgba(255, 255, 255, 0.97);
+            color: #344054;
             font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+        }
+
+        #viewer-header[hidden] {
+            display: none;
+        }
+
+        html.embedded-viewer #viewer-header,
+        html.embedded-viewer #plddt-legend {
+            display: none;
+        }
+
+        #protein-title {
+            margin: 0 0 3px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        #protein-meta {
+            margin: 0 0 8px;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        #viewer-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(220px, 1fr) minmax(220px, 0.8fr);
+            align-items: center;
+            gap: 12px;
         }
 
         #viewer-toolbar[hidden] {
             display: none;
+        }
+
+        #viewer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #viewer-actions strong {
+            margin-right: 2px;
+            white-space: nowrap;
         }
 
         #viewer-toolbar button {
@@ -102,24 +144,15 @@
             cursor: not-allowed;
         }
 
-        #viewer-control-status {
-            margin-left: auto;
-            color: #667085;
-            font-size: 12px;
-        }
-
         #plddt-legend {
-            position: fixed;
-            top: 54px;
-            left: 10px;
-            z-index: 1100;
-            width: min(340px, calc(100vw - 32px));
-            padding: 9px 12px;
+            width: auto;
+            min-width: 0;
+            padding: 5px 8px;
             border: 1px solid #d0d5dd;
             border-radius: 6px;
-            background: rgba(255, 255, 255, 0.96);
+            background: #fff;
             color: #344054;
-            font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+            font: 12px/1.35 -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
         }
 
         #plddt-legend[hidden] {
@@ -128,7 +161,7 @@
 
         .plddt-legend-gradient {
             height: 10px;
-            margin: 6px 0 3px;
+            margin: 5px 0 3px;
             border: 1px solid rgba(52, 64, 84, 0.2);
             border-radius: 5px;
             background: linear-gradient(90deg, #bf2222 0%, #fff 50%, #3361e1 100%);
@@ -157,9 +190,56 @@
         }
 
         .plddt-legend-ranges {
-            margin-top: 5px;
+            margin-top: 3px;
             color: #667085;
             font-size: 10px;
+        }
+
+        #viewer-source {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+            font-size: 12px;
+        }
+
+        #structure-source {
+            width: 100%;
+            min-width: 0;
+            padding: 7px 8px;
+            border: 1px solid #c7cdd4;
+            border-radius: 5px;
+            background: #fff;
+            color: #344054;
+            font: inherit;
+        }
+
+        #viewer-control-status {
+            grid-column: 1 / -1;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        @media (max-width: 850px) {
+            #viewer-toolbar {
+                grid-template-columns: minmax(0, 1fr) minmax(200px, 0.8fr);
+            }
+
+            #viewer-source {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 560px) {
+            #viewer-toolbar {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            #plddt-legend,
+            #viewer-source,
+            #viewer-control-status {
+                grid-column: 1;
+            }
         }
 
         #pdb-full-viewer:fullscreen {
@@ -246,26 +326,45 @@
          Mol* container
     ========================================== -->
 
-    <div id="pdb-full-viewer"></div>
+    <header id="viewer-header">
+        <h1 id="protein-title">{{ protein_name or "Structure Viewer" }}{% if gene_name %} ({{ gene_name }}){% endif %}</h1>
+        {% if uniprot_acc or entry_name or organism or protein_length %}
+        <p id="protein-meta">
+            UniProt: {{ uniprot_acc }}{% if entry_name %} · {{ entry_name }}{% endif %}{% if organism %} · {{ organism }}{% endif %}{% if protein_length %} · {{ protein_length }} aa{% endif %}
+        </p>
+        {% endif %}
+        <div id="viewer-toolbar" aria-label="Structure viewer controls">
+            <div id="viewer-actions">
+                <strong>Selected:</strong>
+                <button type="button" data-viewer-action="reset" disabled>Reset view</button>
+                <button type="button" data-viewer-action="cartoon" disabled>Cartoon</button>
+                <button type="button" data-viewer-action="surface" disabled>Surface</button>
+                <button type="button" data-viewer-action="confidence" disabled>pLDDT confidence</button>
+                <button type="button" data-viewer-action="fullscreen" disabled>Fullscreen</button>
+            </div>
+            <aside id="plddt-legend" aria-label="AlphaFold pLDDT color ranges">
+                <strong>pLDDT confidence score (0–100)</strong>
+                <div class="plddt-legend-gradient" role="img" aria-label="Low scores are red and transition through white to blue at high scores"></div>
+                <div class="plddt-legend-ticks" aria-hidden="true">
+                    <span style="left: 0%">0</span><span style="left: 50%">50</span><span style="left: 70%">70</span><span style="left: 90%">90</span><span style="left: 100%">100</span>
+                </div>
+                <div class="plddt-legend-ranges">
+                    &lt;50 Very low · 50–70 Low · 70–90 Confident · ≥90 Very high
+                </div>
+            </aside>
+            <label id="viewer-source" for="structure-source">
+                Select a structure source
+                <select id="structure-source" {% if structure_options|length < 2 %}disabled{% endif %}>
+                    {% for option in structure_options %}
+                    <option value="{{ option.url }}" data-source="{{ option.source }}" {% if option.url == pdb_url %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <span id="viewer-control-status" role="status" aria-live="polite"></span>
+        </div>
+    </header>
 
-    <div id="viewer-toolbar" aria-label="Structure viewer controls">
-        <button type="button" data-viewer-action="reset" disabled>Reset view</button>
-        <button type="button" data-viewer-action="cartoon" disabled>Cartoon</button>
-        <button type="button" data-viewer-action="surface" disabled>Surface</button>
-        <button type="button" data-viewer-action="confidence" disabled>pLDDT confidence</button>
-        <button type="button" data-viewer-action="fullscreen" disabled>Fullscreen</button>
-        <span id="viewer-control-status" role="status" aria-live="polite"></span>
-    </div>
-    <aside id="plddt-legend" aria-label="AlphaFold pLDDT color ranges" hidden>
-        <strong>pLDDT confidence score (0–100)</strong>
-        <div class="plddt-legend-gradient" role="img" aria-label="Low scores are red and transition through white to blue at high scores"></div>
-        <div class="plddt-legend-ticks" aria-hidden="true">
-            <span style="left: 0%">0</span><span style="left: 50%">50</span><span style="left: 70%">70</span><span style="left: 90%">90</span><span style="left: 100%">100</span>
-        </div>
-        <div class="plddt-legend-ranges">
-            &lt;50 Very low · 50–70 Low · 70–90 Confident · ≥90 Very high
-        </div>
-    </aside>
+    <div id="pdb-full-viewer"></div>
 
 
     <div id="viewer-loading" role="status" aria-live="polite">
@@ -290,6 +389,21 @@
 
     const PDB_URL = {{ pdb_url | tojson }};
     const STRUCTURE_SOURCE = {{ structure_source | tojson }};
+
+    function updateViewerHeaderHeight() {
+        const header = document.getElementById("viewer-header");
+        document.documentElement.style.setProperty(
+            "--viewer-header-height",
+            `${header && !header.hidden ? header.offsetHeight : 0}px`
+        );
+    }
+
+    updateViewerHeaderHeight();
+    if ("ResizeObserver" in window) {
+        new ResizeObserver(updateViewerHeaderHeight).observe(document.getElementById("viewer-header"));
+    } else {
+        window.addEventListener("resize", updateViewerHeaderHeight);
+    }
 
 
     console.log(
@@ -792,13 +906,16 @@
     }
 
     function setupViewerControls(viewer) {
+        const header = document.getElementById("viewer-header");
         const toolbar = document.getElementById("viewer-toolbar");
         const status = document.getElementById("viewer-control-status");
         const confidenceButton = toolbar.querySelector('[data-viewer-action="confidence"]');
         const embedded = window.parent !== window;
+        header.hidden = embedded;
         toolbar.hidden = embedded;
         document.getElementById("plddt-legend").hidden = STRUCTURE_SOURCE !== "alphafold"
             || embedded;
+        updateViewerHeaderHeight();
         toolbar.querySelectorAll("[data-viewer-action]").forEach(button => {
             button.disabled = false;
         });
@@ -806,6 +923,16 @@
         confidenceButton.title = STRUCTURE_SOURCE === "alphafold"
             ? "Color by the per-residue pLDDT scores in the AlphaFold PDB B-factor field."
             : "pLDDT confidence coloring is not available for this structure source.";
+
+        document.getElementById("structure-source").addEventListener("change", event => {
+            const option = event.target.selectedOptions[0];
+            if (!option) return;
+
+            const nextUrl = new URL(window.location.href);
+            nextUrl.searchParams.set("url", option.value);
+            nextUrl.searchParams.set("source", option.dataset.source || "");
+            window.location.assign(nextUrl.href);
+        });
 
         toolbar.addEventListener("click", async event => {
             const button = event.target.closest("[data-viewer-action]");

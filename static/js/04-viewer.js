@@ -519,6 +519,49 @@ window.openPDBViewer = function (targetWindow = null) {
     if (window.currentStructureSource) {
         viewerQuery.set("source", window.currentStructureSource);
     }
+    const protein = window.currentProtein || {};
+    const structureChoices = [];
+    const proteinData = window.currentProteinData || window.currentData || {};
+    (proteinData.structures || []).forEach(structure => {
+        if (structure.pdb_url) {
+            structureChoices.push({
+                label: `PDB ${structure.pdb_id || ""}`.trim(),
+                url: structure.pdb_url,
+                source: "pdb"
+            });
+        }
+    });
+
+    const predicted = proteinData.predicted_structures || {};
+    const encodedProteinId = encodeURIComponent(protein.protein_id || proteinId || "");
+    if (predicted.alphafold?.local_pdb_path) {
+        structureChoices.push({
+            label: "AlphaFold",
+            url: `/data/alphafold/${encodedProteinId}.pdb`,
+            source: "alphafold"
+        });
+    }
+    if (predicted.alphafill?.cif_url) {
+        structureChoices.push({
+            label: "AlphaFill",
+            url: predicted.alphafill.cif_url,
+            source: "alphafill"
+        });
+    }
+    if (predicted.swiss_model?.local_pdb_path) {
+        structureChoices.push({
+            label: "SWISS-MODEL",
+            url: `/data/swiss_model/${encodedProteinId}.pdb`,
+            source: "swiss_model"
+        });
+    }
+    viewerQuery.set("protein", protein.protein_name || protein.gene_name || "");
+    viewerQuery.set("gene", protein.gene_name || "");
+    viewerQuery.set("uniprot", protein.uniprot_acc || protein.protein_id || "");
+    viewerQuery.set("entry", protein.entry_name || "");
+    viewerQuery.set("organism", protein.organism || "");
+    viewerQuery.set("length", protein.length || "");
+    viewerQuery.set("structures", JSON.stringify(structureChoices));
     const viewerUrl = `/structure-viewer?${viewerQuery.toString()}`;
     console.log("Viewer URL:", viewerUrl);
 
